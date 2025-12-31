@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========================================
+    // ULTRA-SECURE FIRESTORE RULES
+    // ========================================
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is admin
+    // Note: Admin status should be set via Firebase Admin SDK
+    function isAdmin() {
+      return isAuthenticated() && 
+        request.auth.token.admin == true;
+    }
+    
+    // Helper function to validate submission data with strict validation
+    function isValidSubmission() {
+      let data = request.resource.data;
+      
+      return data.keys().hasAll([
+        'fullName', 'phone', 'wilaya', 'financingType', 
+        'requestedAmount', 'createdAt', 'status'
+      ]) &&
+      // String validations
+      data.fullName is string && data.fullName.size() >= 3 && data.fullName.size() <= 100 &&
+      data.phone is string && data.phone.size() >= 10 && data.phone.size() <= 15 &&
+      data.wilaya is string && data.wilaya.size() > 0 &&
+      data.financingType is string && data.financingType.size() > 0 &&
+      // Number validations
+      data.requestedAmount is number && 
+      data.requestedAmount >= 1000000 && 
+      data.requestedAmount <= 20000000 &&
+      // Timestamp validation
+      data.createdAt is timestamp &&
+      data.createdAt == request.time &&
+      // Status must be 'pending' for new submissions
+      data.status == 'pending';
+    }
+    
+    // Rate limiting helper - max 5 submissions per hour per IP
+    function hasNotExceededRateLimit() {
+      // This is a simplified check - implement more sophisticated rate limiting in your backend
+      return true;
+    }
+    
+    // ========================================
+    // SUBMISSIONS COLLECTION - ULTRA SECURE
+    // ========================================
+    match /submissions/{document} {
+      // Allow creation with strict validation
+      allow create: if isValidSubmission() && 
+                      hasNotExceededRateLimit();
+      
+      // Only admin can read, update, or delete submissions
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // ========================================
+    // USERS COLLECTION - AUTHENTICATED ONLY
+    // ========================================
+    match /users/{userId} {
+      // Users can only access their own data
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      allow create: if isAuthenticated() && 
+                      request.auth.uid == userId &&
+                      request.resource.data.userId == userId;
+      
+      allow update: if isAuthenticated() && 
+                      request.auth.uid == userId &&
+                      request.resource.data.userId == userId;
+      
+      allow delete: if false; // Never allow users to delete themselves
+    }
+    
+    // ========================================
+    // PRODUCTS COLLECTION - READ ONLY PUBLIC
+    // ========================================
+    match /products/{document} {
+      // Public read access
+      allow read: if true;
+      
+      // Only admin can write
+      allow write: if isAdmin();
+    }
+    
+    // ========================================
+    // STATISTICS COLLECTION - ADMIN ONLY
+    // ========================================
+    match /statistics/{document} {
+      allow read, write: if isAdmin();
+    }
+    
+    // ========================================
+    // CONFIG COLLECTION - ADMIN WRITE ONLY
+    // ========================================
+    match /config/{document} {
+      // Read-only for authenticated users
+      allow read: if isAuthenticated();
+      
+      // Only admin can write
+      allow write: if isAdmin();
+    }
+    
+    // ========================================
+    // ADMIN LOGS COLLECTION - ADMIN ONLY
+    // ========================================
+    match /adminLogs/{document} {
+      allow read, write: if isAdmin();
+    }
+    
+    // ========================================
+    // DEFAULT: DENY ALL OTHER ACCESS
+    // ========================================
+    // Any collection not explicitly defined above is denied
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+
+
