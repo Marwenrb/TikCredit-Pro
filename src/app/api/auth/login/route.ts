@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateToken } from '@/lib/auth'
-import { verifyPassword } from '@/lib/password'
 import { strictRateLimiter } from '@/lib/rateLimit'
 
-// ULTRA-SECURE LOGIN with Rate Limiting and Bcrypt
+// ULTRA-SECURE LOGIN with Rate Limiting
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting - prevent brute force attacks (5 attempts per minute)
@@ -31,9 +30,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Simple password check - Password: Admin123
-    // For production, use environment variables with proper escaping
-    const ADMIN_PASSWORD = 'Admin123'
+    // Get password from environment variable (secure - not exposed in code)
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+    
+    if (!ADMIN_PASSWORD) {
+      console.error('CRITICAL: ADMIN_PASSWORD not set in environment variables')
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
     
     const isValid = password === ADMIN_PASSWORD
     
@@ -60,8 +66,8 @@ export async function POST(request: NextRequest) {
     response.cookies.set('admin-token', token, {
       httpOnly: true, // Prevents JavaScript access
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-      sameSite: 'strict', // CSRF protection (changed from 'lax' to 'strict')
-      maxAge: 60 * 60 * 8, // 8 hours (reduced from 24 for security)
+      sameSite: 'strict', // CSRF protection
+      maxAge: 60 * 60 * 8, // 8 hours
       path: '/',
     })
 
@@ -74,4 +80,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

@@ -364,7 +364,7 @@ export default function HomePage() {
             className="text-center mb-20"
           >
             <motion.div 
-              className="luxury-card p-12 bg-gradient-to-br from-elegant-blue via-elegant-blue-dark to-elegant-blue relative overflow-hidden shadow-luxury-xl"
+              className="p-12 rounded-luxury-lg bg-gradient-to-br from-elegant-blue via-elegant-blue-dark to-elegant-blue relative overflow-hidden shadow-luxury-xl"
               whileHover={{ 
                 scale: 1.01,
                 boxShadow: '0 25px 50px -12px rgba(30, 58, 138, 0.25)',

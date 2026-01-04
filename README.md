@@ -11,9 +11,9 @@
 
 - **Ultra-Premium UI/UX** - Aurora effects, 3D particles, interactive cursor tracking
 - **RTL Arabic Support** - Full right-to-left layout with Arabic typography
-- **Secure Admin Dashboard** - JWT + Bcrypt authentication with rate limiting
+- **Secure Admin Dashboard** - Environment-based authentication with rate limiting
 - **Multi-Step Form** - Beautiful financing application form
-- **Excel/PDF Export** - Download submissions in multiple formats
+- **Multi-Format Export** - Download submissions as TXT, CSV, Excel, or PDF
 - **Firebase Integration** - Real-time Firestore database
 
 ## 🚀 Quick Start
@@ -26,22 +26,16 @@ npm install
 
 ### 2. Configure Environment
 
-Run the setup script to create your `.env.local`:
-
-```bash
-node scripts/setup-env.js
-```
-
-Or manually create `.env.local`:
+Create `.env.local` file in the root directory:
 
 ```env
-# Admin password: Admin123
-ADMIN_PASSWORD_HASH=$2b$12$your-bcrypt-hash-here
+# Admin Password (REQUIRED)
+ADMIN_PASSWORD=YourSecurePasswordHere
 
-# JWT Secret (any secure random string)
-JWT_SECRET=your-secure-jwt-secret-key
+# JWT Secret (REQUIRED - 32+ characters)
+JWT_SECRET=your-very-long-secure-random-string-here-at-least-32-chars
 
-# Firebase (optional - for database)
+# Firebase (OPTIONAL - for database)
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=
@@ -49,6 +43,8 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 ```
+
+**⚠️ IMPORTANT:** Never commit `.env.local` to git! It's already in `.gitignore`.
 
 ### 3. Start Development Server
 
@@ -78,7 +74,7 @@ src/
 ## 🔐 Admin Access
 
 - **URL:** `/admin`
-- **Password:** `Admin123` (configure in `.env.local`)
+- **Password:** Set in `.env.local` as `ADMIN_PASSWORD`
 
 ## 🎨 Tech Stack
 
@@ -89,13 +85,15 @@ src/
 | Tailwind CSS | Utility-first styling |
 | Framer Motion | Animations & transitions |
 | Firebase | Database & authentication |
-| Bcrypt.js | Password hashing |
 | JWT | Session tokens |
 
 ## 📦 Production Build
 
 ```bash
+# Build for production
 npm run build
+
+# Start production server
 npm start
 ```
 
@@ -105,7 +103,10 @@ npm start
 
 1. Push to GitHub
 2. Import project on [Vercel](https://vercel.com)
-3. Add environment variables
+3. Add environment variables in Vercel dashboard:
+   - `ADMIN_PASSWORD`
+   - `JWT_SECRET`
+   - Firebase variables (if using)
 4. Deploy
 
 ### Firebase Hosting
@@ -115,21 +116,46 @@ npm run build
 firebase deploy
 ```
 
+**Remember to set environment variables in Firebase Console!**
+
 ## 📝 Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ADMIN_PASSWORD_HASH` | ✅ | Bcrypt hash of admin password |
-| `JWT_SECRET` | ✅ | Secret key for JWT tokens |
+| `ADMIN_PASSWORD` | ✅ | Admin login password (plain text - stored securely) |
+| `JWT_SECRET` | ✅ | Secret key for JWT tokens (32+ characters) |
 | `NEXT_PUBLIC_FIREBASE_*` | ⚠️ | Firebase config (for database) |
 
 ## 🛡️ Security Features
 
-- ✅ Bcrypt password hashing (12 rounds)
+- ✅ Environment-based password (not in code)
 - ✅ JWT token authentication
 - ✅ HTTP-only secure cookies
 - ✅ Rate limiting (10 requests/minute)
 - ✅ CSRF protection (strict same-site)
+- ✅ Secure headers in production
+
+## 📤 Export Formats
+
+The admin dashboard supports multiple export formats:
+
+- **TXT** ⭐ - Full Arabic support, beautifully formatted
+- **CSV** ⭐ - Spreadsheet-compatible with Arabic
+- **Excel** - XLSX format with Arabic columns
+- **PDF** - Numbers and dates only (Arabic not supported in jsPDF)
+
+## 🧹 Production Checklist
+
+Before deploying to production:
+
+- [ ] Set `ADMIN_PASSWORD` in environment variables
+- [ ] Set `JWT_SECRET` (32+ characters, random)
+- [ ] Configure Firebase (if using database)
+- [ ] Test admin login
+- [ ] Test form submission
+- [ ] Test export functionality
+- [ ] Run `npm run build` successfully
+- [ ] Set `NODE_ENV=production` in deployment platform
 
 ## 📄 License
 
