@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "build:production": "NODE_ENV=production npm run lint && npm run type-check && npm run build",
+    "analyze": "ANALYZE=true npm run build",
+    "security-audit": "npm audit --audit-level moderate",
+    "clean": "rm -rf .next out node_modules/.cache",
+    "deploy:check": "node scripts/deploy-production.js"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

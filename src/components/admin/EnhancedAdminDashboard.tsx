@@ -252,7 +252,7 @@ const EnhancedAdminDashboard: React.FC = () => {
     }
   }
 
-  // Virtualized row renderer
+  // Row renderer
   const Row = ({ index, style, data }: { index: number; style: React.CSSProperties; data: Submission[] }) => {
     const submission = data[index]
     const isSelected = selectedIds.has(submission.id)
@@ -263,7 +263,6 @@ const EnhancedAdminDashboard: React.FC = () => {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: index * 0.02 }}
-        className="px-2"
       >
         <div
           className={`bg-white backdrop-blur-sm border rounded-luxury-lg p-4 hover:border-elegant-blue/40 hover:shadow-luxury-lg transition-all shadow-luxury flex items-center gap-4 ${
@@ -608,17 +607,17 @@ const EnhancedAdminDashboard: React.FC = () => {
               <p className="text-sm">جرّب تغيير فلاتر البحث</p>
             </div>
           ) : (
-            <div className="border border-luxury-lightGray rounded-luxury overflow-hidden">
-              <List
-                height={ITEM_HEIGHT * Math.min(VISIBLE_ITEMS, filteredSubmissions.length)}
-                itemCount={filteredSubmissions.length}
-                itemSize={ITEM_HEIGHT}
-                width="100%"
-                itemData={filteredSubmissions}
-                className="scrollbar-thin scrollbar-thumb-elegant-blue scrollbar-track-luxury-offWhite"
-              >
-                {Row}
-              </List>
+            <div className="border border-luxury-lightGray rounded-luxury overflow-hidden max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-elegant-blue scrollbar-track-luxury-offWhite">
+              <div className="space-y-2 p-2">
+                {filteredSubmissions.map((submission, index) => (
+                  <Row
+                    key={submission.id}
+                    index={index}
+                    style={{}}
+                    data={filteredSubmissions}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </GlassCard>

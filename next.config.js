@@ -5,8 +5,22 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
-  // Enable standalone output for Docker/Netlify deployments
-  output: 'standalone',
+  
+  // Performance optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn']
+    } : false,
+  },
+  
+  // Image optimization
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 31536000, // 1 year
+  },
+  
+  // Note: 'standalone' output is for Docker only, not Netlify
+  // Netlify uses its own Next.js runtime
   
   // Security Headers - Production-Ready
   async headers() {
@@ -74,7 +88,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   
   // Webpack configuration
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Optimize bundle size
     if (!isServer) {
       config.resolve.fallback = {
@@ -84,6 +98,26 @@ const nextConfig = {
         tls: false,
       }
     }
+    
+    // Production optimizations
+    if (!dev) {
+      // Tree shaking optimization
+      config.optimization.usedExports = true
+      config.optimization.sideEffects = false
+      
+      // Bundle analyzer (optional)
+      if (process.env.ANALYZE === 'true') {
+        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+        config.plugins.push(
+          new BundleAnalyzerPlugin({
+            analyzerMode: 'static',
+            openAnalyzer: false,
+            reportFilename: 'bundle-analyzer-report.html'
+          })
+        )
+      }
+    }
+    
     return config
   },
 }
