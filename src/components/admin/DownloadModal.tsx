@@ -8,7 +8,9 @@ import DateRangeFilter from './DateRangeFilter'
 import { 
   DateRange, 
   exportToExcel, 
-  exportToPDF, 
+  exportToPDF,
+  exportToTXT,
+  exportToCSV,
   filterSubmissionsByDateRange,
   getSubmissionStatistics,
   formatCurrency,
@@ -27,7 +29,7 @@ export interface DownloadModalProps {
   submissions: Submission[]
 }
 
-type ExportFormat = 'excel' | 'pdf'
+type ExportFormat = 'excel' | 'pdf' | 'txt' | 'csv'
 
 const DownloadModal: React.FC<DownloadModalProps> = ({
   isOpen,
@@ -35,7 +37,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
   submissions,
 }) => {
   const [dateRange, setDateRange] = useState<DateRange>({ type: 'all' })
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('excel')
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('txt')
   const [includeNotes, setIncludeNotes] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
 
@@ -63,10 +65,19 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
         includeNotes,
       }
 
-      if (selectedFormat === 'excel') {
-        exportToExcel(filteredSubmissions, options)
-      } else {
-        exportToPDF(filteredSubmissions, options)
+      switch (selectedFormat) {
+        case 'txt':
+          exportToTXT(filteredSubmissions, options)
+          break
+        case 'csv':
+          exportToCSV(filteredSubmissions, options)
+          break
+        case 'excel':
+          exportToExcel(filteredSubmissions, options)
+          break
+        case 'pdf':
+          exportToPDF(filteredSubmissions, options)
+          break
       }
 
       // Success feedback
@@ -81,18 +92,38 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
     }
   }
 
-  const formatOptions: { type: ExportFormat; label: string; icon: React.ReactNode; color: string }[] = [
+  const formatOptions: { type: ExportFormat; label: string; description: string; icon: React.ReactNode; color: string; arabicSupport: boolean }[] = [
+    {
+      type: 'txt',
+      label: 'TXT (نص عربي)',
+      description: 'ملف نصي مع دعم كامل للعربية',
+      icon: <FileText className="w-5 h-5" />,
+      color: 'from-elegant-blue to-elegant-blue-light',
+      arabicSupport: true,
+    },
+    {
+      type: 'csv',
+      label: 'CSV (نص عربي)',
+      description: 'جدول بيانات مع دعم العربية',
+      icon: <FileSpreadsheet className="w-5 h-5" />,
+      color: 'from-premium-gold to-premium-gold-dark',
+      arabicSupport: true,
+    },
     {
       type: 'excel',
       label: 'Excel (XLSX)',
+      description: 'ملف Excel قابل للتحرير',
       icon: <FileSpreadsheet className="w-5 h-5" />,
       color: 'from-status-success to-status-success-dark',
+      arabicSupport: true,
     },
     {
       type: 'pdf',
-      label: 'PDF Document',
+      label: 'PDF (إنجليزي)',
+      description: 'مستند PDF (أرقام فقط)',
       icon: <FileText className="w-5 h-5" />,
       color: 'from-status-error to-status-error-dark',
+      arabicSupport: false,
     },
   ]
 
@@ -177,13 +208,16 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
             <FileText className="w-5 h-5" />
             صيغة التصدير
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <p className="text-sm text-luxury-darkGray mb-3">
+            ⭐ للحصول على النص العربي، استخدم TXT أو CSV
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {formatOptions.map((format) => (
               <motion.button
                 key={format.type}
                 onClick={() => setSelectedFormat(format.type)}
                 className={cn(
-                  'p-6 rounded-luxury-lg border-2 transition-all duration-300 flex items-center gap-4',
+                  'p-4 rounded-luxury-lg border-2 transition-all duration-300 flex flex-col items-center gap-2 text-center relative',
                   selectedFormat === format.type
                     ? 'border-elegant-blue/40 bg-gradient-to-br from-white to-elegant-blue-50 shadow-premium'
                     : 'border-luxury-lightGray bg-white hover:border-elegant-blue/20 hover:shadow-luxury-lg'
@@ -192,6 +226,11 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 300 }}
               >
+                {format.arabicSupport && (
+                  <span className="absolute -top-2 -right-2 text-xs bg-status-success text-white px-2 py-0.5 rounded-full">
+                    عربي ✓
+                  </span>
+                )}
                 <motion.div
                   className={cn(
                     'p-3 rounded-luxury-lg bg-gradient-to-br text-white shadow-luxury',
@@ -202,20 +241,18 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
                 >
                   {format.icon}
                 </motion.div>
-                <div className="flex-1 text-left">
-                  <p className="text-lg font-bold text-elegant-blue">{format.label}</p>
-                  <p className="text-sm text-luxury-darkGray">
-                    {format.type === 'excel' ? 'ملف Excel قابل للتحرير' : 'مستند PDF احترافي'}
-                  </p>
+                <div>
+                  <p className="text-sm font-bold text-elegant-blue">{format.label}</p>
+                  <p className="text-xs text-luxury-darkGray">{format.description}</p>
                 </div>
                 {selectedFormat === format.type && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="w-6 h-6 rounded-full bg-elegant-blue flex items-center justify-center"
+                    className="absolute top-2 left-2 w-5 h-5 rounded-full bg-elegant-blue flex items-center justify-center"
                   >
                     <svg
-                      className="w-4 h-4 text-white"
+                      className="w-3 h-3 text-white"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

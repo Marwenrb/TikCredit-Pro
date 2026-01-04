@@ -243,6 +243,8 @@ export const exportToExcel = (
 
 /**
  * Export submissions to PDF with professional formatting
+ * Note: PDF uses English labels for compatibility (Arabic not supported in jsPDF without custom fonts)
+ * For Arabic text export, use TXT or CSV format instead
  */
 export const exportToPDF = (
   submissions: Submission[],
@@ -253,7 +255,7 @@ export const exportToPDF = (
     const filteredSubmissions = filterSubmissionsByDateRange(submissions, options.dateRange)
 
     if (filteredSubmissions.length === 0) {
-      alert('لا توجد طلبات في الفترة المحددة')
+      alert('لا توجد طلبات في الفترة المحددة - For Arabic text, please use TXT or CSV export')
       return
     }
 
@@ -269,69 +271,65 @@ export const exportToPDF = (
     doc.setTextColor(30, 58, 138) // Elegant blue
     doc.text('TikCredit Pro - Submissions Report', 15, 20)
 
-    // Add date range
+    // Add date range info
     doc.setFontSize(12)
     doc.setTextColor(75, 75, 75)
-    const dateLabel = formatDateRangeLabel(options.dateRange)
-    doc.text(`Date Range: ${dateLabel}`, 15, 30)
+    doc.text(`Export Date: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 15, 30)
 
     // Add submission count
     doc.text(`Total Submissions: ${filteredSubmissions.length}`, 15, 37)
 
-    // Prepare table data
+    // Add note about Arabic text
+    doc.setFontSize(9)
+    doc.setTextColor(128, 128, 128)
+    doc.text('Note: For Arabic text support, please export as TXT or CSV format', 15, 44)
+
+    // Prepare table data - use phone as identifier since Arabic names won't render
     const tableData = filteredSubmissions.map((submission, index) => {
+      // Format amount without Arabic currency
+      const amount = submission.data.requestedAmount?.toLocaleString() || '0'
+      
       const row = [
         (index + 1).toString(),
-        submission.data.fullName || '',
-        submission.data.phone || '',
-        submission.data.wilaya || '',
-        submission.data.financingType || '',
-        `${submission.data.requestedAmount?.toLocaleString('ar-DZ')} دج` || '0',
-        format(new Date(submission.timestamp), 'dd/MM/yyyy'),
+        submission.data.phone || '-',
+        submission.data.email || '-',
+        `${amount} DZD`,
+        format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm'),
       ]
-
-      if (options.includeNotes) {
-        row.push(submission.data.notes?.substring(0, 50) || '')
-      }
 
       return row
     })
 
-    // Define table headers
-    const headers = ['#', 'Full Name', 'Phone', 'Wilaya', 'Type', 'Amount', 'Date']
-    
-    if (options.includeNotes) {
-      headers.push('Notes')
-    }
+    // Define table headers (English for PDF compatibility)
+    const headers = ['#', 'Phone', 'Email', 'Amount', 'Date']
 
     // Generate table
     autoTable(doc, {
       head: [headers],
       body: tableData,
-      startY: 45,
+      startY: 50,
       theme: 'striped',
       headStyles: {
         fillColor: [30, 58, 138], // Elegant blue
         textColor: [255, 255, 255],
-        fontSize: 10,
+        fontSize: 11,
         fontStyle: 'bold',
-        halign: 'left',
+        halign: 'center',
       },
       bodyStyles: {
-        fontSize: 9,
+        fontSize: 10,
         textColor: [50, 50, 50],
+        halign: 'center',
       },
       alternateRowStyles: {
         fillColor: [249, 250, 251], // Luxury off-white
       },
       columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 'auto', minCellWidth: 30 },
-        2: { cellWidth: 25 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 30 },
-        5: { cellWidth: 25, halign: 'right' },
-        6: { cellWidth: 25 },
+        0: { cellWidth: 15, halign: 'center' },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 60 },
+        3: { cellWidth: 35, halign: 'right' },
+        4: { cellWidth: 40 },
       },
       margin: { left: 15, right: 15 },
       didDrawPage: (data) => {
@@ -340,7 +338,7 @@ export const exportToPDF = (
         doc.setFontSize(8)
         doc.setTextColor(128, 128, 128)
         doc.text(
-          `Page ${data.pageNumber} of ${pageCount}`,
+          `Page ${data.pageNumber} of ${pageCount} - TikCredit Pro`,
           doc.internal.pageSize.width / 2,
           doc.internal.pageSize.height - 10,
           { align: 'center' }
@@ -354,9 +352,189 @@ export const exportToPDF = (
     // Download PDF
     doc.save(filename)
 
-    console.log(`✅ تم تصدير ${filteredSubmissions.length} طلب إلى PDF بنجاح`)
+    console.log(`Exported ${filteredSubmissions.length} submissions to PDF`)
   } catch (error) {
     console.error('PDF export error:', error)
+    alert('حدث خطأ أثناء تصدير الملف. يرجى المحاولة مرة أخرى.')
+  }
+}
+
+// ============================================
+// TXT EXPORT (UTF-8 Arabic Support)
+// ============================================
+
+/**
+ * Export submissions to TXT with proper Arabic UTF-8 encoding
+ */
+export const exportToTXT = (
+  submissions: Submission[],
+  options: ExportOptions
+): void => {
+  try {
+    // Filter by date range
+    const filteredSubmissions = filterSubmissionsByDateRange(submissions, options.dateRange)
+
+    if (filteredSubmissions.length === 0) {
+      alert('لا توجد طلبات في الفترة المحددة')
+      return
+    }
+
+    // Build TXT content with proper formatting
+    let content = ''
+    
+    // Header
+    content += '═══════════════════════════════════════════════════════════════════════════════\n'
+    content += '                         TikCredit Pro - تقرير الطلبات                          \n'
+    content += '═══════════════════════════════════════════════════════════════════════════════\n\n'
+    
+    // Date info
+    const dateLabel = formatDateRangeLabel(options.dateRange)
+    content += `📅 الفترة: ${dateLabel}\n`
+    content += `📊 إجمالي الطلبات: ${filteredSubmissions.length}\n`
+    content += `🕐 تاريخ التصدير: ${format(new Date(), 'dd/MM/yyyy HH:mm')}\n\n`
+    content += '───────────────────────────────────────────────────────────────────────────────\n\n'
+
+    // Submissions
+    filteredSubmissions.forEach((submission, index) => {
+      content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`
+      content += `│ طلب رقم ${index + 1}                                                                      \n`
+      content += `├─────────────────────────────────────────────────────────────────────────────┤\n`
+      content += `│ الاسم الكامل:     ${submission.data.fullName || 'غير محدد'}\n`
+      content += `│ رقم الهاتف:       ${submission.data.phone || 'غير محدد'}\n`
+      content += `│ البريد الإلكتروني: ${submission.data.email || 'غير محدد'}\n`
+      content += `│ الولاية:          ${submission.data.wilaya || 'غير محدد'}\n`
+      content += `│ نوع التمويل:      ${submission.data.financingType || 'غير محدد'}\n`
+      content += `│ المبلغ المطلوب:   ${submission.data.requestedAmount?.toLocaleString('ar-DZ') || '0'} دج\n`
+      content += `│ طريقة الراتب:     ${submission.data.salaryReceiveMethod || 'غير محدد'}\n`
+      content += `│ نطاق الدخل:       ${submission.data.monthlyIncomeRange || 'غير محدد'}\n`
+      content += `│ وقت التواصل:      ${submission.data.preferredContactTime || 'غير محدد'}\n`
+      content += `│ عميل موجود:       ${submission.data.isExistingCustomer || 'لا'}\n`
+      content += `│ تاريخ الإرسال:    ${format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm')}\n`
+      
+      if (options.includeNotes && submission.data.notes) {
+        content += `│ الملاحظات:        ${submission.data.notes}\n`
+      }
+      
+      content += `└─────────────────────────────────────────────────────────────────────────────┘\n\n`
+    })
+
+    // Footer
+    content += '───────────────────────────────────────────────────────────────────────────────\n'
+    content += '                    TikCredit Pro © 2024 - صُنع بحب في الجزائر 🇩🇿              \n'
+    content += '═══════════════════════════════════════════════════════════════════════════════\n'
+
+    // Create Blob with UTF-8 BOM for proper Arabic display
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + content], { type: 'text/plain;charset=utf-8' })
+    
+    // Generate filename
+    const filename = options.filename?.replace(/\.(xlsx|pdf)$/i, '.txt') || 
+                     `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.txt`
+
+    // Download file
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    console.log(`✅ تم تصدير ${filteredSubmissions.length} طلب إلى TXT بنجاح`)
+  } catch (error) {
+    console.error('TXT export error:', error)
+    alert('حدث خطأ أثناء تصدير الملف. يرجى المحاولة مرة أخرى.')
+  }
+}
+
+// ============================================
+// CSV EXPORT (UTF-8 Arabic Support)
+// ============================================
+
+/**
+ * Export submissions to CSV with proper Arabic UTF-8 encoding
+ */
+export const exportToCSV = (
+  submissions: Submission[],
+  options: ExportOptions
+): void => {
+  try {
+    // Filter by date range
+    const filteredSubmissions = filterSubmissionsByDateRange(submissions, options.dateRange)
+
+    if (filteredSubmissions.length === 0) {
+      alert('لا توجد طلبات في الفترة المحددة')
+      return
+    }
+
+    // CSV Headers
+    let headers = [
+      'الرقم',
+      'الاسم الكامل',
+      'رقم الهاتف',
+      'البريد الإلكتروني',
+      'الولاية',
+      'نوع التمويل',
+      'المبلغ المطلوب',
+      'طريقة الراتب',
+      'نطاق الدخل',
+      'وقت التواصل',
+      'عميل موجود',
+      'تاريخ الإرسال'
+    ]
+
+    if (options.includeNotes) {
+      headers.push('الملاحظات')
+    }
+
+    // Build CSV content
+    let csvContent = headers.join(',') + '\n'
+
+    filteredSubmissions.forEach((submission, index) => {
+      const row = [
+        index + 1,
+        `"${(submission.data.fullName || '').replace(/"/g, '""')}"`,
+        `"${submission.data.phone || ''}"`,
+        `"${submission.data.email || 'غير محدد'}"`,
+        `"${submission.data.wilaya || ''}"`,
+        `"${submission.data.financingType || ''}"`,
+        submission.data.requestedAmount || 0,
+        `"${submission.data.salaryReceiveMethod || ''}"`,
+        `"${submission.data.monthlyIncomeRange || 'غير محدد'}"`,
+        `"${submission.data.preferredContactTime || 'غير محدد'}"`,
+        `"${submission.data.isExistingCustomer || 'لا'}"`,
+        `"${format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm')}"`
+      ]
+
+      if (options.includeNotes) {
+        row.push(`"${(submission.data.notes || '').replace(/"/g, '""')}"`)
+      }
+
+      csvContent += row.join(',') + '\n'
+    })
+
+    // Create Blob with UTF-8 BOM for proper Arabic display
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' })
+    
+    // Generate filename
+    const filename = options.filename?.replace(/\.(xlsx|pdf|txt)$/i, '.csv') || 
+                     `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.csv`
+
+    // Download file
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    console.log(`✅ تم تصدير ${filteredSubmissions.length} طلب إلى CSV بنجاح`)
+  } catch (error) {
+    console.error('CSV export error:', error)
     alert('حدث خطأ أثناء تصدير الملف. يرجى المحاولة مرة أخرى.')
   }
 }
