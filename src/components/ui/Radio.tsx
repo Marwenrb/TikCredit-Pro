@@ -33,10 +33,10 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
             key={option.value}
             className={cn(
               'flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-300',
-              'bg-dark-50/30 backdrop-blur-sm border-2',
+              'bg-white backdrop-blur-sm border-2 shadow-sm',
               isSelected
-                ? 'border-gold-500 bg-gold-500/10'
-                : 'border-gold-500/20 hover:border-gold-500/40'
+                ? 'border-elegant-blue bg-elegant-blue/10'
+                : 'border-luxury-lightGray hover:border-elegant-blue/40'
             )}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -53,8 +53,8 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
               className={cn(
                 'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
                 isSelected
-                  ? 'border-gold-500 bg-gold-500'
-                  : 'border-gray-400'
+                  ? 'border-elegant-blue bg-elegant-blue'
+                  : 'border-luxury-mediumGray'
               )}
             >
               {isSelected && (
@@ -67,8 +67,8 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
               )}
             </div>
             <span className={cn(
-              'flex-1 text-base',
-              isSelected ? 'text-gold-400 font-medium' : 'text-gray-300'
+              'flex-1 text-base font-medium',
+              isSelected ? 'text-elegant-blue font-bold' : 'text-luxury-charcoal'
             )}>
               {option.label}
             </span>

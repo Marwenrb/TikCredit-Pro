@@ -10,7 +10,7 @@ export default function FormPage() {
   return (
     <div className="min-h-screen bg-luxury-gradient relative overflow-hidden">
       {/* Subtle Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute inset-0" style={{
           backgroundImage: `radial-gradient(circle at 2px 2px, #1E3A8A 1px, transparent 0)`,
           backgroundSize: '40px 40px'

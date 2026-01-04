@@ -50,7 +50,7 @@ const Typewriter: React.FC<TypewriterProps> = ({
       {displayedText}
       {showCursor && (
         <motion.span
-          className="inline-block w-0.5 h-5 bg-gold-400 ml-1 align-middle"
+          className="inline-block w-0.5 h-5 bg-elegant-blue ml-1 align-middle"
           animate={{ opacity: [1, 0, 1] }}
           transition={{ duration: 0.8, repeat: Infinity }}
         />

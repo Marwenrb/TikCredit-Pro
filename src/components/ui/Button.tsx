@@ -10,13 +10,44 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Primary gradient button (default)
         default: 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white hover:from-elegant-blue-dark hover:to-elegant-blue shadow-luxury-lg hover:shadow-luxury-xl transform hover:scale-[1.02] active:scale-[0.98]',
+        
+        // Outline variants
         outline: 'border-2 border-elegant-blue text-elegant-blue hover:bg-elegant-blue hover:text-white shadow-luxury hover:shadow-luxury-lg',
+        'outline-gold': 'border-2 border-premium-gold text-premium-gold hover:bg-premium-gold hover:text-white shadow-luxury hover:shadow-luxury-lg',
+        
+        // Ghost variants
         ghost: 'text-elegant-blue hover:bg-elegant-blue/10 hover:shadow-lg',
+        'ghost-gold': 'text-premium-gold hover:bg-premium-gold/10 hover:shadow-lg',
+        
+        // White & Premium variants
         white: 'bg-white text-elegant-blue hover:bg-luxury-offWhite shadow-luxury-xl hover:shadow-2xl border-2 border-elegant-blue/10 hover:border-elegant-blue/30',
         premium: 'bg-gradient-to-br from-white via-luxury-lightGray to-luxury-offWhite text-elegant-blue shadow-premium hover:shadow-luxury-xl border border-elegant-blue/20 hover:border-elegant-blue/40 backdrop-blur-sm',
-        danger: 'bg-gradient-to-r from-status-error to-red-600 text-white hover:from-red-600 hover:to-status-error shadow-lg hover:shadow-xl',
+        
+        // Glass variants (glassmorphism)
+        glass: 'bg-white/70 backdrop-blur-lg text-elegant-blue border border-white/30 shadow-luxury-lg hover:bg-white/90 hover:shadow-luxury-xl',
+        'glass-blue': 'bg-elegant-blue/10 backdrop-blur-lg text-elegant-blue border border-elegant-blue/20 shadow-luxury-lg hover:bg-elegant-blue/20 hover:shadow-luxury-xl',
+        'glass-gold': 'bg-premium-gold/10 backdrop-blur-lg text-premium-gold border border-premium-gold/20 shadow-luxury-lg hover:bg-premium-gold/20 hover:shadow-luxury-xl',
+        
+        // Gradient variants
+        gradient: 'bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold text-white shadow-premium-lg hover:shadow-premium-xl bg-[length:200%_auto] hover:bg-right transition-all duration-500',
+        'gradient-gold': 'bg-gradient-to-r from-premium-gold to-premium-gold-dark text-white shadow-lg hover:shadow-xl hover:from-premium-gold-dark hover:to-premium-gold',
+        
+        // Neon glow variant
+        neon: 'bg-elegant-blue text-white shadow-glow-blue hover:shadow-glow-blue-lg border border-elegant-blue-light/50',
+        'neon-gold': 'bg-premium-gold text-white shadow-glow-gold hover:shadow-glow-gold-lg border border-premium-gold-light/50',
+        
+        // Status variants
+        success: 'bg-gradient-to-r from-status-success to-status-success-dark text-white hover:from-status-success-dark hover:to-status-success shadow-lg hover:shadow-xl',
+        danger: 'bg-gradient-to-r from-status-error to-status-error-dark text-white hover:from-status-error-dark hover:to-status-error shadow-lg hover:shadow-xl',
+        warning: 'bg-gradient-to-r from-status-warning to-status-warning-dark text-white hover:from-status-warning-dark hover:to-status-warning shadow-lg hover:shadow-xl',
+        
+        // Gold variants (legacy support)
         gold: 'bg-gradient-to-r from-premium-gold to-premium-gold-dark text-white hover:from-premium-gold-dark hover:to-premium-gold shadow-lg hover:shadow-xl',
+        
+        // Magnetic variant (special hover effect)
+        magnetic: 'bg-white text-elegant-blue border-2 border-elegant-blue/20 shadow-premium hover:shadow-premium-xl hover:border-elegant-blue/50 hover:translate-x-1 transition-all',
       },
       size: {
         default: 'px-6 py-3 text-base',
@@ -44,7 +75,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Extract motion-specific props
     const { onDrag, onDragEnd, onDragStart, ...buttonProps } = props as any
     
-    const isWhiteVariant = variant === 'white' || variant === 'premium'
+    // Determine shimmer color based on variant
+    const isWhiteVariant = variant === 'white' || variant === 'premium' || variant === 'glass' || variant === 'magnetic'
+    const isGlassVariant = variant?.includes('glass')
+    const isOutlineVariant = variant?.includes('outline')
+    const isGhostVariant = variant?.includes('ghost')
     
     return (
       <motion.button

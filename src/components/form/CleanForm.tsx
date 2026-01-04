@@ -473,7 +473,7 @@ const CleanForm: React.FC = () => {
           {/* Step 4: Review and Submit */}
           {currentStep === 4 && (
             <div className="space-y-6">
-              <div className="bg-luxury-lightGray/50 rounded-luxury-lg p-6 space-y-4 border border-luxury-mediumGray/20">
+              <div className="bg-luxury-offWhite rounded-luxury-lg p-6 space-y-4 border border-luxury-lightGray shadow-sm">
                 <h3 className="text-2xl font-bold text-elegant-blue mb-4 flex items-center gap-2">
                   <FileText className="w-6 h-6" />
                   ملخص طلبك
@@ -481,30 +481,30 @@ const CleanForm: React.FC = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1">الاسم الكامل</p>
-                    <p className="text-luxury-charcoal font-semibold">{formData.fullName}</p>
+                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">الاسم الكامل</p>
+                    <p className="text-luxury-charcoal font-bold">{formData.fullName}</p>
                   </div>
                   
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1">رقم الهاتف</p>
-                    <p className="text-luxury-charcoal font-semibold">{formData.phone}</p>
+                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">رقم الهاتف</p>
+                    <p className="text-luxury-charcoal font-bold">{formData.phone}</p>
                   </div>
                   
                   {formData.email && (
                     <div>
-                      <p className="text-sm text-luxury-darkGray mb-1">البريد الإلكتروني</p>
-                      <p className="text-luxury-charcoal font-semibold">{formData.email}</p>
+                      <p className="text-sm text-luxury-darkGray mb-1 font-medium">البريد الإلكتروني</p>
+                      <p className="text-luxury-charcoal font-bold">{formData.email}</p>
                     </div>
                   )}
                   
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1">الولاية</p>
-                    <p className="text-luxury-charcoal font-semibold">{formData.wilaya}</p>
+                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">الولاية</p>
+                    <p className="text-luxury-charcoal font-bold">{formData.wilaya}</p>
                   </div>
                   
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1">طبيعة العمل/المهنة</p>
-                    <p className="text-luxury-charcoal font-semibold">
+                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">طبيعة العمل/المهنة</p>
+                    <p className="text-luxury-charcoal font-bold">
                       {formData.profession === 'أخرى (حدد)' && formData.customProfession 
                         ? formData.customProfession 
                         : formData.profession}
@@ -512,8 +512,8 @@ const CleanForm: React.FC = () => {
                   </div>
                   
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1">نوع التمويل</p>
-                    <p className="text-luxury-charcoal font-semibold">{formData.financingType}</p>
+                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">نوع التمويل</p>
+                    <p className="text-luxury-charcoal font-bold">{formData.financingType}</p>
                   </div>
                   
                   <div className="md:col-span-2">

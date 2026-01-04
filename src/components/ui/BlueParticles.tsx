@@ -54,7 +54,7 @@ const BlueParticles: React.FC<BlueParticlesProps> = ({
         this.size = Math.random() * 2 + 1
         this.speedX = (Math.random() - 0.5) * 0.3
         this.speedY = (Math.random() - 0.5) * 0.3
-        this.opacity = Math.random() * 0.3 + 0.1
+        this.opacity = Math.random() * 0.15 + 0.05
         this.pulseSpeed = Math.random() * 0.02 + 0.01
         this.hue = Math.random() * 20 + 210 // Blue range (210-230)
       }
@@ -71,7 +71,7 @@ const BlueParticles: React.FC<BlueParticlesProps> = ({
 
         // Pulse opacity
         this.opacity += this.pulseSpeed
-        if (this.opacity > 0.4 || this.opacity < 0.1) {
+        if (this.opacity > 0.2 || this.opacity < 0.05) {
           this.pulseSpeed *= -1
         }
       }
@@ -111,8 +111,8 @@ const BlueParticles: React.FC<BlueParticlesProps> = ({
           const distance = Math.sqrt(dx * dx + dy * dy)
 
           if (distance < 120) {
-            ctx.strokeStyle = `rgba(30, 58, 138, ${0.15 * (1 - distance / 120)})`
-            ctx.lineWidth = 1
+            ctx.strokeStyle = `rgba(30, 58, 138, ${0.08 * (1 - distance / 120)})`
+            ctx.lineWidth = 0.5
             ctx.beginPath()
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
@@ -154,7 +154,7 @@ const BlueParticles: React.FC<BlueParticlesProps> = ({
     <div className={`pointer-events-none ${className}`}>
       <canvas 
         ref={canvasRef} 
-        className="w-full h-full opacity-40"
+        className="w-full h-full opacity-30"
         style={{ position: 'absolute', inset: 0 }}
       />
     </div>

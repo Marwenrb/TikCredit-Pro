@@ -30,9 +30,9 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                 <motion.div
                   className={cn(
                     'w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300',
-                    isCompleted && 'bg-gold-500 text-white',
-                    isCurrent && 'bg-gold-500 text-white scale-110 shadow-lg shadow-gold-500/50',
-                    isUpcoming && 'bg-dark-100 border-2 border-gold-500/30 text-gray-400'
+                    isCompleted && 'bg-elegant-blue text-white',
+                    isCurrent && 'bg-elegant-blue text-white scale-110 shadow-lg shadow-elegant-blue/50',
+                    isUpcoming && 'bg-white border-2 border-luxury-lightGray text-luxury-mediumGray'
                   )}
                   initial={false}
                   animate={{
@@ -60,10 +60,10 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                 >
                   <p
                     className={cn(
-                      'text-xs font-medium',
-                      isCurrent && 'text-gold-400',
-                      isCompleted && 'text-gold-500',
-                      isUpcoming && 'text-gray-400'
+                      'text-xs font-semibold',
+                      isCurrent && 'text-elegant-blue',
+                      isCompleted && 'text-elegant-blue',
+                      isUpcoming && 'text-luxury-mediumGray'
                     )}
                   >
                     {step.title}
@@ -72,11 +72,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
               </div>
               {index < steps.length - 1 && (
                 <div className="flex-1 mx-2 h-0.5 relative">
-                  <div className="absolute inset-0 bg-dark-100" />
+                  <div className="absolute inset-0 bg-luxury-lightGray" />
                   <motion.div
                     className={cn(
                       'absolute inset-0 h-full',
-                      isCompleted ? 'bg-gold-500' : 'bg-dark-100'
+                      isCompleted ? 'bg-elegant-blue' : 'bg-luxury-lightGray'
                     )}
                     initial={{ width: 0 }}
                     animate={{ width: isCompleted ? '100%' : '0%' }}

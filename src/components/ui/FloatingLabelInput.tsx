@@ -26,7 +26,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, FloatingLabelInput
       <div className="relative w-full group">
         <div className="relative">
           {icon && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gold-500/50 group-focus-within:text-gold-400 transition-colors z-10">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-elegant-blue/50 group-focus-within:text-elegant-blue transition-colors z-10">
               {icon}
             </div>
           )}
@@ -40,11 +40,11 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, FloatingLabelInput
               (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = node
             }}
             className={cn(
-              'w-full px-4 pt-6 pb-2 bg-dark-50/30 backdrop-blur-sm border-2 rounded-xl',
-              'text-white placeholder:text-transparent',
-              'focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20',
+              'w-full px-4 pt-6 pb-2 bg-white backdrop-blur-sm border-2 rounded-xl shadow-sm',
+              'text-luxury-charcoal placeholder:text-transparent',
+              'focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/20',
               'transition-all duration-300',
-              error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gold-500/30',
+              error ? 'border-status-error focus:border-status-error focus:ring-status-error/20' : 'border-luxury-lightGray',
               icon && 'pr-12',
               className
             )}
@@ -61,8 +61,8 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, FloatingLabelInput
             className={cn(
               'absolute right-4 pointer-events-none transition-all duration-300',
               isActive
-                ? 'top-2 text-xs text-gold-400 font-medium'
-                : 'top-1/2 -translate-y-1/2 text-base text-gray-400'
+                ? 'top-2 text-xs text-elegant-blue font-semibold'
+                : 'top-1/2 -translate-y-1/2 text-base text-luxury-mediumGray'
             )}
             animate={{
               y: isActive ? 0 : 0,
@@ -77,9 +77,9 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, FloatingLabelInput
               initial={{ opacity: 0, y: -10, height: 0 }}
               animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, y: -10, height: 0 }}
-              className="mt-2 text-sm text-red-400 flex items-center gap-1"
+              className="mt-2 text-sm text-status-error flex items-center gap-1 font-medium"
             >
-              <span className="w-1 h-1 bg-red-400 rounded-full" />
+              <span className="w-1 h-1 bg-status-error rounded-full" />
               {error}
             </motion.p>
           )}

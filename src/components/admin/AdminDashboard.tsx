@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText } from 'lucide-react'
+import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles } from 'lucide-react'
 import { Button, GlassCard, StatCard, Modal } from '@/components/ui'
+import DownloadModal from './DownloadModal'
 import { Submission } from '@/types'
 import {
   getSubmissions,
@@ -28,6 +29,7 @@ const AdminDashboard: React.FC = () => {
   const [period, setPeriod] = useState<'all' | 'today' | 'week' | 'month'>('all')
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false)
 
   useEffect(() => {
     loadSubmissions()
@@ -82,15 +84,42 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark via-dark-50 to-dark-100 p-6">
+    <div className="min-h-screen bg-luxury-gradient p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-gold-400">لوحة التحكم</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 ml-2" />
-            تسجيل الخروج
-          </Button>
-        </div>
+        {/* Premium Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+        >
+          <div className="flex items-center gap-3">
+            <motion.div
+              className="p-3 rounded-luxury-lg bg-gradient-to-br from-elegant-blue to-elegant-blue-light shadow-premium"
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 5 }}
+            >
+              <Sparkles className="w-8 h-8 text-white" />
+            </motion.div>
+            <div>
+              <h1 className="text-4xl font-bold text-elegant-blue">لوحة التحكم</h1>
+              <p className="text-luxury-darkGray font-medium">إدارة طلبات التمويل</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              variant="glass-blue" 
+              size="lg"
+              onClick={() => setIsDownloadModalOpen(true)}
+            >
+              <Download className="w-5 h-5 ml-2" />
+              تصدير الطلبات
+            </Button>
+            <Button variant="outline" size="lg" onClick={handleLogout}>
+              <LogOut className="w-5 h-5 ml-2" />
+              تسجيل الخروج
+            </Button>
+          </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
@@ -118,12 +147,12 @@ const AdminDashboard: React.FC = () => {
         <GlassCard variant="elevated" className="p-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-mediumGray" />
               <input
                 type="text"
                 placeholder="بحث بالاسم، الهاتف، أو الولاية..."
                 onChange={(e) => debouncedSearch(e.target.value)}
-                className="w-full pr-10 pl-4 py-3 bg-dark-50/50 backdrop-blur-sm border border-gold-500/30 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gold-500"
+                className="w-full pr-10 pl-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl text-luxury-charcoal placeholder:text-luxury-mediumGray shadow-sm focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue"
               />
             </div>
             <div className="flex gap-2">
@@ -139,21 +168,19 @@ const AdminDashboard: React.FC = () => {
               ))}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => exportToJSON(filteredSubmissions)}>
+              <Button 
+                variant="gradient" 
+                size="sm" 
+                onClick={() => setIsDownloadModalOpen(true)}
+              >
                 <Download className="w-4 h-4 ml-2" />
+                تصدير متقدم
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportToJSON(filteredSubmissions)}>
                 JSON
               </Button>
               <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredSubmissions)}>
-                <Download className="w-4 h-4 ml-2" />
                 CSV
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => exportToText(filteredSubmissions)}>
-                <FileText className="w-4 h-4 ml-2" />
-                TXT
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => exportToPDF(filteredSubmissions)}>
-                <FileText className="w-4 h-4 ml-2" />
-                PDF
               </Button>
               <Button variant="outline" size="sm" onClick={() => generateDemoData(10)}>
                 بيانات تجريبية
@@ -167,7 +194,7 @@ const AdminDashboard: React.FC = () => {
 
           <div className="space-y-2">
             {filteredSubmissions.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-luxury-darkGray">
                 لا توجد طلبات
               </div>
             ) : (
@@ -176,17 +203,17 @@ const AdminDashboard: React.FC = () => {
                   key={submission.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-dark-50/30 backdrop-blur-sm border border-gold-500/20 rounded-xl p-4 hover:border-gold-500/40 transition-all"
+                  className="bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl p-4 hover:border-elegant-blue/40 hover:shadow-md transition-all shadow-sm"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gold-400 mb-1">
+                      <h3 className="text-lg font-semibold text-elegant-blue mb-1">
                         {submission.data.fullName}
                       </h3>
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-300">
+                      <div className="flex flex-wrap gap-4 text-sm text-luxury-darkGray">
                         <span>{submission.data.phone}</span>
                         <span>{submission.data.wilaya}</span>
-                        <span className="text-gold-400 font-medium">
+                        <span className="text-elegant-blue font-bold">
                           {formatCurrency(submission.data.requestedAmount)}
                         </span>
                         <span>
@@ -207,7 +234,7 @@ const AdminDashboard: React.FC = () => {
                         size="icon"
                         onClick={() => handleDelete(submission.id)}
                       >
-                        <Trash2 className="w-4 h-4 text-red-400" />
+                        <Trash2 className="w-4 h-4 text-status-error" />
                       </Button>
                     </div>
                   </div>
@@ -218,6 +245,7 @@ const AdminDashboard: React.FC = () => {
         </GlassCard>
       </div>
 
+      {/* Submission Detail Modal */}
       <Modal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
@@ -228,52 +256,52 @@ const AdminDashboard: React.FC = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-gray-400">الاسم الكامل:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.fullName}</p>
+                <span className="text-luxury-darkGray font-medium">الاسم الكامل:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.fullName}</p>
               </div>
               <div>
-                <span className="text-gray-400">رقم الهاتف:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.phone}</p>
+                <span className="text-luxury-darkGray font-medium">رقم الهاتف:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.phone}</p>
               </div>
               <div>
-                <span className="text-gray-400">البريد الإلكتروني:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.email || 'غير محدد'}</p>
+                <span className="text-luxury-darkGray font-medium">البريد الإلكتروني:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.email || 'غير محدد'}</p>
               </div>
               <div>
-                <span className="text-gray-400">الولاية:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.wilaya}</p>
+                <span className="text-luxury-darkGray font-medium">الولاية:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.wilaya}</p>
               </div>
               <div>
-                <span className="text-gray-400">نوع التمويل:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.financingType}</p>
+                <span className="text-luxury-darkGray font-medium">نوع التمويل:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.financingType}</p>
               </div>
               <div>
-                <span className="text-gray-400">المبلغ المطلوب:</span>
-                <p className="text-gold-400 font-bold">{formatCurrency(selectedSubmission.data.requestedAmount)}</p>
+                <span className="text-luxury-darkGray font-medium">المبلغ المطلوب:</span>
+                <p className="text-elegant-blue font-bold text-xl">{formatCurrency(selectedSubmission.data.requestedAmount)}</p>
               </div>
               <div>
-                <span className="text-gray-400">طريقة استلام الراتب:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.salaryReceiveMethod}</p>
+                <span className="text-luxury-darkGray font-medium">طريقة استلام الراتب:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.salaryReceiveMethod}</p>
               </div>
               <div>
-                <span className="text-gray-400">نطاق الدخل:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.monthlyIncomeRange || 'غير محدد'}</p>
+                <span className="text-luxury-darkGray font-medium">نطاق الدخل:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.monthlyIncomeRange || 'غير محدد'}</p>
               </div>
               <div>
-                <span className="text-gray-400">وقت التواصل المفضل:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.preferredContactTime || 'غير محدد'}</p>
+                <span className="text-luxury-darkGray font-medium">وقت التواصل المفضل:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.preferredContactTime || 'غير محدد'}</p>
               </div>
               <div>
-                <span className="text-gray-400">عميل موجود:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.isExistingCustomer}</p>
+                <span className="text-luxury-darkGray font-medium">عميل موجود:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.isExistingCustomer}</p>
               </div>
               <div className="col-span-2">
-                <span className="text-gray-400">الملاحظات:</span>
-                <p className="text-white font-medium">{selectedSubmission.data.notes || 'لا توجد ملاحظات'}</p>
+                <span className="text-luxury-darkGray font-medium">الملاحظات:</span>
+                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.notes || 'لا توجد ملاحظات'}</p>
               </div>
               <div className="col-span-2">
-                <span className="text-gray-400">تاريخ الإرسال:</span>
-                <p className="text-white font-medium">
+                <span className="text-luxury-darkGray font-medium">تاريخ الإرسال:</span>
+                <p className="text-luxury-charcoal font-bold">
                   {format(new Date(selectedSubmission.timestamp), 'dd MMMM yyyy HH:mm')}
                 </p>
               </div>
@@ -281,6 +309,13 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* Premium Download Modal */}
+      <DownloadModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        submissions={submissions}
+      />
     </div>
   )
 }

@@ -7,8 +7,13 @@ import { Button, GlassCard } from '@/components/ui'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 
-// Lazy load particles for better performance
+// Lazy load particles and background for better performance
 const BlueParticles = dynamic(() => import('@/components/ui/BlueParticles'), { 
+  ssr: false,
+  loading: () => null
+})
+
+const UltraPremiumBackground = dynamic(() => import('@/components/ui/UltraPremiumBackground'), {
   ssr: false,
   loading: () => null
 })
@@ -65,29 +70,11 @@ export default function HomePage() {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
   return (
     <div className="min-h-screen bg-luxury-gradient relative overflow-hidden">
-      {/* Premium Blue Particle Background */}
-      <BlueParticles className="absolute inset-0 z-0" density={35} />
-      
-      {/* Subtle Background Pattern */}
-      <div className="absolute inset-0 opacity-5 z-0">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 2px 2px, #1E3A8A 1px, transparent 0)`,
-          backgroundSize: '40px 40px'
-        }} />
-      </div>
-      
-      {/* Floating Shapes for Premium Feel with Parallax */}
-      <motion.div 
-        style={{ y }} 
-        className="absolute top-20 left-10 w-72 h-72 bg-elegant-blue-light/5 rounded-full blur-3xl animate-float pointer-events-none" 
-      />
-      <motion.div 
-        style={{ y: useTransform(scrollYProgress, [0, 1], ['0%', '30%']) }} 
-        className="absolute bottom-20 right-10 w-96 h-96 bg-premium-gold-light/5 rounded-full blur-3xl animate-float pointer-events-none" 
-      />
-      <motion.div 
-        style={{ y: useTransform(scrollYProgress, [0, 1], ['0%', '70%']) }} 
-        className="absolute top-1/2 left-1/2 w-64 h-64 bg-elegant-blue/3 rounded-full blur-3xl animate-pulse-soft pointer-events-none" 
+      {/* Ultra-Premium Animated Background */}
+      <UltraPremiumBackground 
+        variant="default" 
+        showParticles={true} 
+        showCursorGlow={true}
       />
       
       <div className="relative z-10">
@@ -154,7 +141,7 @@ export default function HomePage() {
               </motion.span>
               <br />
               <motion.span 
-                className="text-luxury-charcoal text-4xl md:text-6xl inline-block"
+                className="text-luxury-charcoal text-4xl md:text-6xl inline-block font-bold"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4, ...springConfig }}
@@ -168,7 +155,7 @@ export default function HomePage() {
               initial="hidden"
               animate="show"
               transition={{ delay: 0.3 }}
-              className="text-xl md:text-2xl text-luxury-darkGray mb-10 max-w-3xl mx-auto font-light leading-relaxed"
+              className="text-xl md:text-2xl text-luxury-darkGray mb-10 max-w-3xl mx-auto font-medium leading-relaxed"
             >
               حلول تمويل احترافية ومبتكرة تناسب احتياجاتك مع أفضل الشروط والأسعار التنافسية
             </motion.p>
@@ -292,7 +279,7 @@ export default function HomePage() {
                   <h3 className="text-2xl font-bold text-luxury-charcoal mb-3 relative z-10 group-hover:text-elegant-blue transition-colors duration-300">
                     {feature.title}
                   </h3>
-                  <p className="text-luxury-darkGray leading-relaxed relative z-10">
+                  <p className="text-luxury-darkGray leading-relaxed relative z-10 font-medium">
                     {feature.description}
                   </p>
                 </div>
@@ -349,7 +336,7 @@ export default function HomePage() {
                     x: 5,
                     transition: { type: 'spring', stiffness: 400, damping: 25 }
                   }}
-                  className="flex items-center gap-4 p-4 rounded-luxury bg-gradient-to-r from-luxury-lightGray/40 to-luxury-offWhite hover:from-elegant-blue/5 hover:to-elegant-blue-light/5 transition-all duration-300 cursor-default group/item"
+                  className="flex items-center gap-4 p-4 rounded-luxury bg-gradient-to-r from-luxury-offWhite to-white hover:from-elegant-blue/5 hover:to-elegant-blue-light/5 border border-luxury-lightGray hover:border-elegant-blue/30 transition-all duration-300 cursor-default group/item shadow-sm hover:shadow-md"
                 >
                   <motion.div 
                     className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-elegant-blue to-premium-gold flex items-center justify-center shadow-lg"
@@ -555,7 +542,7 @@ export default function HomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 2.3 }}
-                className="flex items-center justify-center flex-wrap gap-3 text-sm text-luxury-darkGray"
+                className="flex items-center justify-center flex-wrap gap-3 text-sm text-luxury-darkGray font-medium"
               >
                 <span className="font-medium">&copy; {new Date().getFullYear()} TikCredit Pro</span>
                 <motion.span 

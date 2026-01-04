@@ -34,26 +34,26 @@ const Slider: React.FC<SliderProps> = ({
   return (
     <div className={className}>
       {label && (
-        <label className="block text-sm font-medium text-gray-200 mb-4">
+        <label className="block text-sm font-medium text-luxury-charcoal mb-4">
           {label}
         </label>
       )}
       <div className="relative">
         <div className="flex justify-between items-center mb-4">
-          <span className="text-sm text-gray-400">{formatCurrency(min)}</span>
+          <span className="text-sm text-luxury-darkGray font-medium">{formatCurrency(min)}</span>
           <motion.div
-            className="px-4 py-2 bg-gold-500/20 backdrop-blur-sm border border-gold-500/40 rounded-lg"
+            className="px-4 py-2 bg-elegant-blue/10 backdrop-blur-sm border border-elegant-blue/30 rounded-lg shadow-sm"
             animate={{ scale: isDragging ? 1.05 : 1 }}
           >
-            <span className="text-lg font-bold text-gold-400">
+            <span className="text-lg font-bold text-elegant-blue">
               {formatCurrency(value)}
             </span>
           </motion.div>
-          <span className="text-sm text-gray-400">{formatCurrency(max)}</span>
+          <span className="text-sm text-luxury-darkGray font-medium">{formatCurrency(max)}</span>
         </div>
-        <div className="relative h-2 bg-dark-100/50 rounded-full">
+        <div className="relative h-2 bg-luxury-lightGray rounded-full">
           <motion.div
-            className="absolute h-full bg-gradient-to-r from-gold-500 to-gold-600 rounded-full"
+            className="absolute h-full bg-gradient-to-r from-elegant-blue to-elegant-blue-light rounded-full"
             style={{ width: `${percentage}%` }}
             transition={{ duration: 0.2 }}
           />
@@ -69,13 +69,13 @@ const Slider: React.FC<SliderProps> = ({
             className="absolute inset-0 w-full h-2 opacity-0 cursor-pointer z-10"
           />
           <motion.div
-            className="absolute top-1/2 w-6 h-6 bg-gold-500 rounded-full shadow-lg border-2 border-white"
+            className="absolute top-1/2 w-6 h-6 bg-elegant-blue rounded-full shadow-lg border-2 border-white"
             style={{ left: `calc(${percentage}% - 12px)`, transform: 'translateY(-50%)' }}
             animate={{
               scale: isDragging ? 1.2 : 1,
               boxShadow: isDragging
-                ? '0 0 20px rgba(212, 175, 55, 0.8)'
-                : '0 4px 12px rgba(212, 175, 55, 0.4)',
+                ? '0 0 20px rgba(30, 58, 138, 0.6)'
+                : '0 4px 12px rgba(30, 58, 138, 0.3)',
             }}
             transition={{ duration: 0.2 }}
           />

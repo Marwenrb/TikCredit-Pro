@@ -14,7 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-200 mb-2">
+          <label className="block text-sm font-medium text-luxury-charcoal mb-2">
             {label}
           </label>
         )}
@@ -22,11 +22,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           type={type}
           className={cn(
-            'w-full px-4 py-3 bg-dark-50/50 backdrop-blur-sm border border-gold-500/30 rounded-xl',
-            'text-white placeholder:text-gray-400',
-            'focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500',
+            'w-full px-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl shadow-sm',
+            'text-luxury-charcoal placeholder:text-luxury-mediumGray',
+            'focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue',
             'transition-all duration-300',
-            error && 'border-red-500 focus:ring-red-500',
+            error && 'border-status-error focus:ring-status-error',
             className
           )}
           whileFocus={{ scale: 1.01 }}
@@ -36,7 +36,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-1 text-sm text-red-400"
+            className="mt-1 text-sm text-status-error font-medium"
           >
             {error}
           </motion.p>
@@ -56,7 +56,7 @@ export const Textarea = React.forwardRef<
     <div className="w-full">
       {label && (
         <motion.label
-          className="block text-sm font-medium text-gray-200 mb-2"
+          className="block text-sm font-medium text-luxury-charcoal mb-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
@@ -66,11 +66,11 @@ export const Textarea = React.forwardRef<
       <motion.textarea
         ref={ref}
         className={cn(
-          'w-full px-4 py-4 bg-dark-50/30 backdrop-blur-sm border-2 rounded-xl',
-          'text-white placeholder:text-gray-400 resize-none',
-          'focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500',
+          'w-full px-4 py-4 bg-white backdrop-blur-sm border-2 rounded-xl shadow-sm',
+          'text-luxury-charcoal placeholder:text-luxury-mediumGray resize-none',
+          'focus:outline-none focus:ring-2 focus:ring-elegant-blue/20 focus:border-elegant-blue',
           'transition-all duration-300',
-          error ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : 'border-gold-500/30',
+          error ? 'border-status-error focus:ring-status-error/20 focus:border-status-error' : 'border-luxury-lightGray',
           className
         )}
         whileFocus={{ scale: 1.01 }}
@@ -81,9 +81,9 @@ export const Textarea = React.forwardRef<
           initial={{ opacity: 0, y: -10, height: 0 }}
           animate={{ opacity: 1, y: 0, height: 'auto' }}
           exit={{ opacity: 0, y: -10, height: 0 }}
-          className="mt-2 text-sm text-red-400 flex items-center gap-1"
+          className="mt-2 text-sm text-status-error flex items-center gap-1 font-medium"
         >
-          <span className="w-1 h-1 bg-red-400 rounded-full" />
+          <span className="w-1 h-1 bg-status-error rounded-full" />
           {error}
         </motion.p>
       )}
@@ -100,18 +100,18 @@ export const Select = React.forwardRef<
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-luxury-charcoal mb-2">
           {label}
         </label>
       )}
       <motion.select
         ref={ref}
         className={cn(
-          'w-full px-4 py-3 bg-dark-50/50 backdrop-blur-sm border border-gold-500/30 rounded-xl',
-          'text-white',
-          'focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500',
+          'w-full px-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl shadow-sm',
+          'text-luxury-charcoal',
+          'focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue',
           'transition-all duration-300',
-          error && 'border-red-500 focus:ring-red-500',
+          error && 'border-status-error focus:ring-status-error',
           className
         )}
         whileFocus={{ scale: 1.01 }}
@@ -123,7 +123,7 @@ export const Select = React.forwardRef<
         <motion.p
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-1 text-sm text-red-400"
+          className="mt-1 text-sm text-status-error font-medium"
         >
           {error}
         </motion.p>

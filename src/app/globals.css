@@ -2,10 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================ */
+/* ULTRA-PREMIUM WHITE THEME - TYPOGRAPHY */
+/* ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@300;400;600;700;900&display=swap');
+
 :root {
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --font-arabic: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+  /* Premium Font Families */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-arabic: 'Tajawal', 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+  --font-heading: 'Inter', 'Montserrat', sans-serif;
+  
+  /* Fluid Typography Scale (responsive clamp) */
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+  --text-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 1.65rem + 1.125vw, 2.25rem);
+  --text-4xl: clamp(2.25rem, 1.95rem + 1.5vw, 3rem);
+  --text-5xl: clamp(3rem, 2.55rem + 2.25vw, 3.75rem);
+  --text-6xl: clamp(3.75rem, 3.15rem + 3vw, 4.5rem);
+  
+  /* Spacing Scale (4px base unit) */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+  --space-20: 5rem;    /* 80px */
+  
+  /* Ultra-Premium Colors */
+  --color-white: #FFFFFF;
+  --color-blue-primary: #1E3A8A;
+  --color-blue-light: #3B82F6;
+  --color-gold: #F59E0B;
+  --color-gray-50: #F9FAFB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-900: #1F2937;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
 }
+
+/* ============================================ */
+/* BASE STYLES */
+/* ============================================ */
 
 * {
   margin: 0;
@@ -15,48 +81,315 @@
 
 html {
   scroll-behavior: smooth;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   font-family: var(--font-arabic);
-  background: #0A0A0A;
-  color: #FFFFFF;
+  background: var(--color-white);
+  color: var(--color-gray-900);
   overflow-x: hidden;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
 }
 
+/* ============================================ */
+/* PREMIUM UTILITY CLASSES */
+/* ============================================ */
+
 @layer utilities {
+  /* Text utilities */
   .text-balance {
     text-wrap: balance;
   }
+  
+  .text-premium {
+    @apply bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent;
+  }
+  
+  /* Ultra-Premium Glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .glass-blue {
+    background: rgba(30, 58, 138, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(30, 58, 138, 0.1);
+  }
+  
+  /* Luxury card - ultra-premium white theme */
+  .luxury-card {
+    @apply bg-white border border-luxury-lightGray rounded-luxury-lg shadow-luxury-lg backdrop-blur-sm;
+    background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+    transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .luxury-card:hover {
+    @apply shadow-luxury-xl border-elegant-blue/20;
+    transform: translateY(-2px);
+  }
+  
+  /* Premium card with glow */
+  .premium-card {
+    @apply bg-white rounded-luxury-lg shadow-premium border border-elegant-blue/10;
+    background: linear-gradient(135deg, #FFFFFF 0%, #EFF6FF 100%);
+    transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .premium-card:hover {
+    @apply shadow-premium-lg border-elegant-blue/30;
+    transform: translateY(-4px);
+  }
+  
+  /* Premium button styles */
+  .premium-button {
+    @apply bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white font-semibold shadow-premium hover:shadow-luxury-xl transition-all duration-300;
+  }
+  
+  /* Shimmer effect */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+  
+  .shimmer:hover::before {
+    left: 100%;
+  }
+  
+  /* Gradient text animation */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-size: 200% auto;
+  }
+  
+  /* Smooth transitions */
+  .transition-premium {
+    transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  /* Focus ring - premium style */
+  .focus-premium:focus {
+    @apply outline-none ring-2 ring-elegant-blue ring-offset-2;
+  }
+  
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-8px);
+  }
+  
+  /* Neumorphism soft shadow */
+  .neumorphism {
+    background: #FFFFFF;
+    box-shadow: 
+      8px 8px 16px rgba(0, 0, 0, 0.08),
+      -8px -8px 16px rgba(255, 255, 255, 0.9);
+  }
+  
+  .neumorphism-inset {
+    background: #F9FAFB;
+    box-shadow: 
+      inset 4px 4px 8px rgba(0, 0, 0, 0.06),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  }
 }
 
-/* Custom scrollbar */
+/* ============================================ */
+/* PREMIUM SCROLLBAR */
+/* ============================================ */
+
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1A1A1A;
+  background: var(--color-gray-50);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D4AF37;
-  border-radius: 5px;
+  background: linear-gradient(135deg, var(--color-blue-primary), var(--color-blue-light));
+  border-radius: var(--radius-full);
+  border: 3px solid var(--color-gray-50);
+  transition: all 300ms ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8941F;
+  background: linear-gradient(135deg, var(--color-blue-light), var(--color-blue-primary));
+  border: 2px solid var(--color-gray-50);
 }
 
-/* Selection */
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-blue-primary) var(--color-gray-50);
+}
+
+/* ============================================ */
+/* SELECTION & FOCUS STYLES */
+/* ============================================ */
+
 ::selection {
-  background: rgba(212, 175, 55, 0.3);
-  color: #FFFFFF;
+  background: rgba(30, 58, 138, 0.15);
+  color: var(--color-gray-900);
+  text-shadow: none;
 }
 
-/* Focus visible */
+::-moz-selection {
+  background: rgba(30, 58, 138, 0.15);
+  color: var(--color-gray-900);
+  text-shadow: none;
+}
+
 :focus-visible {
-  outline: 2px solid #D4AF37;
-  outline-offset: 2px;
+  outline: 2px solid var(--color-blue-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+  transition: outline-offset var(--transition-fast);
+}
+
+/* ============================================ */
+/* TYPOGRAPHY ENHANCEMENTS */
+/* ============================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--color-gray-900);
+}
+
+h1 { font-size: var(--text-5xl); }
+h2 { font-size: var(--text-4xl); }
+h3 { font-size: var(--text-3xl); }
+h4 { font-size: var(--text-2xl); }
+h5 { font-size: var(--text-xl); }
+h6 { font-size: var(--text-lg); }
+
+p {
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--color-blue-primary);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+a:hover {
+  color: var(--color-blue-light);
+}
+
+/* ============================================ */
+/* REDUCED MOTION SUPPORT */
+/* ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================ */
+/* ACCESSIBILITY IMPROVEMENTS */
+/* ============================================ */
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  left: -9999px;
+  z-index: 999;
+  padding: 1rem 1.5rem;
+  background: var(--color-blue-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+}
+
+.skip-to-main:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-gray-100: #E5E7EB;
+    --color-gray-900: #000000;
+  }
+  
+  body {
+    font-weight: 500;
+  }
+  
+  button, a {
+    text-decoration: underline;
+  }
+}
+
+/* Dark mode foundation (optional future enhancement) */
+@media (prefers-color-scheme: dark) {
+  /* Keep white theme - add this only if dark mode is needed in future */
+}
+
+/* ============================================ */
+/* PRINT STYLES */
+/* ============================================ */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
 }
 

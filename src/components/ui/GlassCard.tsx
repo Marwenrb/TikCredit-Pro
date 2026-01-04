@@ -22,10 +22,10 @@ const GlassCard: React.FC<GlassCardProps> = ({
   children,
 }) => {
   const variants = {
-    default: 'bg-dark-50/30 backdrop-blur-md border border-gold-500/20',
-    gold: 'bg-gradient-to-br from-gold-500/20 to-gold-600/10 backdrop-blur-md border border-gold-500/40',
-    dark: 'bg-dark-100/50 backdrop-blur-md border border-gray-700/50',
-    elevated: 'bg-dark-50/40 backdrop-blur-lg border border-gold-500/30 shadow-2xl',
+    default: 'bg-white/90 backdrop-blur-md border border-luxury-lightGray shadow-luxury-lg',
+    gold: 'bg-gradient-to-br from-white to-luxury-offWhite backdrop-blur-md border border-premium-gold/30 shadow-premium',
+    dark: 'bg-luxury-offWhite backdrop-blur-md border border-luxury-mediumGray shadow-luxury',
+    elevated: 'bg-white backdrop-blur-lg border border-elegant-blue/20 shadow-luxury-xl',
   }
 
   return (
@@ -33,7 +33,7 @@ const GlassCard: React.FC<GlassCardProps> = ({
       className={cn(
         'rounded-2xl p-6 transition-all duration-300',
         variants[variant],
-        glow && 'shadow-[0_0_30px_rgba(212,175,55,0.3)]',
+        glow && 'shadow-[0_0_30px_rgba(30,58,138,0.2)]',
         shimmer && 'relative overflow-hidden',
         className
       )}
@@ -80,19 +80,19 @@ export const StatCard: React.FC<StatCardProps> = ({
     <GlassCard variant="gold" hover3D glow className={className}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-400 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gold-400">{value}</p>
+          <p className="text-sm text-luxury-darkGray mb-1 font-medium">{title}</p>
+          <p className="text-3xl font-bold text-elegant-blue">{value}</p>
           {trend && (
             <p className={cn(
-              'text-xs mt-2',
-              trend.isPositive ? 'text-green-400' : 'text-red-400'
+              'text-xs mt-2 font-semibold',
+              trend.isPositive ? 'text-status-success' : 'text-status-error'
             )}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
             </p>
           )}
         </div>
         {icon && (
-          <div className="text-gold-500">{icon}</div>
+          <div className="text-elegant-blue">{icon}</div>
         )}
       </div>
     </GlassCard>
