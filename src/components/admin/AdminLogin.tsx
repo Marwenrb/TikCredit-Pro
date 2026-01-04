@@ -19,22 +19,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
 
   useEffect(() => {
     // Check if already authenticated
-    checkAuth()
-  }, [])
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/verify')
-      if (response.ok) {
-        const data = await response.json()
-        if (data.authenticated) {
-          onSuccess()
+    const verifyAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/verify')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.authenticated) {
+            onSuccess()
+          }
         }
+      } catch {
+        // Not authenticated - stay on login page
       }
-    } catch (error) {
-      // Not authenticated
     }
-  }
+    verifyAuth()
+  }, [onSuccess])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -79,14 +79,14 @@ const EnhancedAdminDashboard: React.FC = () => {
   })
 
   // Load submissions
-  useEffect(() => {
-    loadSubmissions()
-  }, [])
-
   const loadSubmissions = useCallback(() => {
     const data = getSubmissions()
     setSubmissions(data)
   }, [])
+
+  useEffect(() => {
+    loadSubmissions()
+  }, [loadSubmissions])
 
   // Fuzzy search setup
   const fuse = useMemo(() => {

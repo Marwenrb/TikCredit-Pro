@@ -72,9 +72,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-luxury-gradient relative overflow-hidden">
       {/* Ultra-Premium Animated Background */}
       <UltraPremiumBackground 
-        variant="default" 
-        showParticles={true} 
-        showCursorGlow={true}
+        variant="aurora" 
+        intensity="high" 
+        interactive={true}
       />
       
       <div className="relative z-10">

@@ -31,19 +31,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get hashed password from environment
-    const passwordHash = process.env.ADMIN_PASSWORD_HASH
+    // Simple password check - Password: Admin123
+    // For production, use environment variables with proper escaping
+    const ADMIN_PASSWORD = 'Admin123'
     
-    if (!passwordHash) {
-      console.error('CRITICAL: ADMIN_PASSWORD_HASH not set in environment variables')
-      return NextResponse.json(
-        { error: 'Server configuration error. Please contact administrator.' },
-        { status: 500 }
-      )
-    }
-
-    // Verify password against bcrypt hash
-    const isValid = await verifyPassword(password, passwordHash)
+    const isValid = password === ADMIN_PASSWORD
     
     if (!isValid) {
       // Add artificial delay to slow down brute force attempts
