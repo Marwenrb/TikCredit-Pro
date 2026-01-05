@@ -89,6 +89,13 @@ const nextConfig = {
   
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
+    // Add explicit path alias for Netlify compatibility
+    const path = require('path')
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@': path.resolve(__dirname, 'src')
+    }
+    
     // Optimize bundle size
     if (!isServer) {
       config.resolve.fallback = {
