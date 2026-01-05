@@ -24,7 +24,7 @@ The development server is already running at: **http://localhost:3000**
 
 ### Step 2: Login
 1. Go to: **http://localhost:3000/admin**
-2. Enter password: **`AdminTikCredit123Pro!`**
+2. Enter password: **`********`**
 3. Click "تسجيل الدخول" (Login)
 4. You should now see the admin dashboard! ✅
 
@@ -32,7 +32,7 @@ The development server is already running at: **http://localhost:3000**
 
 ## 🔐 DEFAULT PASSWORD
 
-**Password**: `AdminTikCredit123Pro!`
+**Password**: `********`
 
 **Important**: Copy and paste this exact password (case-sensitive, includes the `!` at the end)
 
@@ -62,7 +62,7 @@ cd C:\Projects\TikCredit-Pro
 npm run dev
 ```
 
-Then login with: `AdminTikCredit123Pro!`
+Then login with: `********`
 
 ---
 
@@ -70,7 +70,7 @@ Then login with: `AdminTikCredit123Pro!`
 
 1. **Don't delete `.env.local`** - It contains your admin password
 2. **Server must be running** - Keep the terminal open with `npm run dev`
-3. **Password is case-sensitive** - Use exact password: `AdminTikCredit123Pro!`
+3. **Password is case-sensitive** - Use exact password: `********`
 4. **Rate limiting active** - Max 5 login attempts per minute
 
 ---
@@ -80,7 +80,7 @@ Then login with: `AdminTikCredit123Pro!`
 When deploying to Netlify, you MUST set these environment variables in Netlify Dashboard:
 
 ```bash
-ADMIN_PASSWORD=AdminTikCredit123Pro!
+ADMIN_PASSWORD=********
 JWT_SECRET=TikCredit-Ultra-Secure-JWT-Secret-2024-Production-Key-32Plus-Characters
 NODE_ENV=production
 ```
@@ -100,7 +100,7 @@ NODE_ENV=production
 - [x] Environment variables loading correctly
 - [x] Development server running
 - [x] Admin login working
-- [ ] Test login yourself (use password: `AdminTikCredit123Pro!`)
+- [ ] Test login yourself (use password: `********`)
 - [ ] Set environment variables in Netlify
 - [ ] Deploy to production
 
@@ -108,4 +108,4 @@ NODE_ENV=production
 
 **Your admin login is now fully functional! 🎉**
 
-Go to http://localhost:3000/admin and login with `AdminTikCredit123Pro!`
+Go to http://localhost:3000/admin and login with `********`

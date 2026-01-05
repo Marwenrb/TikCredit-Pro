@@ -45,7 +45,7 @@ Go to: **https://app.netlify.com/** → tikcredit → Site Settings → Environm
 
 **Add these 3 variables:**
 ```bash
-ADMIN_PASSWORD=AdminTikCredit123Pro!
+ADMIN_PASSWORD=********
 JWT_SECRET=TikCredit-Ultra-Secure-JWT-Secret-2024-Production-Key-32Plus-Characters
 NODE_ENV=production
 ```
@@ -136,7 +136,7 @@ When Netlify deploys successfully, you'll see:
 **GitHub Repo**: https://github.com/Marwenrb/TikCredit-Pro
 **Netlify Dashboard**: https://app.netlify.com/
 **Site URL**: https://tikcredit.netlify.app
-**Admin Password**: `AdminTikCredit123Pro!`
+**Admin Password**: `********`
 
 ---
 
@@ -146,7 +146,7 @@ When Netlify deploys successfully, you'll see:
 2. **Wait for automatic deployment** (or trigger manually)
 3. **Monitor build logs** at Netlify Dashboard
 4. **Test deployed site** at https://tikcredit.netlify.app
-5. **Test admin login** with password: `AdminTikCredit123Pro!`
+5. **Test admin login** with password: `********`
 
 ---
 
