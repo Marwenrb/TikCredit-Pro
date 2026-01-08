@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import React, { useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
 
 export interface SliderProps {
@@ -27,6 +27,11 @@ const Slider: React.FC<SliderProps> = ({
 
   const percentage = ((value - min) / (max - min)) * 100
 
+  const bubbleOffset = useMemo(() => {
+    const clamped = Math.min(100, Math.max(0, percentage))
+    return `calc(${clamped}% - 36px)`
+  }, [percentage])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(Number(e.target.value))
   }
@@ -51,9 +56,9 @@ const Slider: React.FC<SliderProps> = ({
           </motion.div>
           <span className="text-sm text-luxury-darkGray font-medium">{formatCurrency(max)}</span>
         </div>
-        <div className="relative h-2 bg-luxury-lightGray rounded-full">
+        <div className="relative h-4 bg-gradient-to-r from-white via-luxury-offWhite to-white rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] border border-luxury-lightGray/60">
           <motion.div
-            className="absolute h-full bg-gradient-to-r from-elegant-blue to-elegant-blue-light rounded-full"
+            className="absolute h-full bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold rounded-full shadow-[0_0_18px_rgba(30,58,138,0.35)]"
             style={{ width: `${percentage}%` }}
             transition={{ duration: 0.2 }}
           />
@@ -66,16 +71,46 @@ const Slider: React.FC<SliderProps> = ({
             onChange={handleChange}
             onMouseDown={() => setIsDragging(true)}
             onMouseUp={() => setIsDragging(false)}
-            className="absolute inset-0 w-full h-2 opacity-0 cursor-pointer z-10"
+            className="absolute inset-0 w-full h-4 opacity-0 cursor-pointer z-10"
           />
+          {/* Premium thumb with live value bubble */}
           <motion.div
-            className="absolute top-1/2 w-6 h-6 bg-elegant-blue rounded-full shadow-lg border-2 border-white"
-            style={{ left: `calc(${percentage}% - 12px)`, transform: 'translateY(-50%)' }}
+            className="absolute top-1/2 w-8 h-8 bg-white rounded-full shadow-[0_10px_20px_rgba(30,58,138,0.18)] border-2 border-elegant-blue flex items-center justify-center"
+            style={{ left: `calc(${percentage}% - 16px)`, transform: 'translateY(-50%)' }}
             animate={{
-              scale: isDragging ? 1.2 : 1,
+              scale: isDragging ? 1.15 : 1,
               boxShadow: isDragging
-                ? '0 0 20px rgba(30, 58, 138, 0.6)'
-                : '0 4px 12px rgba(30, 58, 138, 0.3)',
+                ? '0 14px 28px rgba(30,58,138,0.28)'
+                : '0 10px 20px rgba(30,58,138,0.18)',
+            }}
+            transition={{ duration: 0.18 }}
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-elegant-blue" />
+          </motion.div>
+
+          {/* Floating bubble showing current amount */}
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              key={value}
+              className="absolute -top-12 px-3 py-2 rounded-2xl bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold text-white text-sm font-semibold shadow-premium"
+              style={{ left: bubbleOffset }}
+            >
+              {formatCurrency(value)}
+              <motion.span
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold rotate-45"
+                layout
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          <motion.div
+            className="absolute inset-0 pointer-events-none rounded-full bg-gradient-to-r from-elegant-blue/0 via-elegant-blue/8 to-premium-gold/0"
+            animate={{
+              opacity: isDragging ? 1 : 0,
+              scale: isDragging ? 1 : 0.98,
             }}
             transition={{ duration: 0.2 }}
           />

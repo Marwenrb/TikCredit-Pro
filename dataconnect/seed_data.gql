@@ -1,0 +1,84 @@
+mutation SeedData @transaction @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      firstName: "Demo",
+      lastName: "User1",
+      email: "demo1@example.com",
+      createdAt: "2024-01-01T00:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      firstName: "Demo",
+      lastName: "User2",
+      email: "demo2@example.com",
+      createdAt: "2024-01-01T00:00:00Z"
+    }
+  ])
+  loanType_insertMany(data: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440000",
+      name: "Personal Loan",
+      description: "Unsecured loan for personal use"
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440001",
+      name: "Mortgage",
+      description: "Loan secured by real estate property"
+    }
+  ])
+  loanApplication_insertMany(data: [
+    {
+      id: "750e8400-e29b-41d4-a716-446655440000",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      loanTypeId: "650e8400-e29b-41d4-a716-446655440000",
+      applicationId: "APP-2024-001",
+      applicationDate: "2024-02-15",
+      requestedAmount: 5000.00,
+      status: "Pending"
+    },
+    {
+      id: "750e8400-e29b-41d4-a716-446655440001",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      loanTypeId: "650e8400-e29b-41d4-a716-446655440001",
+      applicationId: "APP-2024-002",
+      applicationDate: "2024-02-20",
+      requestedAmount: 150000.00,
+      status: "Approved",
+      approvedAmount: 140000.00
+    }
+  ])
+  financialInfo_insertMany(data: [
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      loanApplicationId: "750e8400-e29b-41d4-a716-446655440000",
+      income: 60000.00,
+      employmentStatus: "Employed",
+      employmentType: "Full-time"
+    },
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      loanApplicationId: "750e8400-e29b-41d4-a716-446655440001",
+      income: 90000.00,
+      creditScore: 720,
+      employmentStatus: "Employed",
+      employmentType: "Full-time"
+    }
+  ])
+ document_insertMany(data: [
+   {
+     loanApplicationId: "750e8400-e29b-41d4-a716-446655440000",
+     fileName: "Drivers License",
+     fileType: "image/jpeg",
+     documentUrl: "http://example.com/photo.jpg",
+     uploadDate: "2024-02-15T12:00:00Z"
+   },
+   {
+     loanApplicationId: "750e8400-e29b-41d4-a716-446655440001",
+     fileName: "Proof of income",
+     fileType: "application/pdf",
+     documentUrl: "http://example.com/income.pdf",
+     uploadDate: "2024-02-20T10:00:00Z"
+   }
+ ])
+}

@@ -16,6 +16,8 @@
     "deploy:check": "node scripts/deploy-production.js"
   },
   "dependencies": {
+    "@dataconnect/admin-generated": "file:src/dataconnect-admin-generated",
+    "@dataconnect/generated": "file:src/dataconnect-generated",
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",

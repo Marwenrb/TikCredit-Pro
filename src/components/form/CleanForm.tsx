@@ -12,6 +12,7 @@ import StepIndicator from '@/components/ui/StepIndicator'
 import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS } from '@/types'
 import { saveSubmission, saveDraft, getDraft, clearDraft, validatePhone, validateEmail, formatCurrency } from '@/lib/utils'
 import confetti from 'canvas-confetti'
+import { useToast } from '@/components/ui/Toast'
 
 // Loan amount validation constants
 const MIN_LOAN_AMOUNT = 5_000_000
@@ -46,6 +47,7 @@ const CleanForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [amountValidation, setAmountValidation] = useState<{ valid: boolean; error?: string }>({ valid: true })
+  const toast = useToast()
 
   // Load draft on mount
   useEffect(() => {
@@ -123,7 +125,10 @@ const CleanForm: React.FC = () => {
 
   const handleSubmit = async () => {
     // Validate all steps including loan amount
-    if (!validateStep(currentStep)) return
+    if (!validateStep(currentStep)) {
+      toast.warning('يرجى إكمال الحقول المطلوبة قبل المتابعة')
+      return
+    }
     
     // Double-check loan amount validation before submission
     const finalAmountValidation = validateLoanAmount(formData.requestedAmount)
@@ -134,7 +139,7 @@ const CleanForm: React.FC = () => {
       }))
       // Scroll to step 3 to show the error
       setCurrentStep(3)
-      alert('يرجى تصحيح المبلغ المطلوب قبل الإرسال')
+      toast.warning(finalAmountValidation.error || 'يرجى تصحيح المبلغ المطلوب قبل الإرسال')
       return
     }
 
@@ -150,8 +155,17 @@ const CleanForm: React.FC = () => {
       const responseData = await response.json()
 
       if (response.ok) {
+        // Save locally for admin dashboard/offline view
+        saveSubmission(formData)
+
         clearDraft()
         setIsSuccess(true)
+        const persisted = responseData.persisted as 'server' | 'local' | undefined
+        if (persisted === 'local') {
+          toast.info('تم حفظ طلبك محلياً لعدم توفر الاتصال. سنحاول المزامنة تلقائياً.', 7000)
+        } else {
+          toast.success('تم استلام طلبك بنجاح!', 5000)
+        }
         
         // Celebration confetti
         const duration = 3000
@@ -191,9 +205,9 @@ const CleanForm: React.FC = () => {
         
         // Show user-friendly error message
         if (errorDetails.length > 0) {
-          alert(`يرجى تصحيح الأخطاء التالية:\n${errorDetails.join('\n')}`)
+          toast.error(`يرجى تصحيح الأخطاء التالية:\n${errorDetails.join('\n')}`, 7000)
         } else {
-          alert(`حدث خطأ: ${errorMessage}`)
+          toast.error(`حدث خطأ: ${errorMessage}`, 7000)
         }
         
         throw new Error(errorMessage)
@@ -201,7 +215,11 @@ const CleanForm: React.FC = () => {
     } catch (error) {
       console.error('Error submitting form:', error)
       const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال الطلب'
-      alert(`حدث خطأ أثناء إرسال الطلب: ${errorMessage}\n\nيرجى المحاولة مرة أخرى.`)
+      if (!navigator.onLine) {
+        toast.warning('الاتصال غير متوفر. تم حفظ بياناتك محلياً، وسنحاول الإرسال عند عودة الاتصال.', 7000)
+      } else {
+        toast.error(`تعذر الاتصال بالخادم: ${errorMessage}`, 7000)
+      }
     } finally {
       setIsSubmitting(false)
     }

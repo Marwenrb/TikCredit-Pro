@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictRateLimiter } from '@/lib/rateLimit'
-import { validatePhone, validateEmail, saveSubmission } from '@/lib/utils'
+import { validatePhone, validateEmail } from '@/lib/utils'
+import { adminDb } from '@/lib/firebase-admin'
 import { FormData } from '@/types'
+import { promises as fs } from 'fs'
+import path from 'path'
 
 // Loan amount validation constants
 const MIN_LOAN_AMOUNT = 5_000_000
@@ -27,6 +30,49 @@ function validateLoanAmount(amount: number): { valid: boolean; error?: string } 
     }
   }
   return { valid: true }
+}
+
+/**
+ * Persist submission to Firestore using Admin SDK (server-safe)
+ */
+async function saveSubmissionServer(submission: {
+  id: string
+  timestamp: string
+  data: FormData & { amountValid: boolean }
+  ip: string
+  userAgent: string
+}) {
+  if (!adminDb) {
+    throw new Error('Firebase Admin is not initialized. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY.')
+  }
+
+  await adminDb
+    .collection('submissions')
+    .doc(submission.id)
+    .set({
+      ...submission,
+      createdAt: submission.timestamp,
+      status: 'pending',
+      source: 'web-form',
+    })
+}
+
+/**
+ * Fallback: persist to local JSON file in .tmp/submissions.json (dev-only)
+ */
+async function saveSubmissionLocal(submission: any) {
+  const dir = path.join(process.cwd(), '.tmp')
+  const file = path.join(dir, 'submissions.json')
+  await fs.mkdir(dir, { recursive: true })
+  let existing: any[] = []
+  try {
+    const content = await fs.readFile(file, 'utf-8')
+    existing = JSON.parse(content)
+  } catch {
+    existing = []
+  }
+  existing.push(submission)
+  await fs.writeFile(file, JSON.stringify(existing, null, 2), 'utf-8')
 }
 
 export async function POST(request: NextRequest) {
@@ -125,48 +171,38 @@ export async function POST(request: NextRequest) {
     }
     
     // Save submission (Firebase will be used in production)
+    let persisted: 'server' | 'local' = 'server'
     try {
-      saveSubmission(data)
-      
-      // Log submission for monitoring
-      console.log('✅ New submission received:', {
-        id: submission.id,
-        name: data.fullName,
-        phone: data.phone.substring(0, 4) + '****',
-        amount: data.requestedAmount,
-        amountValid: amountValidation.valid,
-        timestamp: submission.timestamp,
-      })
+      await saveSubmissionServer(submission)
     } catch (saveError) {
-      console.error('❌ Error saving submission:', saveError)
-      // Log detailed error for debugging
-      console.error('Error details:', {
-        message: saveError instanceof Error ? saveError.message : 'Unknown error',
-        stack: saveError instanceof Error ? saveError.stack : undefined,
-        data: {
-          fullName: data.fullName,
-          phone: data.phone.substring(0, 4) + '****',
-          amount: data.requestedAmount,
-        }
-      })
-      
-      return NextResponse.json(
-        { 
-          error: 'Failed to save submission',
-          message: 'حدث خطأ أثناء حفظ الطلب. يرجى المحاولة مرة أخرى.'
-        },
-        { status: 500 }
-      )
+      persisted = 'local'
+      console.error('❌ Error saving submission (server):', saveError)
+      console.warn('Fallback: saving submission locally to .tmp/submissions.json')
+      await saveSubmissionLocal(submission)
     }
+
+    // Log submission for monitoring
+    console.log('✅ New submission received:', {
+      id: submission.id,
+      name: data.fullName,
+      phone: data.phone.substring(0, 4) + '****',
+      amount: data.requestedAmount,
+      amountValid: amountValidation.valid,
+      timestamp: submission.timestamp,
+      persisted,
+    })
     
     // Send success response
     return NextResponse.json(
       {
         success: true,
-        message: 'تم استلام طلبك بنجاح',
+        message: persisted === 'local'
+          ? 'تم حفظ طلبك محلياً بسبب انقطاع الاتصال. سنحاول المزامنة لاحقاً.'
+          : 'تم استلام طلبك بنجاح',
         submissionId: submission.id,
         approvalProbability: calculateApprovalProbability(data),
         amountValid: amountValidation.valid,
+        persisted,
       },
       { 
         status: 200,
