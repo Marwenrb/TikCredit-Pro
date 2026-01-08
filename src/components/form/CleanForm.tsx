@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   User, Phone, Mail, MapPin, DollarSign, FileText, 
-  CheckCircle2, ArrowRight, ArrowLeft
+  CheckCircle2, ArrowRight, ArrowLeft, XCircle, AlertCircle
 } from 'lucide-react'
 import { Button, Slider, ProgressBar, Textarea } from '@/components/ui'
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput'
@@ -13,12 +13,39 @@ import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME
 import { saveSubmission, saveDraft, getDraft, clearDraft, validatePhone, validateEmail, formatCurrency } from '@/lib/utils'
 import confetti from 'canvas-confetti'
 
+// Loan amount validation constants
+const MIN_LOAN_AMOUNT = 5_000_000
+const MAX_LOAN_AMOUNT = 20_000_000
+
+/**
+ * Validate loan amount
+ */
+const validateLoanAmount = (amount: number): { valid: boolean; error?: string } => {
+  if (!amount || isNaN(amount)) {
+    return { valid: false, error: 'المبلغ المطلوب مطلوب' }
+  }
+  if (amount < MIN_LOAN_AMOUNT) {
+    return { 
+      valid: false, 
+      error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
+    }
+  }
+  if (amount > MAX_LOAN_AMOUNT) {
+    return { 
+      valid: false, 
+      error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
+    }
+  }
+  return { valid: true }
+}
+
 const CleanForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA)
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [amountValidation, setAmountValidation] = useState<{ valid: boolean; error?: string }>({ valid: true })
 
   // Load draft on mount
   useEffect(() => {
@@ -71,6 +98,11 @@ const CleanForm: React.FC = () => {
       if (!formData.financingType) {
         newErrors.financingType = 'نوع التمويل مطلوب'
       }
+      // Validate loan amount
+      const amountValidation = validateLoanAmount(formData.requestedAmount)
+      if (!amountValidation.valid) {
+        newErrors.requestedAmount = amountValidation.error
+      }
     }
 
     setErrors(newErrors)
@@ -90,7 +122,21 @@ const CleanForm: React.FC = () => {
   }
 
   const handleSubmit = async () => {
+    // Validate all steps including loan amount
     if (!validateStep(currentStep)) return
+    
+    // Double-check loan amount validation before submission
+    const finalAmountValidation = validateLoanAmount(formData.requestedAmount)
+    if (!finalAmountValidation.valid) {
+      setErrors(prev => ({
+        ...prev,
+        requestedAmount: finalAmountValidation.error
+      }))
+      // Scroll to step 3 to show the error
+      setCurrentStep(3)
+      alert('يرجى تصحيح المبلغ المطلوب قبل الإرسال')
+      return
+    }
 
     setIsSubmitting(true)
 
@@ -100,6 +146,8 @@ const CleanForm: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
+
+      const responseData = await response.json()
 
       if (response.ok) {
         clearDraft()
@@ -131,11 +179,29 @@ const CleanForm: React.FC = () => {
           })
         }, 250)
       } else {
-        throw new Error('Submission failed')
+        // Enhanced error handling
+        const errorMessage = responseData.message || responseData.error || 'فشل إرسال الطلب'
+        const errorDetails = responseData.errors || []
+        
+        console.error('Submission failed:', {
+          status: response.status,
+          message: errorMessage,
+          errors: errorDetails
+        })
+        
+        // Show user-friendly error message
+        if (errorDetails.length > 0) {
+          alert(`يرجى تصحيح الأخطاء التالية:\n${errorDetails.join('\n')}`)
+        } else {
+          alert(`حدث خطأ: ${errorMessage}`)
+        }
+        
+        throw new Error(errorMessage)
       }
     } catch (error) {
       console.error('Error submitting form:', error)
-      alert('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.')
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال الطلب'
+      alert(`حدث خطأ أثناء إرسال الطلب: ${errorMessage}\n\nيرجى المحاولة مرة أخرى.`)
     } finally {
       setIsSubmitting(false)
     }
@@ -143,7 +209,24 @@ const CleanForm: React.FC = () => {
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    if (errors[field]) {
+    
+    // Real-time validation for loan amount
+    if (field === 'requestedAmount') {
+      const validation = validateLoanAmount(value as number)
+      setAmountValidation(validation)
+      if (validation.valid) {
+        setErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors.requestedAmount
+          return newErrors
+        })
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          requestedAmount: validation.error
+        }))
+      }
+    } else if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev }
         delete newErrors[field]
@@ -450,21 +533,113 @@ const CleanForm: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-luxury-charcoal">
-                  المبلغ المطلوب
+                <label className="block text-sm font-medium text-luxury-charcoal mb-2">
+                  المبلغ المطلوب *
                 </label>
-                <Slider
-                  min={1000000}
-                  max={20000000}
-                  step={100000}
-                  value={formData.requestedAmount}
-                  onChange={(value) => updateField('requestedAmount', value)}
-                  className="w-full"
-                />
-                <div className="text-center p-4 bg-elegant-blue/10 rounded-luxury border border-elegant-blue/20">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent">
+                
+                {/* Custom Amount Input */}
+                <div className="relative">
+                  <FloatingLabelInput
+                    label="أدخل المبلغ (5,000,000 - 20,000,000 د.ج)"
+                    type="number"
+                    value={formData.requestedAmount.toString()}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0
+                      updateField('requestedAmount', value)
+                    }}
+                    error={errors.requestedAmount}
+                    icon={<DollarSign className="w-5 h-5" />}
+                    min={MIN_LOAN_AMOUNT}
+                    max={MAX_LOAN_AMOUNT}
+                    className="text-right"
+                  />
+                  
+                  {/* Real-time validation indicator */}
+                  <AnimatePresence>
+                    {formData.requestedAmount > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="mt-2 flex items-center gap-2"
+                      >
+                        {amountValidation.valid ? (
+                          <>
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="text-status-success"
+                            >
+                              <CheckCircle2 className="w-5 h-5" />
+                            </motion.div>
+                            <span className="text-sm text-status-success font-medium">
+                              المبلغ صحيح
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="text-status-error"
+                            >
+                              <XCircle className="w-5 h-5" />
+                            </motion.div>
+                            <span className="text-sm text-status-error font-medium">
+                              {amountValidation.error}
+                            </span>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                
+                {/* Slider for visual selection */}
+                <div className="mt-4">
+                  <Slider
+                    min={MIN_LOAN_AMOUNT}
+                    max={MAX_LOAN_AMOUNT}
+                    step={100000}
+                    value={formData.requestedAmount}
+                    onChange={(value) => updateField('requestedAmount', value)}
+                    className="w-full"
+                  />
+                </div>
+                
+                {/* Amount Display with validation status */}
+                <motion.div 
+                  className={`text-center p-4 rounded-luxury border-2 transition-all duration-300 ${
+                    amountValidation.valid
+                      ? 'bg-status-success/10 border-status-success/30'
+                      : 'bg-status-error/10 border-status-error/30'
+                  }`}
+                  animate={{
+                    scale: amountValidation.valid ? 1 : [1, 1.02, 1],
+                  }}
+                >
+                  <span className={`text-4xl font-bold bg-gradient-to-r ${
+                    amountValidation.valid
+                      ? 'from-elegant-blue to-premium-gold'
+                      : 'from-status-error to-status-error/70'
+                  } bg-clip-text text-transparent`}>
                     {formatCurrency(formData.requestedAmount)}
                   </span>
+                  {!amountValidation.valid && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm text-status-error mt-2 font-medium"
+                    >
+                      {amountValidation.error}
+                    </motion.p>
+                  )}
+                </motion.div>
+                
+                {/* Amount range helper */}
+                <div className="flex justify-between items-center text-xs text-luxury-darkGray px-2">
+                  <span>الحد الأدنى: {formatCurrency(MIN_LOAN_AMOUNT)}</span>
+                  <span>الحد الأقصى: {formatCurrency(MAX_LOAN_AMOUNT)}</span>
                 </div>
               </div>
             </div>

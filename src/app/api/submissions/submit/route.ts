@@ -3,6 +3,32 @@ import { strictRateLimiter } from '@/lib/rateLimit'
 import { validatePhone, validateEmail, saveSubmission } from '@/lib/utils'
 import { FormData } from '@/types'
 
+// Loan amount validation constants
+const MIN_LOAN_AMOUNT = 5_000_000
+const MAX_LOAN_AMOUNT = 20_000_000
+
+/**
+ * Validate loan amount
+ */
+function validateLoanAmount(amount: number): { valid: boolean; error?: string } {
+  if (!amount || isNaN(amount)) {
+    return { valid: false, error: 'المبلغ المطلوب مطلوب' }
+  }
+  if (amount < MIN_LOAN_AMOUNT) {
+    return { 
+      valid: false, 
+      error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
+    }
+  }
+  if (amount > MAX_LOAN_AMOUNT) {
+    return { 
+      valid: false, 
+      error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
+    }
+  }
+  return { valid: true }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Apply rate limiting
@@ -27,17 +53,29 @@ export async function POST(request: NextRequest) {
     }
     
     // Parse request body
-    const data: FormData = await request.json()
+    let data: FormData
+    try {
+      data = await request.json()
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError)
+      return NextResponse.json(
+        { 
+          error: 'Invalid request format',
+          message: 'يرجى التحقق من البيانات المرسلة'
+        },
+        { status: 400 }
+      )
+    }
     
     // Validate required fields
     const errors: string[] = []
     
-    if (!data.fullName || data.fullName.length < 3) {
+    if (!data.fullName || data.fullName.trim().length < 3) {
       errors.push('الاسم الكامل مطلوب (3 أحرف على الأقل)')
     }
     
     if (!data.phone || !validatePhone(data.phone)) {
-      errors.push('رقم الهاتف غير صحيح')
+      errors.push('رقم الهاتف غير صحيح (يجب أن يبدأ بـ 05/06/07 ويحتوي على 10 أرقام)')
     }
     
     if (data.email && !validateEmail(data.email)) {
@@ -56,38 +94,70 @@ export async function POST(request: NextRequest) {
       errors.push('نوع التمويل مطلوب')
     }
     
-    if (!data.requestedAmount || data.requestedAmount < 1000000 || data.requestedAmount > 20000000) {
-      errors.push('المبلغ المطلوب غير صحيح')
+    // Validate loan amount with new range (5M-20M)
+    const amountValidation = validateLoanAmount(data.requestedAmount)
+    if (!amountValidation.valid) {
+      errors.push(amountValidation.error || 'المبلغ المطلوب غير صحيح')
     }
     
     if (errors.length > 0) {
       return NextResponse.json(
-        { error: 'Validation failed', errors },
+        { 
+          error: 'Validation failed', 
+          errors,
+          message: 'يرجى التحقق من البيانات المدخلة'
+        },
         { status: 400 }
       )
     }
     
-    // Save submission
+    // Create submission object
     const submission = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
-      data,
+      data: {
+        ...data,
+        // Store validation status
+        amountValid: amountValidation.valid,
+      },
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
     }
     
-    // In production, save to database (Firebase/PostgreSQL)
-    // For now, we'll save to localStorage via the utility function
-    saveSubmission(data)
-    
-    // Log submission for monitoring
-    console.log('New submission received:', {
-      id: submission.id,
-      name: data.fullName,
-      phone: data.phone.substring(0, 4) + '****', // Partially hide for privacy
-      amount: data.requestedAmount,
-      timestamp: submission.timestamp,
-    })
+    // Save submission (Firebase will be used in production)
+    try {
+      saveSubmission(data)
+      
+      // Log submission for monitoring
+      console.log('✅ New submission received:', {
+        id: submission.id,
+        name: data.fullName,
+        phone: data.phone.substring(0, 4) + '****',
+        amount: data.requestedAmount,
+        amountValid: amountValidation.valid,
+        timestamp: submission.timestamp,
+      })
+    } catch (saveError) {
+      console.error('❌ Error saving submission:', saveError)
+      // Log detailed error for debugging
+      console.error('Error details:', {
+        message: saveError instanceof Error ? saveError.message : 'Unknown error',
+        stack: saveError instanceof Error ? saveError.stack : undefined,
+        data: {
+          fullName: data.fullName,
+          phone: data.phone.substring(0, 4) + '****',
+          amount: data.requestedAmount,
+        }
+      })
+      
+      return NextResponse.json(
+        { 
+          error: 'Failed to save submission',
+          message: 'حدث خطأ أثناء حفظ الطلب. يرجى المحاولة مرة أخرى.'
+        },
+        { status: 500 }
+      )
+    }
     
     // Send success response
     return NextResponse.json(
@@ -96,6 +166,7 @@ export async function POST(request: NextRequest) {
         message: 'تم استلام طلبك بنجاح',
         submissionId: submission.id,
         approvalProbability: calculateApprovalProbability(data),
+        amountValid: amountValidation.valid,
       },
       { 
         status: 200,
@@ -107,9 +178,17 @@ export async function POST(request: NextRequest) {
       }
     )
   } catch (error) {
-    console.error('Submission error:', error)
+    // Comprehensive error logging
+    console.error('❌ Submission API error:', error)
+    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error)
+    console.error('Error message:', error instanceof Error ? error.message : String(error))
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.'
+      },
       { status: 500 }
     )
   }
@@ -128,10 +207,13 @@ function calculateApprovalProbability(data: FormData): number {
     score += incomeIndex * 10
   }
   
-  // Amount vs income ratio
+  // Amount vs income ratio (updated for 5M-20M range)
   const maxAmounts = [1500000, 3500000, 6000000, 12000000, 25000000]
   if (incomeIndex >= 0 && data.requestedAmount <= maxAmounts[incomeIndex]) {
     score += 15
+  } else if (data.requestedAmount >= MIN_LOAN_AMOUNT && data.requestedAmount <= MAX_LOAN_AMOUNT) {
+    // Valid range but might be high for income
+    score += 5
   } else {
     score -= 10
   }

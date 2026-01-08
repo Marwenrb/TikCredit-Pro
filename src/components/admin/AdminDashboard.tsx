@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles } from 'lucide-react'
+import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle } from 'lucide-react'
 import { Button, GlassCard, StatCard, Modal } from '@/components/ui'
 import DownloadModal from './DownloadModal'
 import { Submission } from '@/types'
@@ -155,7 +155,7 @@ const AdminDashboard: React.FC = () => {
                 className="w-full pr-10 pl-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl text-luxury-charcoal placeholder:text-luxury-mediumGray shadow-sm focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {(['all', 'today', 'week', 'month'] as const).map((p) => (
                 <Button
                   key={p}
@@ -166,6 +166,23 @@ const AdminDashboard: React.FC = () => {
                   {p === 'all' ? 'الكل' : p === 'today' ? 'اليوم' : p === 'week' ? 'الأسبوع' : 'الشهر'}
                 </Button>
               ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const MIN_LOAN_AMOUNT = 5_000_000
+                  const MAX_LOAN_AMOUNT = 20_000_000
+                  const validOnly = filteredSubmissions.filter(s => 
+                    s.data.requestedAmount >= MIN_LOAN_AMOUNT && 
+                    s.data.requestedAmount <= MAX_LOAN_AMOUNT
+                  )
+                  setFilteredSubmissions(validOnly)
+                }}
+                title="عرض المبالغ الصحيحة فقط"
+              >
+                <CheckCircle2 className="w-4 h-4 ml-1" />
+                صحيحة فقط
+              </Button>
             </div>
             <div className="flex gap-2">
               <Button 
@@ -210,11 +227,26 @@ const AdminDashboard: React.FC = () => {
                       <h3 className="text-lg font-semibold text-elegant-blue mb-1">
                         {submission.data.fullName}
                       </h3>
-                      <div className="flex flex-wrap gap-4 text-sm text-luxury-darkGray">
+                      <div className="flex flex-wrap gap-4 text-sm text-luxury-darkGray items-center">
                         <span>{submission.data.phone}</span>
                         <span>{submission.data.wilaya}</span>
-                        <span className="text-elegant-blue font-bold">
+                        <span className="text-elegant-blue font-bold flex items-center gap-1">
                           {formatCurrency(submission.data.requestedAmount)}
+                          {(() => {
+                            const MIN_LOAN_AMOUNT = 5_000_000
+                            const MAX_LOAN_AMOUNT = 20_000_000
+                            const isValid = submission.data.requestedAmount >= MIN_LOAN_AMOUNT && 
+                                          submission.data.requestedAmount <= MAX_LOAN_AMOUNT
+                            return isValid ? (
+                              <span title="المبلغ صحيح">
+                                <CheckCircle2 className="w-4 h-4 text-status-success" />
+                              </span>
+                            ) : (
+                              <span title="المبلغ خارج النطاق المسموح">
+                                <XCircle className="w-4 h-4 text-status-error" />
+                              </span>
+                            )
+                          })()}
                         </span>
                         <span>
                           {format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm')}
@@ -275,9 +307,38 @@ const AdminDashboard: React.FC = () => {
                 <span className="text-luxury-darkGray font-medium">نوع التمويل:</span>
                 <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.financingType}</p>
               </div>
-              <div>
+              <div className="col-span-2">
                 <span className="text-luxury-darkGray font-medium">المبلغ المطلوب:</span>
-                <p className="text-elegant-blue font-bold text-xl">{formatCurrency(selectedSubmission.data.requestedAmount)}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-elegant-blue font-bold text-xl">
+                    {formatCurrency(selectedSubmission.data.requestedAmount)}
+                  </p>
+                  {(() => {
+                    const MIN_LOAN_AMOUNT = 5_000_000
+                    const MAX_LOAN_AMOUNT = 20_000_000
+                    const isValid = selectedSubmission.data.requestedAmount >= MIN_LOAN_AMOUNT && 
+                                  selectedSubmission.data.requestedAmount <= MAX_LOAN_AMOUNT
+                    return (
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                        isValid 
+                          ? 'bg-status-success/20 text-status-success border border-status-success/30' 
+                          : 'bg-status-error/20 text-status-error border border-status-error/30'
+                      }`}>
+                        {isValid ? (
+                          <>
+                            <CheckCircle2 className="w-3 h-3" />
+                            صحيح
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-3 h-3" />
+                            خارج النطاق ({MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} - {MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج)
+                          </>
+                        )}
+                      </span>
+                    )
+                  })()}
+                </div>
               </div>
               <div>
                 <span className="text-luxury-darkGray font-medium">طريقة استلام الراتب:</span>

@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'TikCredit Pro',
   },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export const viewport: Viewport = {

@@ -125,7 +125,7 @@ export const INITIAL_FORM_DATA: FormData = {
   profession: '',
   customProfession: '',
   financingType: '',
-  requestedAmount: 1000000,
+  requestedAmount: 5_000_000, // Updated to new minimum (5M DZD)
   notes: ''
 }
 

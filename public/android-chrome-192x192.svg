@@ -1,0 +1,29 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with rounded corners -->
+  <rect width="192" height="192" rx="42" fill="#1E3A8A"/>
+  
+  <!-- Gradient overlay for premium look -->
+  <defs>
+    <linearGradient id="bgGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#1E3A8A;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="arrowGrad192" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bgGrad192)"/>
+  
+  <!-- Main arrow shape (credit/growth symbol) -->
+  <path d="M96 48L120 84H132L108 120H84L60 84H72L96 48Z" fill="url(#arrowGrad192)"/>
+  <path d="M96 120L72 84H84L108 120H96Z" fill="#60A5FA" opacity="0.8"/>
+  
+  <!-- Gold accent dot -->
+  <circle cx="96" cy="144" r="12" fill="#F59E0B"/>
+  <circle cx="96" cy="144" r="8" fill="#FBBF24"/>
+  
+  <!-- Subtle shine effect -->
+  <ellipse cx="80" cy="68" rx="16" ry="8" fill="white" opacity="0.1"/>
+</svg>
+
