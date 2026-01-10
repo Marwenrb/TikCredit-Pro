@@ -35,14 +35,10 @@ function initializeFirebaseAdmin(): boolean {
       return false
     }
   } else {
-    // Log which credentials are missing for debugging
-    const missing = []
-    if (!projectId) missing.push('FIREBASE_PROJECT_ID')
-    if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL')
-    if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY')
-    
-    console.warn(`⚠️ Firebase Admin: Missing environment variables: ${missing.join(', ')}`)
-    console.warn('📝 Submissions will be saved locally. Set up environment variables for cloud storage.')
+    // Firebase is optional - only log once at startup if in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📝 Firebase Admin: Not configured - using local file storage for submissions')
+    }
     return false
   }
 }

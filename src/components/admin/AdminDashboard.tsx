@@ -1,14 +1,14 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle } from 'lucide-react'
+import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle, RefreshCw, Loader2, AlertCircle } from 'lucide-react'
 import { Button, GlassCard, StatCard, Modal } from '@/components/ui'
 import DownloadModal from './DownloadModal'
 import { Submission } from '@/types'
 import {
   getSubmissions,
-  deleteSubmission,
+  deleteSubmission as deleteLocalSubmission,
   clearAllSubmissions,
   getStatistics,
   filterSubmissions,
@@ -30,10 +30,53 @@ const AdminDashboard: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [dataSource, setDataSource] = useState<'firebase' | 'local' | 'browser'>('browser')
+
+  // Fetch submissions from server API
+  const fetchServerSubmissions = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/submissions/list')
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.submissions) {
+          setSubmissions(data.submissions)
+          setDataSource(data.source || 'firebase')
+          console.log(`✅ Loaded ${data.submissions.length} submissions from ${data.source}`)
+          return
+        }
+      } else if (response.status === 401) {
+        // Not authenticated - redirect to login
+        window.location.href = '/admin'
+        return
+      }
+      
+      // Fallback to browser localStorage
+      console.log('⚠️ Server fetch failed, using browser localStorage')
+      const localData = getSubmissions()
+      setSubmissions(localData)
+      setDataSource('browser')
+      
+    } catch (err) {
+      console.error('Error fetching submissions:', err)
+      // Fallback to browser localStorage
+      const localData = getSubmissions()
+      setSubmissions(localData)
+      setDataSource('browser')
+      setError('تعذر الاتصال بالخادم. يتم عرض البيانات المحلية فقط.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    loadSubmissions()
-  }, [])
+    fetchServerSubmissions()
+  }, [fetchServerSubmissions])
 
   useEffect(() => {
     const filtered = filterSubmissions(submissions, period, searchQuery)
@@ -47,22 +90,37 @@ const AdminDashboard: React.FC = () => {
     []
   )
 
-  const loadSubmissions = () => {
-    const data = getSubmissions()
-    setSubmissions(data)
+  const handleRefresh = () => {
+    fetchServerSubmissions()
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا الطلب؟')) {
-      deleteSubmission(id)
-      loadSubmissions()
+      try {
+        // Try server delete first
+        const response = await fetch(`/api/submissions/list?id=${id}`, {
+          method: 'DELETE',
+        })
+        
+        if (response.ok) {
+          // Refresh from server
+          fetchServerSubmissions()
+          return
+        }
+      } catch (err) {
+        console.error('Server delete failed:', err)
+      }
+      
+      // Fallback to local delete
+      deleteLocalSubmission(id)
+      setSubmissions(prev => prev.filter(s => s.id !== id))
     }
   }
 
   const handleClearAll = () => {
     if (confirm('هل أنت متأكد من حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه.')) {
       clearAllSubmissions()
-      loadSubmissions()
+      setSubmissions([])
     }
   }
 
@@ -83,9 +141,36 @@ const AdminDashboard: React.FC = () => {
     setIsDetailModalOpen(true)
   }
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-luxury-gradient p-6 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-elegant-blue animate-spin mx-auto mb-4" />
+          <p className="text-luxury-darkGray">جاري تحميل الطلبات...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-luxury-gradient p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Error Banner */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3"
+          >
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <p className="text-amber-800 text-sm">{error}</p>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)} className="mr-auto">
+              إغلاق
+            </Button>
+          </motion.div>
+        )}
+
         {/* Premium Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -102,10 +187,29 @@ const AdminDashboard: React.FC = () => {
             </motion.div>
             <div>
               <h1 className="text-4xl font-bold text-elegant-blue">لوحة التحكم</h1>
-              <p className="text-luxury-darkGray font-medium">إدارة طلبات التمويل</p>
+              <div className="flex items-center gap-2">
+                <p className="text-luxury-darkGray font-medium">إدارة طلبات التمويل</p>
+                <span className={`px-2 py-0.5 text-xs rounded-full ${
+                  dataSource === 'firebase' 
+                    ? 'bg-green-100 text-green-700' 
+                    : dataSource === 'local' 
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {dataSource === 'firebase' ? '☁️ Firebase' : dataSource === 'local' ? '📁 خادم محلي' : '💾 متصفح'}
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={handleRefresh}
+              title="تحديث البيانات"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </Button>
             <Button 
               variant="glass-blue" 
               size="lg"

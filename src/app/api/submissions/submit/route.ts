@@ -34,6 +34,7 @@ function validateLoanAmount(amount: number): { valid: boolean; error?: string } 
 
 /**
  * Persist submission to Firestore using Admin SDK (server-safe)
+ * Returns true if saved to Firebase, false if Firebase not available
  */
 async function saveSubmissionServer(submission: {
   id: string
@@ -41,20 +42,27 @@ async function saveSubmissionServer(submission: {
   data: FormData & { amountValid: boolean }
   ip: string
   userAgent: string
-}) {
+}): Promise<boolean> {
   if (!adminDb) {
-    throw new Error('Firebase Admin is not initialized. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY.')
+    // Firebase not configured - this is expected in local development
+    return false
   }
 
-  await adminDb
-    .collection('submissions')
-    .doc(submission.id)
-    .set({
-      ...submission,
-      createdAt: submission.timestamp,
-      status: 'pending',
-      source: 'web-form',
-    })
+  try {
+    await adminDb
+      .collection('submissions')
+      .doc(submission.id)
+      .set({
+        ...submission,
+        createdAt: submission.timestamp,
+        status: 'pending',
+        source: 'web-form',
+      })
+    return true
+  } catch (error) {
+    console.error('❌ Firebase save error:', error instanceof Error ? error.message : error)
+    return false
+  }
 }
 
 /**
@@ -170,14 +178,13 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || 'unknown',
     }
     
-    // Save submission (Firebase will be used in production)
+    // Save submission - try Firebase first, fallback to local file
     let persisted: 'server' | 'local' = 'server'
-    try {
-      await saveSubmissionServer(submission)
-    } catch (saveError) {
+    const savedToFirebase = await saveSubmissionServer(submission)
+    
+    if (!savedToFirebase) {
       persisted = 'local'
-      console.error('❌ Error saving submission (server):', saveError)
-      console.warn('Fallback: saving submission locally to .tmp/submissions.json')
+      console.log('📝 Firebase not available, saving submission locally to .tmp/submissions.json')
       await saveSubmissionLocal(submission)
     }
 
