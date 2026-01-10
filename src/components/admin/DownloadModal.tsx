@@ -73,7 +73,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
           exportToCSV(filteredSubmissions, options)
           break
         case 'excel':
-          exportToExcel(filteredSubmissions, options)
+          await exportToExcel(filteredSubmissions, options)
           break
         case 'pdf':
           exportToPDF(filteredSubmissions, options)

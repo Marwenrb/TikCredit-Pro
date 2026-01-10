@@ -3,7 +3,7 @@
  * Advanced Excel & PDF export functionality with date filtering
  */
 
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { format } from 'date-fns'
@@ -153,10 +153,10 @@ export const formatDateRangeLabel = (dateRange: DateRange): string => {
 /**
  * Export submissions to Excel with advanced formatting
  */
-export const exportToExcel = (
+export const exportToExcel = async (
   submissions: Submission[],
   options: ExportOptions
-): void => {
+): Promise<void> => {
   try {
     // Filter by date range
     const filteredSubmissions = filterSubmissionsByDateRange(submissions, options.dateRange)
@@ -166,69 +166,94 @@ export const exportToExcel = (
       return
     }
 
-    // Prepare data for Excel
-    const excelData = filteredSubmissions.map((submission, index) => {
-      const data: any = {
-        'الرقم': index + 1,
-        'الاسم الكامل': submission.data.fullName || '',
-        'رقم الهاتف': submission.data.phone || '',
-        'البريد الإلكتروني': submission.data.email || 'غير محدد',
-        'الولاية': submission.data.wilaya || '',
-        'نوع التمويل': submission.data.financingType || '',
-        'المبلغ المطلوب': submission.data.requestedAmount || 0,
-        'طريقة استلام الراتب': submission.data.salaryReceiveMethod || '',
-        'نطاق الدخل الشهري': submission.data.monthlyIncomeRange || 'غير محدد',
-        'وقت التواصل المفضل': submission.data.preferredContactTime || 'غير محدد',
-        'عميل موجود': submission.data.isExistingCustomer || 'لا',
-        'تاريخ الإرسال': format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm'),
-      }
+    // Create workbook and worksheet using ExcelJS
+    const workbook = new ExcelJS.Workbook()
+    const sheetName = `Submissions_${format(new Date(), 'ddMMyyyy')}`
+    const worksheet = workbook.addWorksheet(sheetName.substring(0, 31)) // Excel sheet name limit
 
-      if (options.includeNotes) {
-        data['الملاحظات'] = submission.data.notes || ''
-      }
-
-      return data
-    })
-
-    // Create worksheet
-    const ws = XLSX.utils.json_to_sheet(excelData)
-
-    // Set column widths
-    const columnWidths = [
-      { wch: 8 },  // ID
-      { wch: 25 }, // Full Name
-      { wch: 15 }, // Phone
-      { wch: 25 }, // Email
-      { wch: 15 }, // Wilaya
-      { wch: 20 }, // Financing Type
-      { wch: 15 }, // Amount
-      { wch: 20 }, // Salary Method
-      { wch: 20 }, // Income Range
-      { wch: 20 }, // Contact Time
-      { wch: 12 }, // Existing Customer
-      { wch: 18 }, // Date
+    // Define columns with headers
+    const columns = [
+      { header: 'الرقم', key: 'number', width: 8 },
+      { header: 'الاسم الكامل', key: 'fullName', width: 25 },
+      { header: 'رقم الهاتف', key: 'phone', width: 15 },
+      { header: 'البريد الإلكتروني', key: 'email', width: 25 },
+      { header: 'الولاية', key: 'wilaya', width: 15 },
+      { header: 'نوع التمويل', key: 'financingType', width: 20 },
+      { header: 'المبلغ المطلوب', key: 'amount', width: 15 },
+      { header: 'طريقة استلام الراتب', key: 'salaryMethod', width: 20 },
+      { header: 'نطاق الدخل الشهري', key: 'incomeRange', width: 20 },
+      { header: 'وقت التواصل المفضل', key: 'contactTime', width: 20 },
+      { header: 'عميل موجود', key: 'existingCustomer', width: 12 },
+      { header: 'تاريخ الإرسال', key: 'timestamp', width: 18 },
     ]
 
     if (options.includeNotes) {
-      columnWidths.push({ wch: 30 }) // Notes
+      columns.push({ header: 'الملاحظات', key: 'notes', width: 30 })
     }
 
-    ws['!cols'] = columnWidths
+    worksheet.columns = columns
 
-    // Create workbook
-    const wb = XLSX.utils.book_new()
-    
-    // Generate sheet name with date range
-    const dateLabel = formatDateRangeLabel(options.dateRange)
-    const sheetName = `Submissions_${format(new Date(), 'ddMMyyyy')}`
-    
-    XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31)) // Excel sheet name limit
+    // Style header row
+    worksheet.getRow(1).font = { bold: true, size: 12 }
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE3F2FD' }
+    }
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' }
+
+    // Add data rows
+    filteredSubmissions.forEach((submission, index) => {
+      const row: Record<string, unknown> = {
+        number: index + 1,
+        fullName: submission.data.fullName || '',
+        phone: submission.data.phone || '',
+        email: submission.data.email || 'غير محدد',
+        wilaya: submission.data.wilaya || '',
+        financingType: submission.data.financingType || '',
+        amount: submission.data.requestedAmount || 0,
+        salaryMethod: submission.data.salaryReceiveMethod || '',
+        incomeRange: submission.data.monthlyIncomeRange || 'غير محدد',
+        contactTime: submission.data.preferredContactTime || 'غير محدد',
+        existingCustomer: submission.data.isExistingCustomer || 'لا',
+        timestamp: format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm'),
+      }
+
+      if (options.includeNotes) {
+        row.notes = submission.data.notes || ''
+      }
+
+      worksheet.addRow(row)
+    })
+
+    // Style data rows with alternating colors
+    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.alignment = { vertical: 'middle', horizontal: 'right' }
+        if (rowNumber % 2 === 0) {
+          row.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF5F5F5' }
+          }
+        }
+      }
+    })
 
     // Generate filename
     const filename = options.filename || `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.xlsx`
 
-    // Download file
-    XLSX.writeFile(wb, filename)
+    // Download file using blob
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
 
     console.log(`✅ تم تصدير ${filteredSubmissions.length} طلب إلى Excel بنجاح`)
   } catch (error) {
