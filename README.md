@@ -5,7 +5,8 @@
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![Firebase](https://img.shields.io/badge/Firebase-10-orange?style=flat-square&logo=firebase)](https://firebase.google.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-12-orange?style=flat-square&logo=firebase)](https://firebase.google.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Ready-black?style=flat-square&logo=vercel)](https://vercel.com)
 
 ## ✨ Features
 
@@ -99,15 +100,33 @@ npm start
 
 ## 🌐 Deployment
 
-### Vercel (Recommended)
+### Vercel (Recommended) ⚡
 
-1. Push to GitHub
-2. Import project on [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard:
-   - `ADMIN_PASSWORD`
-   - `JWT_SECRET`
-   - Firebase variables (if using)
-4. Deploy
+**✅ Configuration Automatique :** Le projet est configuré pour déployer automatiquement depuis la branche `main`.
+
+1. **Connecter à Vercel:**
+   - Allez sur: https://vercel.com/new
+   - Importez le repository: `Marwenrb/TikCredit-Pro`
+   - Vercel détectera automatiquement Next.js
+
+2. **Branche de Production:**
+   - ✅ Vercel déploiera automatiquement depuis `main`
+   - Chaque push vers `main` déclenche un nouveau déploiement
+
+3. **Variables d'Environnement:**
+   - Allez dans **Settings** → **Environment Variables**
+   - Ajoutez ces variables:
+     ```
+     ADMIN_PASSWORD=AdminTikCredit123Pro!
+     JWT_SECRET=TikCreditPro2026SecureJWTSigningKeyForAdminAuth!
+     FIREBASE_PROJECT_ID=tikcredit-prp
+     FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@tikcredit-prp.iam.gserviceaccount.com
+     FIREBASE_PRIVATE_KEY=[Votre clé privée avec \n]
+     ```
+
+4. **Déploiement:**
+   - ✅ Push vers `main` = Déploiement automatique
+   - Consultez `VERCEL-DEPLOYMENT.md` pour plus de détails
 
 ### Firebase Hosting
 
@@ -140,36 +159,33 @@ firebase deploy
 The admin dashboard supports multiple export formats:
 
 - **TXT** ⭐ - Full Arabic support, beautifully formatted
-- **CSV** ⭐ - Spreadsheet-compatible with Arabic
-- **Excel** - XLSX format with Arabic columns
-- **PDF** - Numbers and dates only (Arabic not supported in jsPDF)
+- **CSV** ⭐ - Spreadsheet-compatible with Arabic (UTF-8 BOM)
+- **Excel** ⭐ - XLSX format with styled headers and alternating rows (ExcelJS)
+- **PDF** - Professional PDF reports with tables (English labels)
 
 ## 🚀 PRODUCTION READY! ✅
 
-**Your TikCredit Pro is now ULTRA-SECURE and DEPLOYMENT-READY!**
+**Your TikCredit Pro is now 100% PRODUCTION-READY and DEPLOYMENT-READY!**
 
 ### ✅ All Issues Fixed
-- **Build Errors**: ✅ Resolved TypeScript and ESLint issues
-- **Security**: ✅ Industry-standard security measures implemented
-- **Performance**: ✅ Optimized for production deployment
-- **Documentation**: ✅ Complete deployment guides created
+- **Security Vulnerabilities**: ✅ 0 vulnerabilities (npm audit)
+- **Dependencies**: ✅ All packages updated and compatible
+- **ESLint**: ✅ Upgraded to v9.39.2 (no conflicts)
+- **Excel Export**: ✅ Migrated from xlsx to ExcelJS (secure)
+- **Firebase**: ✅ Latest versions (firebase@12.7.0, firebase-admin@13.6.0)
+- **Build**: ✅ Production build tested and working
+- **Deployment**: ✅ Configured for automatic Vercel deployment from `main`
 
-### 🌐 Quick Deploy to Netlify
-1. **Set Environment Variables** in Netlify Dashboard:
-   ```bash
-   ADMIN_PASSWORD=YourSecurePasswordHere123!
-   JWT_SECRET=TikCredit-Ultra-Secure-JWT-Secret-2024-Production-Key-32Plus-Characters
-   NODE_ENV=production
-   ```
+### 🌐 Automatic Vercel Deployment
+- **Branche de Production**: `main` ✅
+- **Configuration**: `vercel.json` créé ✅
+- **Workflow**: Push vers `main` = Déploiement automatique ✅
+- **Guide**: Voir `VERCEL-DEPLOYMENT.md` pour les détails complets
 
-2. **Deploy**: Connect your GitHub repo to Netlify - it will auto-deploy!
-
-3. **Access**: Visit `https://tikcredit.netlify.app` (or your custom domain)
-
-### 📚 Deployment Guides
-- **🚀 Quick Start**: Read `DEPLOY.md` for step-by-step instructions
-- **🔐 Security**: Read `SECURITY.md` for security features
-- **⚡ Production**: Read `PRODUCTION.md` for advanced configuration
+### 📚 Documentation Guides
+- **🚀 Vercel Deployment**: `VERCEL-DEPLOYMENT.md` - Guide complet de déploiement Vercel
+- **🔥 Firebase Setup**: `FIREBASE-SETUP-GUIDE.md` - Configuration Firebase complète
+- **📋 Submissions Guide**: `FIREBASE-SUBMISSIONS-GUIDE.md` - Guide des soumissions
 
 ### 🛡️ Security Features Active
 - JWT Authentication with 8-hour expiration
