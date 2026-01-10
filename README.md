@@ -27,25 +27,32 @@ npm install
 
 ### 2. Configure Environment
 
-Create `.env.local` file in the root directory:
+Copy `.env.example` to `.env.local` and fill in your actual values:
 
-```env
-# Admin Password (REQUIRED)
-ADMIN_PASSWORD=YourSecurePasswordHere
-
-# JWT Secret (REQUIRED - 32+ characters)
-JWT_SECRET=your-very-long-secure-random-string-here-at-least-32-chars
-
-# Firebase (OPTIONAL - for database)
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
+```bash
+cp .env.example .env.local
 ```
 
-**⚠️ IMPORTANT:** Never commit `.env.local` to git! It's already in `.gitignore`.
+Then edit `.env.local` with your secure credentials:
+
+```env
+# See .env.example for full template with detailed comments
+
+# REQUIRED
+ADMIN_PASSWORD=YourSecurePasswordHere
+JWT_SECRET=your-very-long-secure-random-string-here-at-least-32-chars
+
+# OPTIONAL (for Firebase)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+**⚠️ CRITICAL SECURITY WARNINGS:**
+- ⚠️ **NEVER** commit `.env.local` to Git! It's already in `.gitignore`.
+- ⚠️ **READ** `SECURITY-NOTICE.md` if you cloned this repo before Jan 10, 2026
+- ⚠️ Use **different credentials** for development and production
+- ⚠️ Generate strong passwords using a password manager
 
 ### 3. Start Development Server
 
@@ -115,13 +122,13 @@ npm start
 
 3. **Variables d'Environnement:**
    - Allez dans **Settings** → **Environment Variables**
-   - Ajoutez ces variables:
+   - Ajoutez ces variables (⚠️ NEVER commit these to Git!):
      ```
-     ADMIN_PASSWORD=AdminTikCredit123Pro!
-     JWT_SECRET=TikCreditPro2026SecureJWTSigningKeyForAdminAuth!
-     FIREBASE_PROJECT_ID=tikcredit-prp
-     FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@tikcredit-prp.iam.gserviceaccount.com
-     FIREBASE_PRIVATE_KEY=[Votre clé privée avec \n]
+     ADMIN_PASSWORD=your-secure-admin-password-here
+     JWT_SECRET=your-secure-jwt-secret-minimum-32-characters
+     FIREBASE_PROJECT_ID=your-firebase-project-id
+     FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+     FIREBASE_PRIVATE_KEY=[Your complete private key from Firebase Console]
      ```
 
 4. **Déploiement:**

@@ -1,5 +1,16 @@
 # ✅ Solution Déploiement Vercel - Résumé Final
 
+## ⚠️ SECURITY WARNING - READ FIRST!
+
+**🔐 CRITICAL:** If you cloned this repository before January 10, 2026, credentials were exposed in Git history.
+
+**YOU MUST:**
+1. **READ** `SECURITY-NOTICE.md` immediately
+2. **REGENERATE** all credentials (admin password, JWT secret, Firebase keys)
+3. **NEVER USE** any credentials you find in Git history
+
+---
+
 ## 🎯 Problème Résolu
 
 **Problème Initial:** Vercel déploie automatiquement depuis `main`, mais tout le code de production était sur `production-v1.0`.
@@ -45,12 +56,14 @@
 Après le premier déploiement, ajoutez dans **Settings → Environment Variables**:
 
 ```
-ADMIN_PASSWORD=AdminTikCredit123Pro!
-JWT_SECRET=TikCreditPro2026SecureJWTSigningKeyForAdminAuth!
-FIREBASE_PROJECT_ID=tikcredit-prp
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@tikcredit-prp.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY=[Clé complète avec \n littéraux]
+ADMIN_PASSWORD=your-secure-admin-password-here
+JWT_SECRET=your-secure-jwt-secret-minimum-32-characters
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_CLIENT_EMAIL=your-firebase-service-account@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY=[Your complete private key with \n literals]
 ```
+
+⚠️ **CRITICAL:** NEVER commit these values to Git! Set them only in Vercel Dashboard.
 
 ### Étape 4: Redéployer
 - Allez dans "Deployments"

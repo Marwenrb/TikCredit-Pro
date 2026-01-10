@@ -1,5 +1,16 @@
 # 🚀 Guide de Déploiement Vercel - TikCredit Pro
 
+## ⚠️ SECURITY WARNING - READ FIRST!
+
+**🔐 CRITICAL:** If you cloned this repository before January 10, 2026, credentials were exposed in Git history.
+
+**YOU MUST:**
+1. **READ** `SECURITY-NOTICE.md` immediately
+2. **REGENERATE** all credentials (admin password, JWT secret, Firebase keys)
+3. **NEVER USE** any credentials you find in Git history
+
+---
+
 ## ✅ Configuration Automatique
 
 Le projet est maintenant configuré pour être déployé automatiquement sur Vercel depuis la branche `main`.
@@ -26,17 +37,20 @@ Le projet est maintenant configuré pour être déployé automatiquement sur Ver
 
 4. **Variables d'Environnement:**
    - Allez dans **Settings** → **Environment Variables**
-   - Ajoutez ces variables (NE PAS COMMITER LES VRAIES VALEURS):
+   - ⚠️ **CRITICAL: DO NOT COMMIT THESE VALUES TO GIT!**
    
    ```
-   ADMIN_PASSWORD=AdminTikCredit123Pro!
-   JWT_SECRET=TikCreditPro2026SecureJWTSigningKeyForAdminAuth!
-   FIREBASE_PROJECT_ID=tikcredit-prp
-   FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@tikcredit-prp.iam.gserviceaccount.com
-   FIREBASE_PRIVATE_KEY=[Votre clé privée complète avec \n]
+   ADMIN_PASSWORD=your-secure-admin-password-here
+   JWT_SECRET=your-secure-jwt-secret-minimum-32-characters
+   FIREBASE_PROJECT_ID=your-firebase-project-id
+   FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+   FIREBASE_PRIVATE_KEY=[Your complete private key from Firebase Console]
    ```
 
-   ⚠️ **Important:** Pour `FIREBASE_PRIVATE_KEY`, copiez la clé complète depuis `service-account-key.json` et remplacez les retours à la ligne par `\n` littéraux.
+   ⚠️ **Important:** 
+   - Get these values from your Firebase Console (Project Settings → Service Accounts)
+   - For `FIREBASE_PRIVATE_KEY`, copy the complete key and replace line breaks with `\n` literals
+   - NEVER commit these values to Git - set them only in Vercel Dashboard
 
 ### Option 2: Utiliser un Fichier Service Account (Alternative)
 

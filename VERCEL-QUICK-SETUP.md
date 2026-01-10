@@ -1,5 +1,16 @@
 # ⚡ Configuration Rapide Vercel - TikCredit Pro
 
+## ⚠️ SECURITY WARNING - READ FIRST!
+
+**🔐 CRITICAL:** If you cloned this repository before January 10, 2026, credentials were exposed in Git history.
+
+**YOU MUST:**
+1. **READ** `SECURITY-NOTICE.md` immediately
+2. **REGENERATE** all credentials (admin password, JWT secret, Firebase keys)
+3. **NEVER USE** any credentials you find in Git history
+
+---
+
 ## 🎯 Solution Immédiate
 
 **✅ La branche `main` contient maintenant TOUT le code de production !**
@@ -40,35 +51,39 @@ Après le premier déploiement (qui peut échouer sans les variables):
 
 ```
 ADMIN_PASSWORD
-Valeur: AdminTikCredit123Pro!
-Environnements: Production, Preview, Development
+Value: your-secure-admin-password-here
+Environments: Production, Preview, Development
 
 JWT_SECRET
-Valeur: TikCreditPro2026SecureJWTSigningKeyForAdminAuth!
-Environnements: Production, Preview, Development
+Value: your-secure-jwt-secret-minimum-32-characters
+Environments: Production, Preview, Development
 ```
+
+⚠️ **CRITICAL:** NEVER commit these values to Git!
 
 #### Variables Firebase (Optionnelles):
 
 ```
 FIREBASE_PROJECT_ID
-Valeur: tikcredit-prp
-Environnements: Production, Preview, Development
+Value: your-firebase-project-id
+Environments: Production, Preview, Development
 
 FIREBASE_CLIENT_EMAIL
-Valeur: firebase-adminsdk-fbsvc@tikcredit-prp.iam.gserviceaccount.com
-Environnements: Production, Preview, Development
+Value: your-service-account@your-project.iam.gserviceaccount.com
+Environments: Production, Preview, Development
 
 FIREBASE_PRIVATE_KEY
-Valeur: [Copiez toute la clé privée depuis service-account-key.json]
+Value: [Your complete private key from Firebase Console]
 Format: -----BEGIN PRIVATE KEY-----\nMIIEvw...\n-----END PRIVATE KEY-----\n
-Environnements: Production, Preview, Development
+Environments: Production, Preview, Development
 ```
 
 **⚠️ Important pour FIREBASE_PRIVATE_KEY:**
-- Copiez la clé complète depuis `service-account-key.json`
-- Gardez TOUS les `\n` littéraux (ne pas les convertir en retours à la ligne)
-- La clé doit commencer par `-----BEGIN PRIVATE KEY-----\n` et finir par `\n-----END PRIVATE KEY-----\n`
+- Get the complete key from Firebase Console (Project Settings → Service Accounts)
+- Download the JSON file and copy the `private_key` value
+- Keep ALL `\n` as literals (do not convert to actual line breaks)
+- The key must start with `-----BEGIN PRIVATE KEY-----\n` and end with `\n-----END PRIVATE KEY-----\n`
+- NEVER commit this to Git - set it only in Vercel Dashboard
 
 ### Étape 4: Redéployer
 
