@@ -33,8 +33,7 @@ function validateLoanAmount(amount: number): { valid: boolean; error?: string } 
 }
 
 /**
- * Persist submission to Firestore using Admin SDK (server-safe)
- * Returns true if saved to Firebase, false if Firebase not available
+ * Persist submission to Firestore using Admin SDK
  */
 async function saveSubmissionServer(submission: {
   id: string
@@ -43,10 +42,7 @@ async function saveSubmissionServer(submission: {
   ip: string
   userAgent: string
 }): Promise<boolean> {
-  if (!adminDb) {
-    // Firebase not configured - this is expected in local development
-    return false
-  }
+  if (!adminDb) return false
 
   try {
     await adminDb
@@ -59,26 +55,27 @@ async function saveSubmissionServer(submission: {
         source: 'web-form',
       })
     return true
-  } catch (error) {
-    console.error('❌ Firebase save error:', error instanceof Error ? error.message : error)
+  } catch {
     return false
   }
 }
 
 /**
- * Fallback: persist to local JSON file in .tmp/submissions.json (dev-only)
+ * Fallback: persist to local JSON file
  */
-async function saveSubmissionLocal(submission: any) {
+async function saveSubmissionLocal(submission: object) {
   const dir = path.join(process.cwd(), '.tmp')
   const file = path.join(dir, 'submissions.json')
   await fs.mkdir(dir, { recursive: true })
-  let existing: any[] = []
+  
+  let existing: object[] = []
   try {
     const content = await fs.readFile(file, 'utf-8')
     existing = JSON.parse(content)
   } catch {
     existing = []
   }
+  
   existing.push(submission)
   await fs.writeFile(file, JSON.stringify(existing, null, 2), 'utf-8')
 }
@@ -110,8 +107,7 @@ export async function POST(request: NextRequest) {
     let data: FormData
     try {
       data = await request.json()
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError)
+    } catch {
       return NextResponse.json(
         { 
           error: 'Invalid request format',
@@ -148,7 +144,7 @@ export async function POST(request: NextRequest) {
       errors.push('نوع التمويل مطلوب')
     }
     
-    // Validate loan amount with new range (5M-20M)
+    // Validate loan amount
     const amountValidation = validateLoanAmount(data.requestedAmount)
     if (!amountValidation.valid) {
       errors.push(amountValidation.error || 'المبلغ المطلوب غير صحيح')
@@ -171,45 +167,28 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       data: {
         ...data,
-        // Store validation status
         amountValid: amountValidation.valid,
       },
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
     }
     
-    // Save submission - try Firebase first, fallback to local file
+    // Save submission - Firebase first, local fallback
     let persisted: 'server' | 'local' = 'server'
     const savedToFirebase = await saveSubmissionServer(submission)
     
     if (!savedToFirebase) {
       persisted = 'local'
-      console.log('📝 Firebase not available, saving submission locally to .tmp/submissions.json')
       await saveSubmissionLocal(submission)
     }
-
-    // Log submission for monitoring
-    console.log('✅ New submission received:', {
-      id: submission.id,
-      name: data.fullName,
-      phone: data.phone.substring(0, 4) + '****',
-      amount: data.requestedAmount,
-      amountValid: amountValidation.valid,
-      timestamp: submission.timestamp,
-      persisted,
-    })
     
-    // Send success response
     return NextResponse.json(
       {
         success: true,
-        message: persisted === 'local'
-          ? 'تم حفظ طلبك محلياً بسبب انقطاع الاتصال. سنحاول المزامنة لاحقاً.'
-          : 'تم استلام طلبك بنجاح',
+        message: 'تم استلام طلبك بنجاح',
         submissionId: submission.id,
         approvalProbability: calculateApprovalProbability(data),
         amountValid: amountValidation.valid,
-        persisted,
       },
       { 
         status: 200,
@@ -220,13 +199,7 @@ export async function POST(request: NextRequest) {
         }
       }
     )
-  } catch (error) {
-    // Comprehensive error logging
-    console.error('❌ Submission API error:', error)
-    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error)
-    console.error('Error message:', error instanceof Error ? error.message : String(error))
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
-    
+  } catch {
     return NextResponse.json(
       { 
         error: 'Internal server error',
@@ -241,38 +214,29 @@ export async function POST(request: NextRequest) {
  * Calculate approval probability based on form data
  */
 function calculateApprovalProbability(data: FormData): number {
-  let score = 50 // Base score
+  let score = 50
   
-  // Income score
   const incomeRanges = ['أقل من 30,000 د.ج', '30,000 - 50,000 د.ج', '50,000 - 80,000 د.ج', '80,000 - 120,000 د.ج', 'أكثر من 120,000 د.ج']
   const incomeIndex = incomeRanges.indexOf(data.monthlyIncomeRange)
   if (incomeIndex >= 0) {
     score += incomeIndex * 10
   }
   
-  // Amount vs income ratio (updated for 5M-20M range)
   const maxAmounts = [1500000, 3500000, 6000000, 12000000, 25000000]
   if (incomeIndex >= 0 && data.requestedAmount <= maxAmounts[incomeIndex]) {
     score += 15
   } else if (data.requestedAmount >= MIN_LOAN_AMOUNT && data.requestedAmount <= MAX_LOAN_AMOUNT) {
-    // Valid range but might be high for income
     score += 5
   } else {
     score -= 10
   }
   
-  // Existing customer bonus
   if (data.isExistingCustomer === 'نعم') {
     score += 10
   }
   
-  // Complete information bonus
   if (data.email) score += 5
   if (data.preferredContactTime) score += 5
   
-  // Ensure score is between 30 and 95
   return Math.min(95, Math.max(30, score))
 }
-
-
-

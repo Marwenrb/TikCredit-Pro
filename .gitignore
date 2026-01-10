@@ -74,3 +74,6 @@ service-account.json
 
 # Netlify
 .netlify/
+
+# Firebase Service Account (ne jamais commiter!)
+service-account-key.json

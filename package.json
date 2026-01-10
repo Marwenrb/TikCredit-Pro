@@ -52,6 +52,7 @@
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^9.0.8",
     "autoprefixer": "^10.4.19",
+    "dotenv": "^17.2.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.38",

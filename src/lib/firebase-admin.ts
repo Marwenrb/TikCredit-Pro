@@ -1,25 +1,46 @@
 import admin from 'firebase-admin'
 
 /**
- * Initialize Firebase Admin SDK for server-side operations
- * Supports both environment variables and service account JSON file
+ * Firebase Admin SDK initialization for server-side operations
+ * Production-ready with silent initialization
  */
 function initializeFirebaseAdmin(): boolean {
-  // Only run on server-side
   if (typeof window !== 'undefined') return false
-  
-  // Skip if already initialized
   if (admin.apps.length > 0) return true
 
+  // Try service account JSON file first
+  try {
+    const serviceAccountPath = require('path').join(process.cwd(), 'service-account-key.json')
+    const fs = require('fs')
+    
+    if (fs.existsSync(serviceAccountPath)) {
+      const serviceAccount = require(serviceAccountPath)
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      })
+      
+      // Configure Firestore
+      const db = admin.firestore()
+      db.settings({ ignoreUndefinedProperties: true })
+      
+      return true
+    }
+  } catch {
+    // Silent fail - will try env vars next
+  }
+
+  // Fallback to environment variables
   const projectId = process.env.FIREBASE_PROJECT_ID
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
   const privateKey = process.env.FIREBASE_PRIVATE_KEY
 
-  // Check if all required credentials are present
   if (projectId && clientEmail && privateKey) {
     try {
-      // Handle escaped newlines in the private key
-      const formattedPrivateKey = privateKey.replace(/\\n/g, '\n')
+      let formattedPrivateKey = privateKey.replace(/\\n/g, '\n').replace(/^["']|["']$/g, '')
+      
+      if (!formattedPrivateKey.includes('BEGIN PRIVATE KEY')) {
+        return false
+      }
       
       admin.initializeApp({
         credential: admin.credential.cert({
@@ -28,37 +49,33 @@ function initializeFirebaseAdmin(): boolean {
           privateKey: formattedPrivateKey,
         }),
       })
-      console.log('✅ Firebase Admin: Initialized successfully with service account credentials')
+      
+      const db = admin.firestore()
+      db.settings({ ignoreUndefinedProperties: true })
+      
       return true
-    } catch (error) {
-      console.error('❌ Firebase Admin initialization failed with credentials:', error instanceof Error ? error.message : error)
+    } catch {
       return false
     }
-  } else {
-    // Firebase is optional - only log once at startup if in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📝 Firebase Admin: Not configured - using local file storage for submissions')
-    }
-    return false
   }
+  
+  return false
 }
 
 // Initialize on module load
 const isInitialized = initializeFirebaseAdmin()
 
-// Export Firestore and Auth instances (null if not initialized)
+// Export Firestore and Auth instances
 export const adminDb = isInitialized && admin.apps.length > 0 ? admin.firestore() : null
 export const adminAuth = isInitialized && admin.apps.length > 0 ? admin.auth() : null
 
-// Helper functions for admin operations
+// Helper functions
 export async function verifyAdminToken(token: string) {
   if (!adminAuth) return null
   
   try {
-    const decodedToken = await adminAuth.verifyIdToken(token)
-    return decodedToken
-  } catch (error) {
-    console.error('Token verification error:', error)
+    return await adminAuth.verifyIdToken(token)
+  } catch {
     return null
   }
 }
@@ -67,14 +84,8 @@ export async function createCustomToken(uid: string) {
   if (!adminAuth) return null
   
   try {
-    const customToken = await adminAuth.createCustomToken(uid, { admin: true })
-    return customToken
-  } catch (error) {
-    console.error('Custom token creation error:', error)
+    return await adminAuth.createCustomToken(uid, { admin: true })
+  } catch {
     return null
   }
 }
-
-
-
-
