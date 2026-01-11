@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     let submissions: Record<string, unknown>[] = []
-    let source: 'firebase' | 'local' = 'local'
+    let source: 'firebase' | 'local' | 'firebase+local' = 'local'
 
     // Try Firebase first
     if (adminDb) {
@@ -57,19 +57,33 @@ export async function GET(request: NextRequest) {
           }
         })
         source = 'firebase'
-      } catch {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ Loaded ${submissions.length} submissions from Firebase`)
+        }
+      } catch (error) {
         // Firebase failed, will try local
+        console.error('❌ Firebase fetch error:', error)
+      }
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ Firebase Admin DB not available')
       }
     }
 
-    // Fallback to local file
-    if (submissions.length === 0) {
-      try {
-        const localFile = path.join(process.cwd(), '.tmp', 'submissions.json')
-        const content = await fs.readFile(localFile, 'utf-8')
-        const localSubmissions = JSON.parse(content)
-        
-        submissions = localSubmissions.map((s: Record<string, unknown>) => ({
+    // Always check local file as well (in case Firebase is empty but local has data)
+    // Use /tmp in Vercel serverless environment, fallback to .tmp locally
+    const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), '.tmp')
+    const localFile = path.join(tmpDir, 'submissions.json')
+    
+    try {
+      const content = await fs.readFile(localFile, 'utf-8')
+      const localSubmissions = JSON.parse(content)
+      
+      // Merge local submissions with Firebase submissions (avoid duplicates)
+      const existingIds = new Set(submissions.map(s => s.id))
+      const localSubs = localSubmissions
+        .filter((s: Record<string, unknown>) => !existingIds.has(s.id as string))
+        .map((s: Record<string, unknown>) => ({
           id: s.id,
           timestamp: s.timestamp,
           data: s.data || {
@@ -88,9 +102,24 @@ export async function GET(request: NextRequest) {
             notes: s.notes || (s.data as Record<string, unknown>)?.notes,
           },
         }))
+      
+      // Add local submissions to the list
+      submissions.push(...localSubs)
+      
+      // Update source if we have local submissions
+      if (localSubs.length > 0 && source === 'firebase') {
+        source = 'firebase+local'
+      } else if (submissions.length === localSubs.length) {
         source = 'local'
-      } catch {
-        // No local file exists
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ Loaded ${localSubs.length} submissions from local file (${tmpDir})`)
+      }
+    } catch (error) {
+      // No local file exists or error reading - that's okay
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`ℹ️ No local submissions file found at ${localFile}:`, error instanceof Error ? error.message : 'File not found')
       }
     }
 
@@ -145,7 +174,8 @@ export async function DELETE(request: NextRequest) {
 
     // Also try local file
     try {
-      const localFile = path.join(process.cwd(), '.tmp', 'submissions.json')
+      const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), '.tmp')
+      const localFile = path.join(tmpDir, 'submissions.json')
       const content = await fs.readFile(localFile, 'utf-8')
       const submissions = JSON.parse(content)
       const filtered = submissions.filter((s: Record<string, unknown>) => s.id !== id)
