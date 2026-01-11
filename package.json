@@ -18,6 +18,7 @@
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/canvas-confetti": "^1.6.4",
     "@types/node": "^20.14.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -29,6 +30,8 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.35",
     "exceljs": "^4.4.0",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
@@ -51,13 +54,10 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/canvas-confetti": "^1.6.4",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^9.0.8",
     "dotenv": "^17.2.3",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^14.2.35",
     "sharp": "^0.34.5"
   },
   "overrides": {
