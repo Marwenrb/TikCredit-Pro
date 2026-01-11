@@ -59,5 +59,9 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.35",
     "sharp": "^0.34.5"
+  },
+  "overrides": {
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.5"
   }
 }
