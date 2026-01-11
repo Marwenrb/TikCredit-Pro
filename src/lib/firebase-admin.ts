@@ -39,6 +39,9 @@ function initializeFirebaseAdmin(): boolean {
       let formattedPrivateKey = privateKey.replace(/\\n/g, '\n').replace(/^["']|["']$/g, '')
       
       if (!formattedPrivateKey.includes('BEGIN PRIVATE KEY')) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ Firebase Private Key format invalid - missing BEGIN PRIVATE KEY')
+        }
         return false
       }
       
@@ -53,10 +56,21 @@ function initializeFirebaseAdmin(): boolean {
       const db = admin.firestore()
       db.settings({ ignoreUndefinedProperties: true })
       
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Firebase Admin initialized successfully')
+      }
+      
       return true
-    } catch {
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Firebase Admin initialization error:', error)
+      }
       return false
     }
+  }
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('⚠️ Firebase Admin not initialized - missing environment variables')
   }
   
   return false

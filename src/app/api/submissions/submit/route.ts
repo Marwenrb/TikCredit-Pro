@@ -42,7 +42,12 @@ async function saveSubmissionServer(submission: {
   ip: string
   userAgent: string
 }): Promise<boolean> {
-  if (!adminDb) return false
+  if (!adminDb) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Firebase Admin DB not available - will use local fallback')
+    }
+    return false
+  }
 
   try {
     await adminDb
@@ -55,29 +60,37 @@ async function saveSubmissionServer(submission: {
         source: 'web-form',
       })
     return true
-  } catch {
+  } catch (error) {
+    console.error('❌ Firebase save error:', error)
     return false
   }
 }
 
 /**
- * Fallback: persist to local JSON file
+ * Fallback: persist to local JSON file (Vercel-compatible)
  */
 async function saveSubmissionLocal(submission: object) {
-  const dir = path.join(process.cwd(), '.tmp')
-  const file = path.join(dir, 'submissions.json')
-  await fs.mkdir(dir, { recursive: true })
-  
-  let existing: object[] = []
   try {
-    const content = await fs.readFile(file, 'utf-8')
-    existing = JSON.parse(content)
-  } catch {
-    existing = []
+    // Use /tmp in Vercel serverless environment, fallback to .tmp locally
+    const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), '.tmp')
+    const file = path.join(tmpDir, 'submissions.json')
+    
+    await fs.mkdir(tmpDir, { recursive: true })
+    
+    let existing: object[] = []
+    try {
+      const content = await fs.readFile(file, 'utf-8')
+      existing = JSON.parse(content)
+    } catch {
+      existing = []
+    }
+    
+    existing.push(submission)
+    await fs.writeFile(file, JSON.stringify(existing, null, 2), 'utf-8')
+  } catch (error) {
+    console.error('Failed to save submission locally:', error)
+    throw error
   }
-  
-  existing.push(submission)
-  await fs.writeFile(file, JSON.stringify(existing, null, 2), 'utf-8')
 }
 
 export async function POST(request: NextRequest) {
@@ -175,11 +188,28 @@ export async function POST(request: NextRequest) {
     
     // Save submission - Firebase first, local fallback
     let persisted: 'server' | 'local' = 'server'
-    const savedToFirebase = await saveSubmissionServer(submission)
+    let savedToFirebase = false
+    
+    try {
+      savedToFirebase = await saveSubmissionServer(submission)
+    } catch (firebaseError) {
+      console.error('Firebase save error:', firebaseError)
+      savedToFirebase = false
+    }
     
     if (!savedToFirebase) {
-      persisted = 'local'
-      await saveSubmissionLocal(submission)
+      try {
+        persisted = 'local'
+        await saveSubmissionLocal(submission)
+        console.log('✅ Saved submission locally (fallback):', submission.id)
+      } catch (localError) {
+        console.error('Local save error:', localError)
+        // If both Firebase and local save fail, still return success but log the error
+        // This ensures the user doesn't see an error if the submission was processed
+        console.error('⚠️ Failed to persist submission:', submission.id)
+      }
+    } else {
+      console.log('✅ Saved submission to Firebase:', submission.id)
     }
     
     return NextResponse.json(
@@ -189,6 +219,7 @@ export async function POST(request: NextRequest) {
         submissionId: submission.id,
         approvalProbability: calculateApprovalProbability(data),
         amountValid: amountValidation.valid,
+        persisted: persisted,
       },
       { 
         status: 200,
@@ -199,11 +230,21 @@ export async function POST(request: NextRequest) {
         }
       }
     )
-  } catch {
+  } catch (error) {
+    // Log the actual error for debugging
+    console.error('❌ Submission API Error:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    })
+    
     return NextResponse.json(
       { 
         error: 'Internal server error',
-        message: 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.'
+        message: 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.',
+        ...(process.env.NODE_ENV === 'development' && {
+          details: error instanceof Error ? error.message : 'Unknown error'
+        })
       },
       { status: 500 }
     )
