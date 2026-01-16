@@ -10,7 +10,7 @@ import {
 import { Button, ProgressBar, Textarea, AmountSlider } from '@/components/ui'
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput'
 import StepIndicator from '@/components/ui/StepIndicator'
-import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS } from '@/types'
+import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS, MAX_LOAN_DURATION } from '@/types'
 import { saveSubmission, saveDraft, getDraft, clearDraft, validatePhone, validateEmail, formatCurrency } from '@/lib/utils'
 import {
   saveSubmissionToIndexedDB,
@@ -24,9 +24,10 @@ import {
 import confetti from 'canvas-confetti'
 import { useToast } from '@/components/ui/Toast'
 
-// Loan amount validation constants
+// Loan amount validation constants - 5M to 20M DZD
 const MIN_LOAN_AMOUNT = 5_000_000
 const MAX_LOAN_AMOUNT = 20_000_000
+const LOAN_STEP = 500_000
 
 /**
  * Validate loan amount
@@ -45,6 +46,25 @@ const validateLoanAmount = (amount: number): { valid: boolean; error?: string } 
     return {
       valid: false,
       error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج`
+    }
+  }
+  return { valid: true }
+}
+
+/**
+ * Validate loan duration (max 18 months)
+ */
+const validateLoanDuration = (duration: number): { valid: boolean; error?: string } => {
+  if (!duration || isNaN(duration)) {
+    return { valid: false, error: 'مدة القرض مطلوبة' }
+  }
+  if (duration < 1) {
+    return { valid: false, error: 'مدة القرض يجب أن تكون شهر واحد على الأقل' }
+  }
+  if (duration > MAX_LOAN_DURATION) {
+    return {
+      valid: false,
+      error: `مدة القرض القصوى هي ${MAX_LOAN_DURATION} شهراً`
     }
   }
   return { valid: true }
@@ -167,6 +187,11 @@ const CleanForm: React.FC = () => {
       if (!amountValidation.valid) {
         newErrors.requestedAmount = amountValidation.error
       }
+      // Validate loan duration (max 18 months)
+      const durationValidation = validateLoanDuration(formData.loanDuration)
+      if (!durationValidation.valid) {
+        newErrors.loanDuration = durationValidation.error
+      }
     }
 
     setErrors(newErrors)
@@ -246,11 +271,10 @@ const CleanForm: React.FC = () => {
         const savedTo = responseData.savedTo as string[] | undefined
 
         if (persisted === 'local') {
-          toast.info('تم حفظ طلبك محلياً لعدم توفر الاتصال. سنحاول المزامنة تلقائياً.', 7000)
+          toast.info('تم حفظ طلبك محلياً. سيتم المزامنة تلقائياً عند توفر الاتصال.', 5000)
         } else {
-          // Show where data was saved
-          const storageLocations = savedTo?.join(' + ') || 'الخادم'
-          toast.success(`تم استلام طلبك بنجاح! (محفوظ في: ${storageLocations})`, 5000)
+          // Clean success message without storage details
+          toast.success('تم استلام طلبك بنجاح! سنتصل بك قريباً.', 5000)
         }
 
         // Celebration confetti
@@ -647,17 +671,26 @@ const CleanForm: React.FC = () => {
                 {errors.financingType && <p className="mt-1 text-sm text-status-error">{errors.financingType}</p>}
               </div>
 
-              {/* Premium Amount Slider Component */}
+              {/* Premium Amount Slider Component with Loan Duration */}
               <div className="mt-6">
                 <AmountSlider
                   min={MIN_LOAN_AMOUNT}
                   max={MAX_LOAN_AMOUNT}
-                  step={500000}
+                  step={LOAN_STEP}
                   value={formData.requestedAmount}
                   onChange={(value) => updateField('requestedAmount', value)}
                   error={errors.requestedAmount}
                   showTooltip={true}
+                  loanDuration={formData.loanDuration}
+                  onDurationChange={(duration) => updateField('loanDuration', duration)}
+                  showDuration={true}
                 />
+                {errors.loanDuration && (
+                  <p className="mt-2 text-sm text-status-error flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.loanDuration}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -706,6 +739,13 @@ const CleanForm: React.FC = () => {
                   <div>
                     <p className="text-sm text-luxury-darkGray mb-1 font-medium">نوع التمويل</p>
                     <p className="text-luxury-charcoal font-bold">{formData.financingType}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">مدة القرض</p>
+                    <p className="text-luxury-charcoal font-bold">
+                      {formData.loanDuration} {formData.loanDuration === 1 ? 'شهر' : formData.loanDuration <= 10 ? 'أشهر' : 'شهر'}
+                    </p>
                   </div>
 
                   <div className="md:col-span-2">

@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion'
+import React, { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
-import { DollarSign, Info, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react'
+import { DollarSign, AlertCircle, CheckCircle2, Sparkles, Calendar, Edit3 } from 'lucide-react'
+import { MAX_LOAN_DURATION } from '@/types'
 
 export interface AmountSliderProps {
   min?: number
@@ -14,40 +15,26 @@ export interface AmountSliderProps {
   label?: string
   className?: string
   showTooltip?: boolean
-  estimatedMonthlyPayment?: (amount: number) => number
   error?: string
   disabled?: boolean
-}
-
-// Interest rate for estimation (can be made configurable)
-const ANNUAL_INTEREST_RATE = 0.095 // 9.5%
-const LOAN_TERM_MONTHS = 60 // 5 years
-
-/**
- * Calculate estimated monthly payment
- */
-function calculateMonthlyPayment(principal: number): number {
-  const monthlyRate = ANNUAL_INTEREST_RATE / 12
-  const payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, LOAN_TERM_MONTHS)) / 
-                  (Math.pow(1 + monthlyRate, LOAN_TERM_MONTHS) - 1)
-  return Math.round(payment)
+  // Loan duration props
+  loanDuration?: number
+  onDurationChange?: (duration: number) => void
+  showDuration?: boolean
 }
 
 /**
- * Ultra-Premium Amount Slider Component
+ * Ultra-Premium Amount Slider with Manual Input
  * 
  * Features:
- * - Dual input (slider + numeric field) synchronized
- * - Full accessibility: ARIA labels, keyboard navigation, screen reader support
- * - Touch-friendly for mobile devices
- * - Real-time value tooltip with smooth animations
- * - Estimated monthly payment display
- * - Real-time validation feedback
- * - RTL (Arabic) support
- * - Gradient backgrounds with premium design
- * - Framer Motion spring animations
+ * - Fully functional range slider (5M - 20M DZD)
+ * - Manual input field for typing the exact amount
+ * - Luxury grayscale gradients with blue/gold accents
+ * - Smooth animations with Framer Motion
+ * - Full ARIA accessibility
+ * - Integrated loan duration selector (1-18 months)
  */
-const AmountSlider: React.FC<AmountSliderProps> = ({
+const AmountSlider: React.FC<AmountSliderProps> = memo(({
   min = 5_000_000,
   max = 20_000_000,
   step = 500_000,
@@ -56,87 +43,84 @@ const AmountSlider: React.FC<AmountSliderProps> = ({
   label = 'المبلغ المطلوب',
   className = '',
   showTooltip = true,
-  estimatedMonthlyPayment = calculateMonthlyPayment,
   error,
   disabled = false,
+  loanDuration = 12,
+  onDurationChange,
+  showDuration = true,
 }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [isFocused, setIsFocused] = useState(false)
-  const [inputValue, setInputValue] = useState(value.toString())
-  const [showInfo, setShowInfo] = useState(false)
-  const [showValueBubble, setShowValueBubble] = useState(false)
-  const sliderRef = useRef<HTMLDivElement>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [inputValue, setInputValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  
-  // Spring animation for smooth value changes
-  const springValue = useSpring(value, { stiffness: 300, damping: 30 })
-  const animatedPercentage = useTransform(springValue, [min, max], [0, 100])
-  
+  const sliderRef = useRef<HTMLInputElement>(null)
+
   // Calculate percentage for slider fill
   const percentage = useMemo(() => {
     const clamped = Math.min(max, Math.max(min, value))
     return ((clamped - min) / (max - min)) * 100
   }, [value, min, max])
-  
-  // Update spring when value changes
-  useEffect(() => {
-    springValue.set(value)
-  }, [value, springValue])
-  
-  // Sync input value with slider value
-  useEffect(() => {
-    if (!isFocused) {
-      setInputValue(value.toLocaleString('ar-DZ'))
-    }
-  }, [value, isFocused])
-  
-  // Show value bubble when dragging
-  useEffect(() => {
-    if (isDragging) {
-      setShowValueBubble(true)
-    } else {
-      const timer = setTimeout(() => setShowValueBubble(false), 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [isDragging, value])
-  
+
+  // Format value for display
+  const formattedValue = useMemo(() => {
+    return new Intl.NumberFormat('fr-DZ', {
+      style: 'decimal',
+      maximumFractionDigits: 0,
+    }).format(value)
+  }, [value])
+
+  // Validation state
+  const isValid = value >= min && value <= max
+
   // Handle slider change
   const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value)
     onChange(newValue)
   }, [onChange])
-  
-  // Handle numeric input change
+
+  // Handle manual input
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^\d]/g, '')
     setInputValue(raw)
-    
-    const numValue = parseInt(raw, 10)
+  }, [])
+
+  // Handle input blur - apply the value
+  const handleInputBlur = useCallback(() => {
+    setIsEditing(false)
+    const numValue = parseInt(inputValue, 10)
     if (!isNaN(numValue)) {
-      // Clamp value to min/max
+      // Clamp to valid range
       const clampedValue = Math.min(max, Math.max(min, numValue))
       onChange(clampedValue)
     }
-  }, [min, max, onChange])
-  
-  // Handle input blur - format the number
-  const handleInputBlur = useCallback(() => {
-    setIsFocused(false)
-    // Ensure value is within bounds
-    const clampedValue = Math.min(max, Math.max(min, value))
-    if (clampedValue !== value) {
-      onChange(clampedValue)
+    setInputValue('')
+  }, [inputValue, min, max, onChange])
+
+  // Handle input key press
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleInputBlur()
     }
-    setInputValue(clampedValue.toLocaleString('ar-DZ'))
-  }, [value, min, max, onChange])
-  
-  // Handle keyboard navigation for slider
+    if (e.key === 'Escape') {
+      setIsEditing(false)
+      setInputValue('')
+    }
+  }, [handleInputBlur])
+
+  // Start editing mode
+  const startEditing = useCallback(() => {
+    setIsEditing(true)
+    setInputValue(value.toString())
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }, [value])
+
+  // Handle keyboard navigation on slider
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (disabled) return
-    
+
     let newValue = value
     const largeStep = step * 5
-    
+
     switch (e.key) {
       case 'ArrowRight':
       case 'ArrowUp':
@@ -167,313 +151,325 @@ const AmountSlider: React.FC<AmountSliderProps> = ({
       default:
         return
     }
-    
+
     onChange(newValue)
   }, [value, min, max, step, onChange, disabled])
-  
-  // Calculate thumb position accounting for thumb width
-  const thumbPosition = useMemo(() => {
-    const thumbWidth = 32 // 2rem = 32px
-    return `calc(${percentage}% - ${(percentage / 100) * thumbWidth}px)`
-  }, [percentage])
-  
-  // Validation state
-  const isValid = value >= min && value <= max
-  const monthlyPayment = estimatedMonthlyPayment(value)
-  
+
   // Quick amount buttons
   const quickAmounts = useMemo(() => [
-    { label: 'الحد الأدنى', value: min, icon: '💰' },
-    { label: '10 مليون', value: 10_000_000, icon: '📈' },
-    { label: '15 مليون', value: 15_000_000, icon: '🎯' },
-    { label: 'الحد الأقصى', value: max, icon: '🏆' },
-  ], [min, max])
+    { label: '5 مليون', value: 5_000_000 },
+    { label: '10 مليون', value: 10_000_000 },
+    { label: '15 مليون', value: 15_000_000 },
+    { label: '20 مليون', value: 20_000_000 },
+  ], [])
+
+  // Generate duration options (1-18 months)
+  const durationOptions = useMemo(() => {
+    return Array.from({ length: MAX_LOAN_DURATION }, (_, i) => i + 1)
+  }, [])
 
   return (
     <div className={`w-full ${className}`}>
-      {/* Label with info button */}
+      {/* Label */}
       <div className="flex items-center justify-between mb-4">
-        <label 
-          id="amount-slider-label"
-          className="flex items-center gap-2 text-sm font-semibold text-luxury-charcoal"
-        >
-          <Sparkles className="w-4 h-4 text-premium-gold" />
+        <label className="flex items-center gap-2 text-lg font-bold text-luxury-charcoal">
+          <Sparkles className="w-5 h-5 text-premium-gold" />
           {label}
+          <span className="text-status-error">*</span>
         </label>
-        <button
-          type="button"
-          onClick={() => setShowInfo(!showInfo)}
-          className="p-1.5 text-luxury-darkGray hover:text-elegant-blue transition-colors focus:outline-none focus:ring-2 focus:ring-elegant-blue/50 rounded-full hover:bg-elegant-blue/5"
-          aria-label="معلومات حول المبلغ"
-        >
-          <Info className="w-4 h-4" />
-        </button>
       </div>
-      
-      {/* Info tooltip */}
-      <AnimatePresence>
-        {showInfo && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            className="p-4 bg-gradient-to-r from-elegant-blue/5 via-elegant-blue/10 to-premium-gold/5 border border-elegant-blue/20 rounded-2xl text-sm text-luxury-charcoal overflow-hidden"
-          >
-            <p className="leading-relaxed">💡 نصيحة: اختر المبلغ الذي يناسب قدرتك على السداد الشهري. القسط المقدر يعتمد على فترة سداد 5 سنوات بمعدل فائدة 9.5%.</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Quick amount buttons */}
-      <div className="flex flex-wrap gap-2 mb-6">
+
+      {/* Quick Amount Buttons */}
+      <div className="grid grid-cols-4 gap-2 mb-6">
         {quickAmounts.map((qa) => (
           <motion.button
             key={qa.value}
             type="button"
             onClick={() => onChange(qa.value)}
             disabled={disabled}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className={`px-4 py-2 text-xs font-medium rounded-xl transition-all duration-200
-              ${value === qa.value 
-                ? 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white shadow-lg shadow-elegant-blue/25' 
-                : 'bg-luxury-offWhite text-luxury-charcoal hover:bg-elegant-blue/10 hover:text-elegant-blue border border-luxury-gray/50'
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className={`
+              px-3 py-3 text-sm font-bold rounded-xl transition-all duration-200
+              ${value === qa.value
+                ? 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white shadow-lg shadow-elegant-blue/30'
+                : 'bg-luxury-offWhite text-luxury-charcoal hover:bg-elegant-blue/10 hover:text-elegant-blue border-2 border-luxury-gray/50 hover:border-elegant-blue/50'
               }
               focus:outline-none focus:ring-2 focus:ring-elegant-blue/50
-              disabled:opacity-50 disabled:cursor-not-allowed`}
+              disabled:opacity-50 disabled:cursor-not-allowed
+            `}
           >
-            <span className="mr-1">{qa.icon}</span> {qa.label}
+            {qa.label}
           </motion.button>
         ))}
       </div>
-      
-      {/* Main amount display with input */}
-      <div className="mb-6">
-        <div className="relative">
-          <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-            <DollarSign className="w-5 h-5 text-elegant-blue" />
-          </div>
-          <input
-            ref={inputRef}
-            type="text"
-            inputMode="numeric"
-            value={inputValue}
-            onChange={handleInputChange}
-            onFocus={() => {
-              setIsFocused(true)
-              setInputValue(value.toString())
-            }}
-            onBlur={handleInputBlur}
-            disabled={disabled}
-            aria-labelledby="amount-slider-label"
-            aria-describedby="amount-description amount-error"
-            aria-invalid={!!error || !isValid}
-            className={`w-full text-center text-2xl md:text-3xl font-bold py-4 px-12 
-              bg-luxury-offWhite border-2 rounded-2xl transition-all duration-200
-              focus:outline-none focus:ring-4
-              ${error || !isValid
-                ? 'border-status-error focus:border-status-error focus:ring-status-error/20 text-status-error'
-                : 'border-luxury-mediumGray/30 focus:border-elegant-blue focus:ring-elegant-blue/20 text-elegant-blue'
-              }
-              disabled:opacity-50 disabled:cursor-not-allowed`}
-          />
-          <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-            <span className="text-sm font-medium text-luxury-darkGray">د.ج</span>
-          </div>
-        </div>
-        
-        {/* Validation status */}
-        <div className="flex items-center justify-center gap-2 mt-2">
-          {isValid ? (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-1 text-status-success"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-xs font-medium">المبلغ صحيح</span>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-1 text-status-error"
-            >
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-xs font-medium">
-                {value < min ? 'أقل من الحد الأدنى' : 'أكثر من الحد الأقصى'}
-              </span>
-            </motion.div>
-          )}
-        </div>
-      </div>
-      
-      {/* Slider track */}
-      <div 
-        ref={sliderRef}
-        className="relative mb-4"
-        role="presentation"
+
+      {/* Main Amount Display with Manual Input */}
+      <motion.div
+        className="mb-8"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        {/* Min/Max labels */}
+        <div
+          className={`
+            relative p-6 rounded-2xl border-2 transition-all duration-300 cursor-pointer
+            ${isDragging || isEditing
+              ? 'border-elegant-blue bg-gradient-to-br from-elegant-blue/5 via-white to-premium-gold/5 shadow-lg shadow-elegant-blue/20'
+              : error || !isValid
+                ? 'border-status-error bg-status-error/5'
+                : 'border-luxury-gray bg-gradient-to-br from-luxury-offWhite via-white to-luxury-lightGray hover:border-elegant-blue/50'
+            }
+          `}
+          onClick={!isEditing ? startEditing : undefined}
+        >
+          {/* Edit Icon */}
+          <div className="absolute top-4 left-4">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="p-2 rounded-full bg-elegant-blue/10 text-elegant-blue"
+            >
+              <Edit3 className="w-4 h-4" />
+            </motion.div>
+          </div>
+
+          {/* Amount Display / Input */}
+          <div className="text-center">
+            {isEditing ? (
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  inputMode="numeric"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder={formattedValue}
+                  className="w-full text-center text-4xl md:text-5xl font-bold bg-transparent border-none outline-none text-elegant-blue placeholder:text-luxury-gray"
+                  autoFocus
+                />
+                <p className="text-sm text-luxury-darkGray mt-2">
+                  اكتب المبلغ ثم اضغط Enter
+                </p>
+              </div>
+            ) : (
+              <>
+                <motion.p
+                  key={value}
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold bg-clip-text text-transparent"
+                >
+                  {formattedValue}
+                </motion.p>
+                <p className="text-lg font-medium text-luxury-darkGray mt-2">دينار جزائري</p>
+                <p className="text-xs text-luxury-mediumGray mt-1">
+                  اضغط للكتابة يدوياً
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Validation Status */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            {isValid ? (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex items-center gap-2 text-status-success bg-status-success/10 px-4 py-1.5 rounded-full"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="text-sm font-medium">المبلغ صحيح</span>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex items-center gap-2 text-status-error bg-status-error/10 px-4 py-1.5 rounded-full"
+              >
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {value < min ? `الحد الأدنى ${formatCurrency(min)}` : `الحد الأقصى ${formatCurrency(max)}`}
+                </span>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Slider Section */}
+      <div className="mb-8">
+        {/* Min/Max Labels */}
         <div className="flex justify-between items-center mb-3">
-          <span className="text-xs font-medium text-luxury-darkGray px-2 py-1 bg-luxury-offWhite rounded-lg">
+          <span className="text-sm font-semibold text-luxury-darkGray px-3 py-1.5 bg-luxury-offWhite rounded-xl border border-luxury-gray/30">
             {formatCurrency(min)}
           </span>
-          <span className="text-xs font-medium text-luxury-darkGray px-2 py-1 bg-luxury-offWhite rounded-lg">
+          <span className="text-xs text-luxury-mediumGray">اسحب المؤشر لتحديد المبلغ</span>
+          <span className="text-sm font-semibold text-luxury-darkGray px-3 py-1.5 bg-luxury-offWhite rounded-xl border border-luxury-gray/30">
             {formatCurrency(max)}
           </span>
         </div>
-        
-        {/* Track container with premium gradient */}
-        <div className="relative h-4 bg-gradient-to-r from-luxury-lightGray via-luxury-gray to-luxury-lightGray rounded-full shadow-inner overflow-hidden">
-          {/* Active fill with premium gradient */}
+
+        {/* Slider Track Container */}
+        <div className="relative h-6 flex items-center">
+          {/* Background Track */}
+          <div className="absolute inset-0 h-3 top-1.5 bg-gradient-to-r from-luxury-lightGray via-luxury-gray to-luxury-lightGray rounded-full shadow-inner" />
+
+          {/* Active Fill */}
           <motion.div
-            className="absolute h-full rounded-full bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold shadow-lg"
+            className="absolute h-3 top-1.5 left-0 rounded-full bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold shadow-md"
             style={{ width: `${percentage}%` }}
             animate={{ width: `${percentage}%` }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           />
-          
-          {/* Shimmer effect on the active fill */}
+
+          {/* Shimmer Effect */}
           <motion.div
-            className="absolute h-full w-20 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-            animate={{ x: ['-100%', '500%'] }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity, 
-              repeatDelay: 2,
-              ease: 'easeInOut' 
-            }}
+            className="absolute h-3 top-1.5 left-0 rounded-full overflow-hidden"
             style={{ width: `${percentage}%` }}
-          />
-          
-          {/* Glow effect when dragging */}
-          <AnimatePresence>
-            {isDragging && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.6 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-gradient-to-r from-elegant-blue/30 via-transparent to-transparent rounded-full"
-                style={{ width: `${percentage}%` }}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-        
-        {/* Native range input (invisible but accessible) */}
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={handleSliderChange}
-          onMouseDown={() => setIsDragging(true)}
-          onMouseUp={() => setIsDragging(false)}
-          onTouchStart={() => setIsDragging(true)}
-          onTouchEnd={() => setIsDragging(false)}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          aria-labelledby="amount-slider-label"
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuenow={value}
-          aria-valuetext={`${formatCurrency(value)}`}
-          className="absolute top-3 left-0 w-full h-4 opacity-0 cursor-pointer z-20 
-            disabled:cursor-not-allowed touch-pan-y"
-        />
-        
-        {/* Custom premium thumb */}
-        <motion.div
-          className="absolute top-1/2 mt-3 w-8 h-8 -translate-y-1/2 pointer-events-none z-10"
-          style={{ left: thumbPosition }}
-          animate={{
-            scale: isDragging ? 1.25 : 1,
-            boxShadow: isDragging
-              ? '0 10px 30px -5px rgba(30, 58, 138, 0.5)'
-              : '0 6px 20px -4px rgba(30, 58, 138, 0.35)',
-          }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        >
-          <div className="w-full h-full bg-white rounded-full shadow-xl border-[3px] border-elegant-blue flex items-center justify-center ring-4 ring-elegant-blue/10">
-            <motion.div 
-              className="w-3 h-3 rounded-full bg-gradient-to-br from-elegant-blue via-elegant-blue-light to-premium-gold"
-              animate={{ rotate: isDragging ? 360 : 0 }}
-              transition={{ duration: 0.5 }}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+              animate={{ x: ['-100%', '200%'] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatDelay: 3,
+                ease: 'easeInOut'
+              }}
             />
-          </div>
-          
-          {/* Value bubble above thumb */}
-          <AnimatePresence>
-            {(showValueBubble || isDragging) && (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 5, scale: 0.9 }}
-                className="absolute -top-14 left-1/2 -translate-x-1/2 bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white px-4 py-2 rounded-xl text-sm font-bold shadow-xl whitespace-nowrap"
-              >
-                {formatCurrency(value)}
-                {/* Arrow pointing down */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-elegant-blue" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+          </motion.div>
+
+          {/* Native Range Input */}
+          <input
+            ref={sliderRef}
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={handleSliderChange}
+            onMouseDown={() => setIsDragging(true)}
+            onMouseUp={() => setIsDragging(false)}
+            onTouchStart={() => setIsDragging(true)}
+            onTouchEnd={() => setIsDragging(false)}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            aria-label="Sélectionnez le montant du prêt"
+            aria-valuemin={min}
+            aria-valuemax={max}
+            aria-valuenow={value}
+            aria-valuetext={formatCurrency(value)}
+            role="slider"
+            className="
+              absolute inset-0 w-full h-6 opacity-0 cursor-pointer z-10
+              disabled:cursor-not-allowed
+            "
+            style={{ touchAction: 'none' }}
+          />
+
+          {/* Custom Thumb */}
+          <motion.div
+            className="absolute top-1/2 -translate-y-1/2 pointer-events-none z-20"
+            style={{
+              left: `calc(${percentage}% - ${percentage * 0.28}px)`,
+            }}
+            animate={{
+              scale: isDragging ? 1.3 : 1,
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          >
+            <div
+              className={`
+                w-7 h-7 rounded-full bg-white shadow-xl border-[3px] border-elegant-blue 
+                flex items-center justify-center
+                ${isDragging ? 'ring-4 ring-elegant-blue/30' : 'ring-2 ring-elegant-blue/10'}
+              `}
+            >
+              <div className="w-3 h-3 rounded-full bg-gradient-to-br from-elegant-blue to-premium-gold" />
+            </div>
+
+            {/* Tooltip on Drag */}
+            <AnimatePresence>
+              {isDragging && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 5, scale: 0.9 }}
+                  className="absolute -top-12 left-1/2 -translate-x-1/2 bg-elegant-blue text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-sm font-bold"
+                >
+                  {formatCurrency(value)}
+                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-elegant-blue" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+
+        {/* Step Indicator */}
+        <p className="text-center text-xs text-luxury-mediumGray mt-3">
+          الخطوة: {formatCurrency(step)}
+        </p>
       </div>
-      
-      {/* Estimated monthly payment tooltip */}
-      {showTooltip && (
+
+      {/* Loan Duration Selector */}
+      {showDuration && onDurationChange && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-6 p-5 bg-gradient-to-br from-elegant-blue/5 via-elegant-blue/10 to-premium-gold/10 
-            border border-elegant-blue/20 rounded-2xl backdrop-blur-sm relative overflow-hidden"
+          transition={{ delay: 0.1 }}
+          className="mt-8 p-6 bg-gradient-to-r from-luxury-offWhite via-white to-luxury-lightGray rounded-2xl border border-luxury-gray/30"
         >
-          {/* Decorative background pattern */}
-          <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_1px_1px,_#1E3A8A_1px,_transparent_0)] bg-[size:20px_20px]" />
-          
-          <div className="relative flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <p className="text-xs text-luxury-darkGray mb-1.5 flex items-center gap-1">
-                <DollarSign className="w-3 h-3" />
-                القسط الشهري المقدر
-              </p>
-              <motion.p 
-                key={monthlyPayment}
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="text-xl font-bold bg-gradient-to-r from-elegant-blue to-elegant-blue-light bg-clip-text text-transparent"
+          <label
+            htmlFor="loan-duration"
+            className="flex items-center gap-2 text-lg font-bold text-luxury-charcoal mb-4"
+          >
+            <Calendar className="w-5 h-5 text-elegant-blue" />
+            مدة القرض (بالشهور)
+            <span className="text-status-error">*</span>
+            <span className="text-sm font-normal text-luxury-darkGray mr-2">
+              (أقصى حد: {MAX_LOAN_DURATION} شهر)
+            </span>
+          </label>
+
+          <div className="grid grid-cols-6 gap-2">
+            {durationOptions.map((month) => (
+              <motion.button
+                key={month}
+                type="button"
+                onClick={() => onDurationChange(month)}
+                disabled={disabled}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`
+                  py-3 text-sm font-bold rounded-xl transition-all duration-200
+                  ${loanDuration === month
+                    ? 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white shadow-lg'
+                    : 'bg-white text-luxury-charcoal hover:bg-elegant-blue/10 border border-luxury-gray/50'
+                  }
+                  focus:outline-none focus:ring-2 focus:ring-elegant-blue/50
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
               >
-                {formatCurrency(monthlyPayment)}
-              </motion.p>
-            </div>
-            <div className="h-12 w-px bg-gradient-to-b from-transparent via-luxury-gray to-transparent" />
-            <div className="text-right flex-1">
-              <p className="text-xs text-luxury-darkGray mb-1.5">مدة السداد</p>
-              <p className="text-lg font-semibold text-luxury-charcoal">5 سنوات</p>
-              <p className="text-xs text-luxury-mediumGray">(60 شهر)</p>
-            </div>
+                {month}
+              </motion.button>
+            ))}
           </div>
-          <div className="relative mt-4 pt-3 border-t border-luxury-gray/30">
-            <p className="text-xs text-luxury-darkGray flex items-center gap-1.5">
-              <AlertCircle className="w-3 h-3" />
-              التقدير للإرشاد فقط. القسط الفعلي يعتمد على الموافقة والشروط.
-            </p>
-          </div>
+
+          <p className="text-center text-sm text-luxury-darkGray mt-4">
+            المدة المختارة: <span className="font-bold text-elegant-blue">{loanDuration} {loanDuration === 1 ? 'شهر' : loanDuration <= 10 ? 'أشهر' : 'شهر'}</span>
+          </p>
         </motion.div>
       )}
-      
-      {/* Error message */}
+
+      {/* Error Message */}
       <AnimatePresence>
         {error && (
           <motion.p
-            id="amount-error"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-status-error flex items-center gap-1"
+            className="mt-4 text-sm text-status-error flex items-center gap-2 bg-status-error/10 px-4 py-2 rounded-lg"
             role="alert"
           >
             <AlertCircle className="w-4 h-4" />
@@ -481,14 +477,16 @@ const AmountSlider: React.FC<AmountSliderProps> = ({
           </motion.p>
         )}
       </AnimatePresence>
-      
-      {/* Hidden description for screen readers */}
-      <p id="amount-description" className="sr-only">
-        اختر المبلغ المطلوب بين {formatCurrency(min)} و {formatCurrency(max)}. 
-        استخدم مفاتيح الأسهم للتعديل بخطوات {formatCurrency(step)}.
+
+      {/* Screen Reader Description */}
+      <p className="sr-only">
+        اختر المبلغ المطلوب بين {formatCurrency(min)} و {formatCurrency(max)}.
+        استخدم مفاتيح الأسهم للتعديل أو اضغط على المبلغ للكتابة يدوياً.
       </p>
     </div>
   )
-}
+})
+
+AmountSlider.displayName = 'AmountSlider'
 
 export default AmountSlider

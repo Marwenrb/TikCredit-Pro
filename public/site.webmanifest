@@ -1,27 +1,36 @@
 {
-  "name": "TikCredit Pro - تمويل احترافي",
+  "name": "TikCredit Pro",
   "short_name": "TikCredit",
-  "description": "خدمة تمويل احترافية وسريعة",
+  "description": "خدمة تمويل احترافية وسريعة - Professional financing service",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#1E3A8A",
+  "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "theme_color": "#1E3A8A",
-  "background_color": "#FFFFFF",
-  "display": "standalone",
-  "start_url": "/",
-  "orientation": "portrait-primary"
+  "categories": [
+    "finance",
+    "business"
+  ],
+  "lang": "ar",
+  "dir": "rtl"
 }
-
-
-
-
-

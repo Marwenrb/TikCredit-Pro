@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A8A"/>
+      <stop offset="100%" style="stop-color:#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B"/>
+      <stop offset="100%" style="stop-color:#FCD34D"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGrad)"/>
+  <!-- Credit Card Shape -->
+  <rect x="100" y="180" width="312" height="190" rx="20" ry="20" fill="white" opacity="0.95"/>
+  <!-- Card Stripe -->
+  <rect x="100" y="220" width="312" height="40" fill="url(#goldGrad)"/>
+  <!-- TC Logo Text -->
+  <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="72" font-weight="900" fill="url(#bgGrad)" text-anchor="middle">TC</text>
+  <!-- Chip -->
+  <rect x="130" y="280" width="50" height="40" rx="6" fill="url(#goldGrad)"/>
+  <line x1="140" y1="290" x2="170" y2="290" stroke="#B45309" stroke-width="2"/>
+  <line x1="140" y1="300" x2="170" y2="300" stroke="#B45309" stroke-width="2"/>
+  <line x1="140" y1="310" x2="170" y2="310" stroke="#B45309" stroke-width="2"/>
+  <!-- Star Accent -->
+  <circle cx="370" cy="300" r="20" fill="url(#goldGrad)"/>
+</svg>

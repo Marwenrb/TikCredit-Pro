@@ -14,7 +14,7 @@ function generateUUID(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID()
   }
-  
+
   // Fallback: generate UUID v4 manually
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
@@ -127,7 +127,7 @@ export function getStatistics(submissions: Submission[]) {
   submissions.forEach(s => {
     wilayaDistribution[s.data.wilaya] = (wilayaDistribution[s.data.wilaya] || 0) + 1
     financingDistribution[s.data.financingType] = (financingDistribution[s.data.financingType] || 0) + 1
-    
+
     const date = new Date(s.timestamp).toISOString().split('T')[0]
     dailySubmissions[date] = (dailySubmissions[date] || 0) + 1
   })
@@ -187,7 +187,7 @@ export function exportToCSV(submissions: Submission[]): void {
       hour: '2-digit',
       minute: '2-digit'
     }),
-    s.data.isExistingCustomer === 'نعم' ? 'عميل حالي' : 
+    s.data.isExistingCustomer === 'نعم' ? 'عميل حالي' :
       s.data.isExistingCustomer === 'لا' ? 'عميل جديد' : 'غير محدد',
     s.data.fullName,
     s.data.phone,
@@ -195,10 +195,10 @@ export function exportToCSV(submissions: Submission[]): void {
     s.data.preferredContactTime || 'غير محدد',
     s.data.wilaya,
     s.data.monthlyIncomeRange || 'غير محدد',
-    s.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : 
+    s.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' :
       s.data.salaryReceiveMethod === 'بنك' ? 'حساب بنكي' : 'غير محدد',
-    s.data.profession ? 
-      (s.data.profession === 'أخرى (حدد)' && s.data.customProfession ? 
+    s.data.profession ?
+      (s.data.profession === 'أخرى (حدد)' && s.data.customProfession ?
         s.data.customProfession : s.data.profession) : 'غير محدد',
     s.data.financingType,
     s.data.requestedAmount.toLocaleString('ar-DZ'),
@@ -208,7 +208,7 @@ export function exportToCSV(submissions: Submission[]): void {
   // Add summary statistics at the end
   const totalAmount = submissions.reduce((sum, s) => sum + s.data.requestedAmount, 0)
   const avgAmount = totalAmount / submissions.length
-  
+
   rows.push([]) // Empty row
   rows.push([
     'الإحصائيات',
@@ -340,47 +340,47 @@ export function debounce<T extends (...args: any[]) => any>(
 
 export async function exportToPDF(submissions: Submission[]): Promise<void> {
   if (typeof window === 'undefined' || submissions.length === 0) return
-  
+
   try {
     // Dynamic imports to avoid SSR issues
     const jsPDF = (await import('jspdf')).default
     const autoTable = (await import('jspdf-autotable')).default
-    
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     })
-    
+
     // Add custom font for Arabic support (using built-in fonts for now)
     doc.setFont('helvetica')
-    
+
     // Title
     doc.setFontSize(20)
     doc.setTextColor(212, 175, 55) // Gold color
     doc.text('TikCredit Pro', 105, 20, { align: 'center' })
-    
+
     // Subtitle
     doc.setFontSize(14)
     doc.setTextColor(100, 100, 100)
     doc.text('تقرير الطلبات المقدمة', 105, 30, { align: 'center' })
-    
+
     // Date
     doc.setFontSize(10)
     doc.text(`التاريخ: ${new Date().toLocaleDateString('ar-DZ')}`, 20, 40)
     doc.text(`عدد الطلبات: ${submissions.length}`, 20, 45)
-    
+
     // Statistics section
     const stats = getStatistics(submissions)
     doc.setFontSize(12)
     doc.setTextColor(50, 50, 50)
     doc.text('الإحصائيات:', 20, 55)
-    
+
     // Draw statistics boxes
     const statsY = 60
     const boxWidth = 60
     const boxHeight = 20
-    
+
     // Total requests box
     doc.setFillColor(212, 175, 55, 30)
     doc.rect(20, statsY, boxWidth, boxHeight, 'F')
@@ -389,7 +389,7 @@ export async function exportToPDF(submissions: Submission[]): Promise<void> {
     doc.text('إجمالي الطلبات', 50, statsY + 7, { align: 'center' })
     doc.setFontSize(14)
     doc.text(stats.total.toString(), 50, statsY + 15, { align: 'center' })
-    
+
     // Average amount box
     doc.setFillColor(212, 175, 55, 30)
     doc.rect(90, statsY, boxWidth, boxHeight, 'F')
@@ -397,16 +397,16 @@ export async function exportToPDF(submissions: Submission[]): Promise<void> {
     doc.text('متوسط المبلغ', 120, statsY + 7, { align: 'center' })
     doc.setFontSize(14)
     doc.text(formatCurrency(stats.avgAmount), 120, statsY + 15, { align: 'center' })
-    
+
     // Add chart placeholder (since actual charting would require canvas)
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
     doc.text('توزيع الطلبات حسب الولاية:', 20, statsY + 30)
-    
+
     // Create simple bar chart representation
     let chartY = statsY + 35
     const maxCount = Math.max(...Object.values(stats.wilayaDistribution))
-    
+
     Object.entries(stats.wilayaDistribution).slice(0, 5).forEach(([wilaya, count]) => {
       const barWidth = (count / maxCount) * 100
       doc.setFillColor(212, 175, 55, 60)
@@ -416,66 +416,66 @@ export async function exportToPDF(submissions: Submission[]): Promise<void> {
       doc.text(`${wilaya}: ${count}`, 125, chartY + 4)
       chartY += 7
     })
-    
+
     // Table data with profession
     const tableData = submissions.map((submission, index) => [
       (index + 1).toString(),
       submission.data.fullName,
       submission.data.phone,
       submission.data.wilaya,
-      submission.data.profession ? 
-        (submission.data.profession === 'أخرى (حدد)' && submission.data.customProfession ? 
+      submission.data.profession ?
+        (submission.data.profession === 'أخرى (حدد)' && submission.data.customProfession ?
           submission.data.customProfession : submission.data.profession) : 'غير محدد',
       formatCurrency(submission.data.requestedAmount),
       new Date(submission.timestamp).toLocaleDateString('ar-DZ')
     ])
-    
-    // Add table
-    ;(doc as any).autoTable({
-      startY: chartY + 10,
-      head: [['#', 'الاسم', 'الهاتف', 'الولاية', 'المهنة', 'المبلغ', 'التاريخ']],
-      body: tableData,
-      styles: {
-        font: 'helvetica',
-        fontSize: 9,
-        cellPadding: 3,
-        lineColor: [212, 175, 55],
-        lineWidth: 0.1
-      },
-      headStyles: {
-        fillColor: [212, 175, 55],
-        textColor: [255, 255, 255],
-        fontSize: 10,
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [250, 250, 250]
-      },
-      columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 35 },
-        3: { cellWidth: 35 },
-        4: { cellWidth: 35, halign: 'right' },
-        5: { cellWidth: 30, halign: 'center' }
-      },
-      margin: { left: 20, right: 20 },
-      didDrawPage: function(data: any) {
-        // Footer
-        doc.setFontSize(8)
-        doc.setTextColor(150, 150, 150)
-        doc.text(
-          `صفحة ${data.pageNumber} من ${doc.getNumberOfPages()}`,
-          105,
-          doc.internal.pageSize.height - 10,
-          { align: 'center' }
-        )
-      }
-    })
-    
+
+      // Add table
+      ; (doc as any).autoTable({
+        startY: chartY + 10,
+        head: [['#', 'الاسم', 'الهاتف', 'الولاية', 'المهنة', 'المبلغ', 'التاريخ']],
+        body: tableData,
+        styles: {
+          font: 'helvetica',
+          fontSize: 9,
+          cellPadding: 3,
+          lineColor: [212, 175, 55],
+          lineWidth: 0.1
+        },
+        headStyles: {
+          fillColor: [212, 175, 55],
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250]
+        },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 35 },
+          3: { cellWidth: 35 },
+          4: { cellWidth: 35, halign: 'right' },
+          5: { cellWidth: 30, halign: 'center' }
+        },
+        margin: { left: 20, right: 20 },
+        didDrawPage: function (data: any) {
+          // Footer
+          doc.setFontSize(8)
+          doc.setTextColor(150, 150, 150)
+          doc.text(
+            `صفحة ${data.pageNumber} من ${doc.getNumberOfPages()}`,
+            105,
+            doc.internal.pageSize.height - 10,
+            { align: 'center' }
+          )
+        }
+      })
+
     // Save the PDF
     doc.save(`tikcredit-report-${new Date().toISOString().split('T')[0]}.pdf`)
-    
+
   } catch (error) {
     console.error('Error generating PDF:', error)
     // Fallback to JSON export if PDF generation fails
@@ -510,7 +510,8 @@ export function generateDemoData(count: number): void {
         profession: professions[Math.floor(Math.random() * professions.length)],
         customProfession: '',
         financingType: FINANCING_TYPES[Math.floor(Math.random() * FINANCING_TYPES.length)],
-        requestedAmount: Math.floor(Math.random() * 19000000) + 1000000,
+        requestedAmount: Math.floor(Math.random() * 15000000) + 5000000,
+        loanDuration: Math.floor(Math.random() * 18) + 1,
         notes: Math.random() > 0.7 ? 'ملاحظات إضافية للطلب' : ''
       }
     })

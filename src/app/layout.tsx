@@ -4,16 +4,15 @@ import Providers from '@/components/Providers'
 
 export const metadata: Metadata = {
   title: 'TikCredit Pro - تمويل احترافي',
-  description: 'خدمة تمويل احترافية وسريعة',
+  description: 'خدمة تمويل احترافية وسريعة - Professional financing service for Algeria',
+  keywords: ['تمويل', 'قرض', 'الجزائر', 'financement', 'crédit', 'Algérie', 'TikCredit'],
+  authors: [{ name: 'TikCredit Pro' }],
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: [
       { url: '/apple-icon.svg', type: 'image/svg+xml' },
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
     other: [
       { rel: 'mask-icon', url: '/safari-pinned-tab.svg', color: '#1E3A8A' },
@@ -25,8 +24,11 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'TikCredit Pro',
   },
-  other: {
-    'mobile-web-app-capable': 'yes',
+  openGraph: {
+    title: 'TikCredit Pro - تمويل احترافي',
+    description: 'خدمة تمويل احترافية وسريعة',
+    type: 'website',
+    locale: 'ar_DZ',
   },
 }
 
