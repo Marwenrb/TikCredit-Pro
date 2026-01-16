@@ -606,7 +606,7 @@ export async function elitePersistSubmission(
     }
 
     return {
-        success: savedTo.length >= 2, // At least local + one report
+        success: savedTo.length >= 1, // At least one storage method (e.g. Firebase on Vercel)
         submissionId,
         savedTo,
         folderPath: paths.folder,

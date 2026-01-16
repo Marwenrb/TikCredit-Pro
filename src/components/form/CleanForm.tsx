@@ -127,7 +127,7 @@ const CleanForm: React.FC = () => {
       }
     }
 
-    loadDraft()
+    // loadDraft() // Disabled to ensure "0 mode" (fresh start) for every user
 
     return () => {
       window.removeEventListener('online', handleOnline)

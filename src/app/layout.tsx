@@ -30,6 +30,9 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'ar_DZ',
   },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export const viewport: Viewport = {
