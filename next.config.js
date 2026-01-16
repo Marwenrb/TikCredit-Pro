@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
+const path = require('path')
+
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  
+  // Experimental optimizations for better bundle size
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns', 'chart.js'],
   },
   
   // Performance optimizations
@@ -91,27 +94,40 @@ const nextConfig = {
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
     // Add explicit path alias for Netlify compatibility
-    const path = require('path')
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       '@': path.resolve(__dirname, 'src')
     }
     
-    // Optimize bundle size
+    // Optimize bundle size - disable fs/net/tls for client-side
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         net: false,
         tls: false,
+        dns: false,
+        child_process: false,
       }
+    }
+    
+    // Fix "Critical dependency" warning for firebase-admin dynamic require
+    // by telling webpack to ignore these dynamic imports in firebase-admin
+    if (isServer) {
+      config.externals = [...(config.externals || []), {
+        'firebase-admin': 'commonjs firebase-admin',
+      }]
     }
     
     // Production optimizations
     if (!dev) {
       // Tree shaking optimization
-      config.optimization.usedExports = true
-      config.optimization.sideEffects = false
+      config.optimization = {
+        ...config.optimization,
+        usedExports: true,
+        sideEffects: true,
+        moduleIds: 'deterministic',
+      }
       
       // Bundle analyzer (optional)
       if (process.env.ANALYZE === 'true') {

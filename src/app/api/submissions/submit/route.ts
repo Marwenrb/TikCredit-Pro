@@ -1,14 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { strictRateLimiter } from '@/lib/rateLimit'
+import { relaxedRateLimiter } from '@/lib/rateLimit'
 import { validatePhone, validateEmail } from '@/lib/utils'
-import { adminDb } from '@/lib/firebase-admin'
+import { elitePersistSubmission } from '@/lib/eliteSubmissionManager'
 import { FormData } from '@/types'
-import { promises as fs } from 'fs'
-import path from 'path'
+import { sendSubmissionNotification } from '@/lib/emailService'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ELITE SUBMISSION API - TikCredit Pro
+// Ultra-Professional Form Submission Handler
+// ═══════════════════════════════════════════════════════════════════════════════
 
 // Loan amount validation constants
 const MIN_LOAN_AMOUNT = 5_000_000
 const MAX_LOAN_AMOUNT = 20_000_000
+
+// Duplicate prevention cache
+const recentSubmissions = new Map<string, number>()
+const DUPLICATE_WINDOW_MS = 60_000
+
+/**
+ * Clean up duplicate cache
+ */
+function cleanupDuplicateCache(): void {
+  const now = Date.now()
+  for (const [key, timestamp] of recentSubmissions.entries()) {
+    if (now - timestamp > DUPLICATE_WINDOW_MS) {
+      recentSubmissions.delete(key)
+    }
+  }
+}
+
+/**
+ * Generate submission fingerprint
+ */
+function generateFingerprint(data: FormData, ip: string): string {
+  return `${ip}-${data.phone}-${data.fullName}-${data.requestedAmount}`
+}
 
 /**
  * Validate loan amount
@@ -18,266 +45,146 @@ function validateLoanAmount(amount: number): { valid: boolean; error?: string } 
     return { valid: false, error: 'المبلغ المطلوب مطلوب' }
   }
   if (amount < MIN_LOAN_AMOUNT) {
-    return { 
-      valid: false, 
-      error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
-    }
+    return { valid: false, error: `المبلغ الأدنى: ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
   }
   if (amount > MAX_LOAN_AMOUNT) {
-    return { 
-      valid: false, 
-      error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
-    }
+    return { valid: false, error: `المبلغ الأقصى: ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
   }
   return { valid: true }
 }
 
 /**
- * Persist submission to Firestore using Admin SDK
+ * Calculate approval probability
  */
-async function saveSubmissionServer(submission: {
-  id: string
-  timestamp: string
-  data: FormData & { amountValid: boolean }
-  ip: string
-  userAgent: string
-}): Promise<boolean> {
-  if (!adminDb) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️ Firebase Admin DB not available - will use local fallback')
-    }
-    return false
-  }
+function calculateApprovalProbability(data: FormData): number {
+  let score = 50
 
-  try {
-    await adminDb
-      .collection('submissions')
-      .doc(submission.id)
-      .set({
-        ...submission,
-        createdAt: submission.timestamp,
-        status: 'pending',
-        source: 'web-form',
-      })
-    return true
-  } catch (error) {
-    console.error('❌ Firebase save error:', error)
-    return false
-  }
+  const incomeRanges = ['أقل من 30,000 د.ج', '30,000 - 50,000 د.ج', '50,000 - 80,000 د.ج', '80,000 - 120,000 د.ج', 'أكثر من 120,000 د.ج']
+  const incomeIndex = incomeRanges.indexOf(data.monthlyIncomeRange)
+  if (incomeIndex >= 0) score += incomeIndex * 10
+
+  if (data.isExistingCustomer === 'نعم') score += 10
+  if (data.email) score += 5
+  if (data.preferredContactTime) score += 5
+
+  return Math.min(95, Math.max(30, score))
 }
 
-/**
- * Fallback: persist to local JSON file (Vercel-compatible)
- */
-async function saveSubmissionLocal(submission: object) {
-  try {
-    // Use /tmp in Vercel serverless environment, fallback to .tmp locally
-    const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), '.tmp')
-    const file = path.join(tmpDir, 'submissions.json')
-    
-    await fs.mkdir(tmpDir, { recursive: true })
-    
-    let existing: object[] = []
-    try {
-      const content = await fs.readFile(file, 'utf-8')
-      existing = JSON.parse(content)
-    } catch {
-      existing = []
-    }
-    
-    existing.push(submission)
-    await fs.writeFile(file, JSON.stringify(existing, null, 2), 'utf-8')
-  } catch (error) {
-    console.error('Failed to save submission locally:', error)
-    throw error
-  }
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST HANDLER
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
   try {
-    // Apply rate limiting
-    const rateLimitResult = strictRateLimiter.check(request)
-    
+    cleanupDuplicateCache()
+
+    // Rate limiting
+    const rateLimitResult = relaxedRateLimiter.check(request)
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { 
-          error: 'Too many requests. Please try again later.',
-          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
-        },
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString(),
-            'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
-          }
-        }
+        { error: 'Too many requests', retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000) },
+        { status: 429, headers: { 'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString() } }
       )
     }
-    
-    // Parse request body
+
+    // Parse body
     let data: FormData
     try {
       data = await request.json()
     } catch {
-      return NextResponse.json(
-        { 
-          error: 'Invalid request format',
-          message: 'يرجى التحقق من البيانات المرسلة'
-        },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid JSON', message: 'يرجى التحقق من البيانات' }, { status: 400 })
     }
-    
-    // Validate required fields
-    const errors: string[] = []
-    
-    if (!data.fullName || data.fullName.trim().length < 3) {
-      errors.push('الاسم الكامل مطلوب (3 أحرف على الأقل)')
-    }
-    
-    if (!data.phone || !validatePhone(data.phone)) {
-      errors.push('رقم الهاتف غير صحيح (يجب أن يبدأ بـ 05/06/07 ويحتوي على 10 أرقام)')
-    }
-    
-    if (data.email && !validateEmail(data.email)) {
-      errors.push('البريد الإلكتروني غير صحيح')
-    }
-    
-    if (!data.wilaya) {
-      errors.push('الولاية مطلوبة')
-    }
-    
-    if (!data.salaryReceiveMethod) {
-      errors.push('طريقة استلام الراتب مطلوبة')
-    }
-    
-    if (!data.financingType) {
-      errors.push('نوع التمويل مطلوب')
-    }
-    
-    // Validate loan amount
-    const amountValidation = validateLoanAmount(data.requestedAmount)
-    if (!amountValidation.valid) {
-      errors.push(amountValidation.error || 'المبلغ المطلوب غير صحيح')
-    }
-    
-    if (errors.length > 0) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed', 
-          errors,
-          message: 'يرجى التحقق من البيانات المدخلة'
-        },
-        { status: 400 }
-      )
-    }
-    
-    // Create submission object
-    const submission = {
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      data: {
-        ...data,
-        amountValid: amountValidation.valid,
-      },
-      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-      userAgent: request.headers.get('user-agent') || 'unknown',
-    }
-    
-    // Save submission - Firebase first, local fallback
-    let persisted: 'server' | 'local' = 'server'
-    let savedToFirebase = false
-    
-    try {
-      savedToFirebase = await saveSubmissionServer(submission)
-    } catch (firebaseError) {
-      console.error('Firebase save error:', firebaseError)
-      savedToFirebase = false
-    }
-    
-    if (!savedToFirebase) {
-      try {
-        persisted = 'local'
-        await saveSubmissionLocal(submission)
-        console.log('✅ Saved submission locally (fallback):', submission.id)
-      } catch (localError) {
-        console.error('Local save error:', localError)
-        // If both Firebase and local save fail, still return success but log the error
-        // This ensures the user doesn't see an error if the submission was processed
-        console.error('⚠️ Failed to persist submission:', submission.id)
-      }
-    } else {
-      console.log('✅ Saved submission to Firebase:', submission.id)
-    }
-    
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'تم استلام طلبك بنجاح',
-        submissionId: submission.id,
-        approvalProbability: calculateApprovalProbability(data),
-        amountValid: amountValidation.valid,
-        persisted: persisted,
-      },
-      { 
-        status: 200,
-        headers: {
-          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString(),
-        }
-      }
-    )
-  } catch (error) {
-    // Log the actual error for debugging
-    console.error('❌ Submission API Error:', error)
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    })
-    
-    return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.',
-        ...(process.env.NODE_ENV === 'development' && {
-          details: error instanceof Error ? error.message : 'Unknown error'
-        })
-      },
-      { status: 500 }
-    )
-  }
-}
 
-/**
- * Calculate approval probability based on form data
- */
-function calculateApprovalProbability(data: FormData): number {
-  let score = 50
-  
-  const incomeRanges = ['أقل من 30,000 د.ج', '30,000 - 50,000 د.ج', '50,000 - 80,000 د.ج', '80,000 - 120,000 د.ج', 'أكثر من 120,000 د.ج']
-  const incomeIndex = incomeRanges.indexOf(data.monthlyIncomeRange)
-  if (incomeIndex >= 0) {
-    score += incomeIndex * 10
+    // Validation
+    const errors: string[] = []
+    if (!data.fullName || data.fullName.trim().length < 3) errors.push('الاسم الكامل مطلوب (3 أحرف على الأقل)')
+    if (!data.phone || !validatePhone(data.phone)) errors.push('رقم الهاتف غير صحيح')
+    if (data.email && !validateEmail(data.email)) errors.push('البريد الإلكتروني غير صحيح')
+    if (!data.wilaya) errors.push('الولاية مطلوبة')
+    if (!data.salaryReceiveMethod) errors.push('طريقة استلام الراتب مطلوبة')
+    if (!data.financingType) errors.push('نوع التمويل مطلوب')
+
+    const amountValidation = validateLoanAmount(data.requestedAmount)
+    if (!amountValidation.valid) errors.push(amountValidation.error!)
+
+    if (errors.length > 0) {
+      return NextResponse.json({ error: 'Validation failed', errors, message: 'يرجى تصحيح الأخطاء' }, { status: 400 })
+    }
+
+    // Client info
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
+
+    // Duplicate check
+    const fingerprint = generateFingerprint(data, clientIp)
+    if (recentSubmissions.has(fingerprint)) {
+      return NextResponse.json({ success: true, message: 'تم استلام طلبك بالفعل', duplicate: true }, { status: 200 })
+    }
+    recentSubmissions.set(fingerprint, Date.now())
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ELITE PERSISTENCE - Triple layer with monthly organization
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const result = await elitePersistSubmission(data, { ip: clientIp, userAgent })
+
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        message: 'حدث خطأ في حفظ الطلب',
+        error: 'Storage unavailable',
+        errors: result.errors
+      }, { status: 503 })
+    }
+
+    // Log success
+    console.log('═'.repeat(60))
+    console.log('✅ ELITE SUBMISSION SAVED')
+    console.log(`   ID: ${result.submissionId}`)
+    console.log(`   Saved to: ${result.savedTo.join(', ')}`)
+    console.log(`   Folder: ${result.folderPath}`)
+    console.log('═'.repeat(60))
+
+    // Send email notification (non-blocking)
+    sendSubmissionNotification(
+      result.submissionId,
+      new Date().toISOString(),
+      data,
+      process.env.NEXT_PUBLIC_APP_URL || 'https://tikcredit.com'
+    ).catch(console.error)
+
+    // Real-time broadcast (non-blocking)
+    const internalToken = process.env.INTERNAL_API_TOKEN
+    if (internalToken) {
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/realtime/submissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Token': internalToken },
+        body: JSON.stringify({ id: result.submissionId, timestamp: new Date().toISOString(), data, status: 'pending' }),
+      }).catch(() => { })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'تم استلام طلبك بنجاح!',
+      submissionId: result.submissionId,
+      savedTo: result.savedTo,
+      folderPath: result.folderPath,
+      approvalProbability: calculateApprovalProbability(data),
+      storageInfo: {
+        firebase: result.savedTo.includes('Firebase'),
+        localJson: result.savedTo.includes('LocalJSON'),
+        arabicReport: result.savedTo.includes('ArabicReport'),
+        frenchReport: result.savedTo.includes('FrenchReport'),
+        backup: result.savedTo.includes('Backup')
+      }
+    }, { status: 200, headers: { 'Cache-Control': 'no-store' } })
+
+  } catch (error) {
+    console.error('❌ Submission API Error:', error)
+    return NextResponse.json({
+      error: 'Internal server error',
+      message: 'حدث خطأ في الخادم',
+      ...(process.env.NODE_ENV === 'development' && { details: error instanceof Error ? error.message : 'Unknown' })
+    }, { status: 500 })
   }
-  
-  const maxAmounts = [1500000, 3500000, 6000000, 12000000, 25000000]
-  if (incomeIndex >= 0 && data.requestedAmount <= maxAmounts[incomeIndex]) {
-    score += 15
-  } else if (data.requestedAmount >= MIN_LOAN_AMOUNT && data.requestedAmount <= MAX_LOAN_AMOUNT) {
-    score += 5
-  } else {
-    score -= 10
-  }
-  
-  if (data.isExistingCustomer === 'نعم') {
-    score += 10
-  }
-  
-  if (data.email) score += 5
-  if (data.preferredContactTime) score += 5
-  
-  return Math.min(95, Math.max(30, score))
 }

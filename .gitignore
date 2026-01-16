@@ -77,3 +77,19 @@ service-account.json
 
 # Firebase Service Account (ne jamais commiter!)
 service-account-key.json
+
+# Local submission data (contains personal information)
+/data/
+/data/**
+data/*.json
+data/**/*.json
+data/**/*.txt
+
+# Submission reports (contain personal data)
+*_rapport_ar.txt
+*_rapport_fr.txt
+*_submissions.json
+*_backup.json
+
+# Never commit any data files
+*.submissions.json

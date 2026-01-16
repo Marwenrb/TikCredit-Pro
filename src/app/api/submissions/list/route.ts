@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { adminDb } from '@/lib/firebase-admin'
-import { promises as fs } from 'fs'
-import path from 'path'
+import { getAllSubmissions, deleteSubmission, getSyncStats, readLocalSubmissions } from '@/lib/persistenceService'
 
 /**
  * GET /api/submissions/list
  * Protected endpoint - requires admin authentication
+ * Returns submissions from both Firebase and local storage
  */
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('admin-token')?.value
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -21,10 +21,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }
 
+    const isDev = process.env.NODE_ENV === 'development'
     let submissions: Record<string, unknown>[] = []
-    let source: 'firebase' | 'local' | 'firebase+local' = 'local'
+    let source: 'firebase' | 'local' | 'firebase+local' | 'combined' = 'local'
+    let firebaseCount = 0
+    let localCount = 0
 
-    // Try Firebase first
+    // 1. Get submissions from MySQL/Firebase (production)
     if (adminDb) {
       try {
         const snapshot = await adminDb
@@ -33,7 +36,7 @@ export async function GET(request: NextRequest) {
           .limit(500)
           .get()
 
-        submissions = snapshot.docs.map(doc => {
+        const firebaseSubmissions = snapshot.docs.map(doc => {
           const docData = doc.data()
           return {
             id: doc.id,
@@ -54,72 +57,62 @@ export async function GET(request: NextRequest) {
               notes: docData.notes || docData.data?.notes,
             },
             timestamp: docData.timestamp || docData.createdAt,
+            syncedToFirebase: true,
+            source: 'firebase'
           }
         })
+
+        submissions.push(...firebaseSubmissions)
+        firebaseCount = firebaseSubmissions.length
         source = 'firebase'
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`✅ Loaded ${submissions.length} submissions from Firebase`)
+
+        if (isDev) {
+          console.log(`✅ Loaded ${firebaseCount} submissions from Firebase`)
         }
       } catch (error) {
-        // Firebase failed, will try local
         console.error('❌ Firebase fetch error:', error)
       }
     } else {
-      if (process.env.NODE_ENV === 'development') {
+      if (isDev) {
         console.warn('⚠️ Firebase Admin DB not available')
       }
     }
 
-    // Always check local file as well (in case Firebase is empty but local has data)
-    // Use /tmp in Vercel serverless environment, fallback to .tmp locally
-    const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), '.tmp')
-    const localFile = path.join(tmpDir, 'submissions.json')
-    
+    // 2. Get submissions from local JSON file (G:\TikCredit-Pro\data\submissions.json)
     try {
-      const content = await fs.readFile(localFile, 'utf-8')
-      const localSubmissions = JSON.parse(content)
-      
-      // Merge local submissions with Firebase submissions (avoid duplicates)
-      const existingIds = new Set(submissions.map(s => s.id))
-      const localSubs = localSubmissions
-        .filter((s: Record<string, unknown>) => !existingIds.has(s.id as string))
-        .map((s: Record<string, unknown>) => ({
+      const localData = await readLocalSubmissions()
+      const localSubmissions = localData.submissions
+
+      // Merge local submissions with Firebase submissions (avoid duplicates by ID)
+      const existingIds = new Set(submissions.map(s => s.id as string))
+
+      const uniqueLocalSubs = localSubmissions
+        .filter(s => !existingIds.has(s.id))
+        .map(s => ({
           id: s.id,
           timestamp: s.timestamp,
-          data: s.data || {
-            fullName: s.fullName || (s.data as Record<string, unknown>)?.fullName,
-            phone: s.phone || (s.data as Record<string, unknown>)?.phone,
-            email: s.email || (s.data as Record<string, unknown>)?.email,
-            wilaya: s.wilaya || (s.data as Record<string, unknown>)?.wilaya,
-            financingType: s.financingType || (s.data as Record<string, unknown>)?.financingType,
-            requestedAmount: s.requestedAmount || (s.data as Record<string, unknown>)?.requestedAmount,
-            salaryReceiveMethod: s.salaryReceiveMethod || (s.data as Record<string, unknown>)?.salaryReceiveMethod,
-            monthlyIncomeRange: s.monthlyIncomeRange || (s.data as Record<string, unknown>)?.monthlyIncomeRange,
-            isExistingCustomer: s.isExistingCustomer || (s.data as Record<string, unknown>)?.isExistingCustomer,
-            preferredContactTime: s.preferredContactTime || (s.data as Record<string, unknown>)?.preferredContactTime,
-            profession: s.profession || (s.data as Record<string, unknown>)?.profession,
-            customProfession: s.customProfession || (s.data as Record<string, unknown>)?.customProfession,
-            notes: s.notes || (s.data as Record<string, unknown>)?.notes,
-          },
+          data: s.data,
+          syncedToFirebase: s.syncedToFirebase,
+          status: s.status,
+          source: 'local'
         }))
-      
-      // Add local submissions to the list
-      submissions.push(...localSubs)
-      
-      // Update source if we have local submissions
-      if (localSubs.length > 0 && source === 'firebase') {
-        source = 'firebase+local'
-      } else if (submissions.length === localSubs.length) {
+
+      submissions.push(...uniqueLocalSubs)
+      localCount = uniqueLocalSubs.length
+
+      if (isDev) {
+        console.log(`✅ Loaded ${localCount} unique local submissions from data/submissions.json`)
+      }
+
+      // Update source based on what we have
+      if (firebaseCount > 0 && localCount > 0) {
+        source = 'combined'
+      } else if (localCount > 0) {
         source = 'local'
       }
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ Loaded ${localSubs.length} submissions from local file (${tmpDir})`)
-      }
     } catch (error) {
-      // No local file exists or error reading - that's okay
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`ℹ️ No local submissions file found at ${localFile}:`, error instanceof Error ? error.message : 'File not found')
+      if (isDev) {
+        console.log('ℹ️ No local submissions file:', error instanceof Error ? error.message : 'Error')
       }
     }
 
@@ -130,20 +123,36 @@ export async function GET(request: NextRequest) {
       return dateB - dateA
     })
 
-    return NextResponse.json({ success: true, submissions, source, count: submissions.length })
+    // Get sync statistics
+    const syncStats = await getSyncStats()
 
-  } catch {
+    return NextResponse.json({
+      success: true,
+      submissions,
+      source,
+      count: submissions.length,
+      stats: {
+        firebase: firebaseCount,
+        local: localCount,
+        combinedTotal: submissions.length,
+        ...syncStats
+      }
+    })
+
+  } catch (error) {
+    console.error('Error fetching submissions:', error)
     return NextResponse.json({ error: 'Failed to fetch submissions' }, { status: 500 })
   }
 }
 
 /**
  * DELETE /api/submissions/list
+ * Delete a submission from all storage layers
  */
 export async function DELETE(request: NextRequest) {
   try {
     const token = request.cookies.get('admin-token')?.value
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -160,41 +169,21 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Submission ID required' }, { status: 400 })
     }
 
-    let deleted = false
-
-    // Try Firebase
-    if (adminDb) {
-      try {
-        await adminDb.collection('submissions').doc(id).delete()
-        deleted = true
-      } catch {
-        // Firebase delete failed
-      }
-    }
-
-    // Also try local file
-    try {
-      const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), '.tmp')
-      const localFile = path.join(tmpDir, 'submissions.json')
-      const content = await fs.readFile(localFile, 'utf-8')
-      const submissions = JSON.parse(content)
-      const filtered = submissions.filter((s: Record<string, unknown>) => s.id !== id)
-      
-      if (filtered.length < submissions.length) {
-        await fs.writeFile(localFile, JSON.stringify(filtered, null, 2), 'utf-8')
-        deleted = true
-      }
-    } catch {
-      // No local file
-    }
+    // Use the persistence service to delete from all layers
+    const deleted = await deleteSubmission(id)
 
     if (!deleted) {
-      return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Submission not found or delete failed' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, deleted: id })
+    return NextResponse.json({
+      success: true,
+      deleted: id,
+      message: 'تم حذف الطلب من جميع مصادر التخزين'
+    })
 
-  } catch {
+  } catch (error) {
+    console.error('Error deleting submission:', error)
     return NextResponse.json({ error: 'Failed to delete submission' }, { status: 500 })
   }
 }

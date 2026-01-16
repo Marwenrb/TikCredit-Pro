@@ -1,16 +1,26 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  User, Phone, Mail, MapPin, DollarSign, FileText, 
-  CheckCircle2, ArrowRight, ArrowLeft, XCircle, AlertCircle
+import {
+  User, Phone, Mail, MapPin, DollarSign, FileText,
+  CheckCircle2, ArrowRight, ArrowLeft, XCircle, AlertCircle,
+  Cloud, CloudOff, Loader2
 } from 'lucide-react'
-import { Button, Slider, ProgressBar, Textarea } from '@/components/ui'
+import { Button, ProgressBar, Textarea, AmountSlider } from '@/components/ui'
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput'
 import StepIndicator from '@/components/ui/StepIndicator'
 import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS } from '@/types'
 import { saveSubmission, saveDraft, getDraft, clearDraft, validatePhone, validateEmail, formatCurrency } from '@/lib/utils'
+import {
+  saveSubmissionToIndexedDB,
+  saveDraftToIndexedDB,
+  getDraftFromIndexedDB,
+  clearDraftFromIndexedDB,
+  initAutoSync,
+  syncPendingSubmissions,
+  getStorageStats
+} from '@/lib/indexedDBService'
 import confetti from 'canvas-confetti'
 import { useToast } from '@/components/ui/Toast'
 
@@ -26,15 +36,15 @@ const validateLoanAmount = (amount: number): { valid: boolean; error?: string } 
     return { valid: false, error: 'المبلغ المطلوب مطلوب' }
   }
   if (amount < MIN_LOAN_AMOUNT) {
-    return { 
-      valid: false, 
-      error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
+    return {
+      valid: false,
+      error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج`
     }
   }
   if (amount > MAX_LOAN_AMOUNT) {
-    return { 
-      valid: false, 
-      error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` 
+    return {
+      valid: false,
+      error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج`
     }
   }
   return { valid: true }
@@ -47,20 +57,72 @@ const CleanForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [amountValidation, setAmountValidation] = useState<{ valid: boolean; error?: string }>({ valid: true })
+  const [isOnline, setIsOnline] = useState(true)
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'offline'>('idle')
   const toast = useToast()
 
-  // Load draft on mount
+  // Initialize auto-sync and load draft on mount
   useEffect(() => {
-    const draft = getDraft()
-    if (draft) {
-      setFormData(prev => ({ ...prev, ...draft }))
+    // Initialize online status
+    setIsOnline(navigator.onLine)
+    setSyncStatus(navigator.onLine ? 'idle' : 'offline')
+
+    // Online/offline listeners
+    const handleOnline = () => {
+      setIsOnline(true)
+      setSyncStatus('syncing')
+      syncPendingSubmissions().then(() => {
+        setSyncStatus('synced')
+        setTimeout(() => setSyncStatus('idle'), 2000)
+      })
+    }
+    const handleOffline = () => {
+      setIsOnline(false)
+      setSyncStatus('offline')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // Initialize auto-sync
+    initAutoSync()
+
+    // Load draft from both localStorage and IndexedDB
+    const loadDraft = async () => {
+      // Try IndexedDB first (more reliable)
+      try {
+        const indexedDBDraft = await getDraftFromIndexedDB()
+        if (indexedDBDraft) {
+          setFormData(prev => ({ ...prev, ...indexedDBDraft }))
+          return
+        }
+      } catch (e) {
+        console.warn('IndexedDB draft load failed, falling back to localStorage')
+      }
+
+      // Fallback to localStorage
+      const localDraft = getDraft()
+      if (localDraft) {
+        setFormData(prev => ({ ...prev, ...localDraft }))
+      }
+    }
+
+    loadDraft()
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
     }
   }, [])
 
-  // Save draft when data changes
+  // Save draft when data changes (to both localStorage and IndexedDB)
   useEffect(() => {
     if (!isSuccess) {
+      // Save to localStorage (fast, synchronous)
       saveDraft(formData)
+
+      // Also save to IndexedDB (persistent, survives browser close)
+      saveDraftToIndexedDB(formData).catch(console.error)
     }
   }, [formData, isSuccess])
 
@@ -129,7 +191,7 @@ const CleanForm: React.FC = () => {
       toast.warning('يرجى إكمال الحقول المطلوبة قبل المتابعة')
       return
     }
-    
+
     // Double-check loan amount validation before submission
     const finalAmountValidation = validateLoanAmount(formData.requestedAmount)
     if (!finalAmountValidation.valid) {
@@ -144,8 +206,19 @@ const CleanForm: React.FC = () => {
     }
 
     setIsSubmitting(true)
+    setSyncStatus('syncing')
 
     try {
+      // Save to IndexedDB first (for offline resilience)
+      let indexedDBId: string | null = null
+      try {
+        indexedDBId = await saveSubmissionToIndexedDB(formData)
+        console.log('✅ Saved to IndexedDB:', indexedDBId)
+      } catch (e) {
+        console.warn('IndexedDB save failed, continuing with server save')
+      }
+
+      // Try to submit to server
       const response = await fetch('/api/submissions/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -155,18 +228,31 @@ const CleanForm: React.FC = () => {
       const responseData = await response.json()
 
       if (response.ok) {
-        // Save locally for admin dashboard/offline view
+        // Save to localStorage as additional backup
         saveSubmission(formData)
 
+        // Clear all drafts (localStorage and IndexedDB)
         clearDraft()
+        try {
+          await clearDraftFromIndexedDB()
+        } catch (e) {
+          console.warn('Failed to clear IndexedDB draft')
+        }
+
         setIsSuccess(true)
+        setSyncStatus('synced')
+
         const persisted = responseData.persisted as 'server' | 'local' | undefined
+        const savedTo = responseData.savedTo as string[] | undefined
+
         if (persisted === 'local') {
           toast.info('تم حفظ طلبك محلياً لعدم توفر الاتصال. سنحاول المزامنة تلقائياً.', 7000)
         } else {
-          toast.success('تم استلام طلبك بنجاح!', 5000)
+          // Show where data was saved
+          const storageLocations = savedTo?.join(' + ') || 'الخادم'
+          toast.success(`تم استلام طلبك بنجاح! (محفوظ في: ${storageLocations})`, 5000)
         }
-        
+
         // Celebration confetti
         const duration = 3000
         const animationEnd = Date.now() + duration
@@ -196,28 +282,39 @@ const CleanForm: React.FC = () => {
         // Enhanced error handling
         const errorMessage = responseData.message || responseData.error || 'فشل إرسال الطلب'
         const errorDetails = responseData.errors || []
-        
+
         console.error('Submission failed:', {
           status: response.status,
           message: errorMessage,
           errors: errorDetails
         })
-        
+
         // Show user-friendly error message
         if (errorDetails.length > 0) {
           toast.error(`يرجى تصحيح الأخطاء التالية:\n${errorDetails.join('\n')}`, 7000)
         } else {
           toast.error(`حدث خطأ: ${errorMessage}`, 7000)
         }
-        
+
         throw new Error(errorMessage)
       }
     } catch (error) {
       console.error('Error submitting form:', error)
       const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال الطلب'
+
       if (!navigator.onLine) {
-        toast.warning('الاتصال غير متوفر. تم حفظ بياناتك محلياً، وسنحاول الإرسال عند عودة الاتصال.', 7000)
+        // Offline mode - submission was saved to IndexedDB
+        setSyncStatus('offline')
+        toast.warning('الاتصال غير متوفر. تم حفظ بياناتك محلياً، وسنحاول الإرسال تلقائياً عند عودة الاتصال.', 7000)
+
+        // Show success since it's saved locally
+        setIsSuccess(true)
+        clearDraft()
+        try {
+          await clearDraftFromIndexedDB()
+        } catch { }
       } else {
+        setSyncStatus('idle')
         toast.error(`تعذر الاتصال بالخادم: ${errorMessage}`, 7000)
       }
     } finally {
@@ -227,7 +324,7 @@ const CleanForm: React.FC = () => {
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    
+
     // Real-time validation for loan amount
     if (field === 'requestedAmount') {
       const validation = validateLoanAmount(value as number)
@@ -268,7 +365,7 @@ const CleanForm: React.FC = () => {
         >
           <CheckCircle2 className="w-16 h-16 text-white" />
         </motion.div>
-        
+
         <motion.h2
           className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 20 }}
@@ -276,7 +373,7 @@ const CleanForm: React.FC = () => {
         >
           تم إرسال طلبك بنجاح!
         </motion.h2>
-        
+
         <motion.p
           className="text-xl text-luxury-darkGray mb-8 max-w-2xl mx-auto"
           initial={{ opacity: 0 }}
@@ -285,14 +382,14 @@ const CleanForm: React.FC = () => {
         >
           شكراً لك! سنتصل بك قريباً لتأكيد تفاصيل طلبك
         </motion.p>
-        
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="premium-button"
             onClick={() => window.location.href = '/'}
           >
@@ -349,7 +446,7 @@ const CleanForm: React.FC = () => {
                   </div>
                   <span className="text-luxury-charcoal font-medium">نعم، أنا عميل موجود</span>
                 </motion.label>
-                
+
                 <motion.label
                   className={`flex items-center gap-3 p-5 rounded-luxury cursor-pointer transition-all duration-300 border-2
                     ${formData.isExistingCustomer === 'لا'
@@ -377,7 +474,7 @@ const CleanForm: React.FC = () => {
                 error={errors.fullName}
                 icon={<User className="w-5 h-5" />}
               />
-              
+
               <FloatingLabelInput
                 label="رقم الهاتف *"
                 type="tel"
@@ -387,7 +484,7 @@ const CleanForm: React.FC = () => {
                 placeholder="05XX XXX XXX"
                 icon={<Phone className="w-5 h-5" />}
               />
-              
+
               <FloatingLabelInput
                 label="البريد الإلكتروني"
                 type="email"
@@ -396,7 +493,7 @@ const CleanForm: React.FC = () => {
                 error={errors.email}
                 icon={<Mail className="w-5 h-5" />}
               />
-              
+
               <div>
                 <label className="block text-sm font-medium text-luxury-charcoal mb-2">
                   وقت التواصل المفضل
@@ -499,8 +596,8 @@ const CleanForm: React.FC = () => {
                   <motion.label
                     key={method}
                     className={`flex items-center gap-3 p-4 rounded-luxury border-2 cursor-pointer transition-all
-                      ${formData.salaryReceiveMethod === method 
-                        ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium' 
+                      ${formData.salaryReceiveMethod === method
+                        ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium'
                         : 'border-luxury-mediumGray/30 hover:border-elegant-blue/50 bg-luxury-offWhite'}`}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
@@ -531,8 +628,8 @@ const CleanForm: React.FC = () => {
                   <motion.label
                     key={type}
                     className={`flex items-center gap-3 p-4 rounded-luxury border-2 cursor-pointer transition-all
-                      ${formData.financingType === type 
-                        ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium' 
+                      ${formData.financingType === type
+                        ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium'
                         : 'border-luxury-mediumGray/30 hover:border-elegant-blue/50 bg-luxury-offWhite'}`}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
@@ -550,115 +647,17 @@ const CleanForm: React.FC = () => {
                 {errors.financingType && <p className="mt-1 text-sm text-status-error">{errors.financingType}</p>}
               </div>
 
-              <div className="space-y-4">
-                <label className="block text-sm font-medium text-luxury-charcoal mb-2">
-                  المبلغ المطلوب *
-                </label>
-                
-                {/* Custom Amount Input */}
-                <div className="relative">
-                  <FloatingLabelInput
-                    label="أدخل المبلغ (5,000,000 - 20,000,000 د.ج)"
-                    type="number"
-                    value={formData.requestedAmount.toString()}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value) || 0
-                      updateField('requestedAmount', value)
-                    }}
-                    error={errors.requestedAmount}
-                    icon={<DollarSign className="w-5 h-5" />}
-                    min={MIN_LOAN_AMOUNT}
-                    max={MAX_LOAN_AMOUNT}
-                    className="text-right"
-                  />
-                  
-                  {/* Real-time validation indicator */}
-                  <AnimatePresence>
-                    {formData.requestedAmount > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="mt-2 flex items-center gap-2"
-                      >
-                        {amountValidation.valid ? (
-                          <>
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="text-status-success"
-                            >
-                              <CheckCircle2 className="w-5 h-5" />
-                            </motion.div>
-                            <span className="text-sm text-status-success font-medium">
-                              المبلغ صحيح
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="text-status-error"
-                            >
-                              <XCircle className="w-5 h-5" />
-                            </motion.div>
-                            <span className="text-sm text-status-error font-medium">
-                              {amountValidation.error}
-                            </span>
-                          </>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                
-                {/* Slider for visual selection */}
-                <div className="mt-4">
-                  <Slider
-                    min={MIN_LOAN_AMOUNT}
-                    max={MAX_LOAN_AMOUNT}
-                    step={100000}
-                    value={formData.requestedAmount}
-                    onChange={(value) => updateField('requestedAmount', value)}
-                    className="w-full"
-                  />
-                </div>
-                
-                {/* Amount Display with validation status */}
-                <motion.div 
-                  className={`text-center p-4 rounded-luxury border-2 transition-all duration-300 ${
-                    amountValidation.valid
-                      ? 'bg-status-success/10 border-status-success/30'
-                      : 'bg-status-error/10 border-status-error/30'
-                  }`}
-                  animate={{
-                    scale: amountValidation.valid ? 1 : [1, 1.02, 1],
-                  }}
-                >
-                  <span className={`text-4xl font-bold bg-gradient-to-r ${
-                    amountValidation.valid
-                      ? 'from-elegant-blue to-premium-gold'
-                      : 'from-status-error to-status-error/70'
-                  } bg-clip-text text-transparent`}>
-                    {formatCurrency(formData.requestedAmount)}
-                  </span>
-                  {!amountValidation.valid && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-sm text-status-error mt-2 font-medium"
-                    >
-                      {amountValidation.error}
-                    </motion.p>
-                  )}
-                </motion.div>
-                
-                {/* Amount range helper */}
-                <div className="flex justify-between items-center text-xs text-luxury-darkGray px-2">
-                  <span>الحد الأدنى: {formatCurrency(MIN_LOAN_AMOUNT)}</span>
-                  <span>الحد الأقصى: {formatCurrency(MAX_LOAN_AMOUNT)}</span>
-                </div>
+              {/* Premium Amount Slider Component */}
+              <div className="mt-6">
+                <AmountSlider
+                  min={MIN_LOAN_AMOUNT}
+                  max={MAX_LOAN_AMOUNT}
+                  step={500000}
+                  value={formData.requestedAmount}
+                  onChange={(value) => updateField('requestedAmount', value)}
+                  error={errors.requestedAmount}
+                  showTooltip={true}
+                />
               </div>
             </div>
           )}
@@ -671,44 +670,44 @@ const CleanForm: React.FC = () => {
                   <FileText className="w-6 h-6" />
                   ملخص طلبك
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <p className="text-sm text-luxury-darkGray mb-1 font-medium">الاسم الكامل</p>
                     <p className="text-luxury-charcoal font-bold">{formData.fullName}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-luxury-darkGray mb-1 font-medium">رقم الهاتف</p>
                     <p className="text-luxury-charcoal font-bold">{formData.phone}</p>
                   </div>
-                  
+
                   {formData.email && (
                     <div>
                       <p className="text-sm text-luxury-darkGray mb-1 font-medium">البريد الإلكتروني</p>
                       <p className="text-luxury-charcoal font-bold">{formData.email}</p>
                     </div>
                   )}
-                  
+
                   <div>
                     <p className="text-sm text-luxury-darkGray mb-1 font-medium">الولاية</p>
                     <p className="text-luxury-charcoal font-bold">{formData.wilaya}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-luxury-darkGray mb-1 font-medium">طبيعة العمل/المهنة</p>
                     <p className="text-luxury-charcoal font-bold">
-                      {formData.profession === 'أخرى (حدد)' && formData.customProfession 
-                        ? formData.customProfession 
+                      {formData.profession === 'أخرى (حدد)' && formData.customProfession
+                        ? formData.customProfession
                         : formData.profession}
                     </p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-luxury-darkGray mb-1 font-medium">نوع التمويل</p>
                     <p className="text-luxury-charcoal font-bold">{formData.financingType}</p>
                   </div>
-                  
+
                   <div className="md:col-span-2">
                     <p className="text-sm text-luxury-darkGray mb-1">المبلغ المطلوب</p>
                     <p className="text-2xl font-bold bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent">
@@ -752,19 +751,19 @@ const CleanForm: React.FC = () => {
         </Button>
 
         {currentStep < FORM_STEPS.length ? (
-          <Button 
-            onClick={handleNext} 
-            size="lg" 
+          <Button
+            onClick={handleNext}
+            size="lg"
             className="min-w-[140px] premium-button"
           >
             التالي
             <ArrowLeft className="w-5 h-5 mr-2" />
           </Button>
         ) : (
-          <Button 
-            onClick={handleSubmit} 
-            loading={isSubmitting} 
-            size="lg" 
+          <Button
+            onClick={handleSubmit}
+            loading={isSubmitting}
+            size="lg"
             className="min-w-[140px] premium-button"
           >
             {isSubmitting ? 'جاري الإرسال...' : 'إرسال الطلب'}

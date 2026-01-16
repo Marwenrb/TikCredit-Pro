@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle, RefreshCw, Loader2, AlertCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle, RefreshCw, Loader2, AlertCircle, Wifi, WifiOff, Bell } from 'lucide-react'
 import { Button, GlassCard, StatCard, Modal } from '@/components/ui'
 import DownloadModal from './DownloadModal'
 import { Submission } from '@/types'
@@ -21,6 +21,8 @@ import {
   generateDemoData,
 } from '@/lib/utils'
 import { format } from 'date-fns'
+import { useRealtimeSubmissions } from '@/hooks/useRealtimeSubmissions'
+import { useToast } from '@/components/ui/Toast'
 
 const AdminDashboard: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -33,11 +35,47 @@ const AdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<'firebase' | 'local' | 'browser'>('browser')
+  const [newSubmissionsCount, setNewSubmissionsCount] = useState(0)
+  
+  const toast = useToast()
+  
+  // Real-time updates via SSE
+  const { isConnected, reconnect } = useRealtimeSubmissions({
+    enabled: true,
+    onNewSubmission: useCallback((submission: Submission) => {
+      // Add new submission to the top of the list
+      setSubmissions(prev => {
+        // Avoid duplicates
+        if (prev.some(s => s.id === submission.id)) return prev
+        return [submission, ...prev]
+      })
+      setNewSubmissionsCount(prev => prev + 1)
+      
+      // Show notification
+      toast.success(
+        `طلب جديد من ${submission.data?.fullName || 'عميل'} - ${submission.data?.requestedAmount ? formatCurrency(submission.data.requestedAmount) : ''}`,
+        5000
+      )
+      
+      // Play notification sound if available
+      try {
+        const audio = new Audio('/notification.mp3')
+        audio.volume = 0.3
+        audio.play().catch(() => {})
+      } catch {
+        // Audio not available
+      }
+    }, [toast]),
+    onError: useCallback((err: Error) => {
+      console.error('Real-time connection error:', err)
+    }, []),
+  })
 
   // Fetch submissions from server API
   const fetchServerSubmissions = useCallback(async () => {
     setIsLoading(true)
     setError(null)
+    setNewSubmissionsCount(0)
     
     try {
       const response = await fetch('/api/submissions/list')
@@ -187,7 +225,7 @@ const AdminDashboard: React.FC = () => {
             </motion.div>
             <div>
               <h1 className="text-4xl font-bold text-elegant-blue">لوحة التحكم</h1>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-luxury-darkGray font-medium">إدارة طلبات التمويل</p>
                 <span className={`px-2 py-0.5 text-xs rounded-full ${
                   dataSource === 'firebase' 
@@ -198,6 +236,33 @@ const AdminDashboard: React.FC = () => {
                 }`}>
                   {dataSource === 'firebase' ? '☁️ Firebase' : dataSource === 'local' ? '📁 خادم محلي' : '💾 متصفح'}
                 </span>
+                {/* Real-time connection status */}
+                <button
+                  onClick={isConnected ? undefined : reconnect}
+                  className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded-full transition-all ${
+                    isConnected 
+                      ? 'bg-green-100 text-green-700 cursor-default' 
+                      : 'bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer'
+                  }`}
+                  title={isConnected ? 'متصل في الوقت الفعلي' : 'انقر لإعادة الاتصال'}
+                >
+                  {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                  {isConnected ? 'مباشر' : 'غير متصل'}
+                </button>
+                {/* New submissions badge */}
+                <AnimatePresence>
+                  {newSubmissionsCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-premium-gold/20 text-premium-gold-dark font-bold"
+                    >
+                      <Bell className="w-3 h-3" />
+                      {newSubmissionsCount} جديد
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
