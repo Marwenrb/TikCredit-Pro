@@ -1,113 +1,125 @@
 import { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { adminDb } from '@/lib/firebase-admin'
+import {
+  SUBMISSIONS_FILE,
+  readSubmissionsFile,
+  getFileModTime,
+  isDev as isDevMode
+} from '@/lib/storage-utils'
 
 /**
  * Real-time Server-Sent Events (SSE) endpoint for live submission updates
- * 
- * This endpoint establishes a persistent connection with the client and
- * sends real-time updates when new submissions arrive.
+ * Works with local storage when Firebase is unavailable
  */
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 // Store active connections for broadcasting
 const connections = new Map<string, ReadableStreamDefaultController<Uint8Array>>()
 
-// Track last known submission count for change detection
+// Track last known submission info for change detection
 let lastSubmissionCount = 0
 let lastSubmissionId: string | null = null
+let lastFileModTime = 0
+
+/**
+ * Check local file for new submissions
+ */
+async function checkLocalSubmissions(): Promise<{ count: number; latestId: string | null; latestSubmission: unknown }> {
+  try {
+    const modTime = await getFileModTime()
+
+    // Only read file if it was modified
+    if (modTime === lastFileModTime) {
+      return { count: lastSubmissionCount, latestId: lastSubmissionId, latestSubmission: null }
+    }
+
+    lastFileModTime = modTime
+
+    const data = await readSubmissionsFile()
+    const submissions = data.submissions || []
+
+    const count = submissions.length
+    const latestId = submissions.length > 0 ? submissions[0].id : null
+    const latestSubmission = submissions.length > 0 ? submissions[0] : null
+
+    return { count, latestId, latestSubmission }
+  } catch {
+    return { count: 0, latestId: null, latestSubmission: null }
+  }
+}
 
 /**
  * Broadcast a new submission event to all connected clients
- * Note: This is an internal function, not exported from the route handler
  */
-function broadcastNewSubmission(submission: Record<string, unknown>) {
+function broadcastNewSubmission(submission: unknown) {
   const event = {
     type: 'new_submission',
     data: submission,
     timestamp: new Date().toISOString(),
   }
-  
+
   const message = `event: new_submission\ndata: ${JSON.stringify(event)}\n\n`
   const encoder = new TextEncoder()
   const encoded = encoder.encode(message)
-  
+
   connections.forEach((controller, connectionId) => {
     try {
       controller.enqueue(encoded)
-    } catch (error) {
-      console.error(`Failed to send to connection ${connectionId}:`, error)
+    } catch {
       connections.delete(connectionId)
     }
   })
 }
 
 /**
- * Poll Firestore for new submissions and broadcast changes
- * In production, use Firestore onSnapshot listener instead
+ * Poll for changes (local storage only - no Firebase errors)
  */
 async function pollForChanges() {
-  if (!adminDb) return
-  
   try {
-    const snapshot = await adminDb
-      .collection('submissions')
-      .orderBy('timestamp', 'desc')
-      .limit(1)
-      .get()
-    
-    if (!snapshot.empty) {
-      const latestDoc = snapshot.docs[0]
-      const latestId = latestDoc.id
-      
-      // Check if this is a new submission
-      if (lastSubmissionId && latestId !== lastSubmissionId) {
-        const submission = {
-          id: latestId,
-          ...latestDoc.data(),
-        }
-        broadcastNewSubmission(submission)
-      }
-      
-      lastSubmissionId = latestId
+    const { count, latestId, latestSubmission } = await checkLocalSubmissions()
+
+    // Check if this is a new submission
+    if (lastSubmissionId && latestId !== lastSubmissionId && latestSubmission) {
+      broadcastNewSubmission(latestSubmission)
     }
-    
-    // Get total count
-    const countSnapshot = await adminDb.collection('submissions').count().get()
-    const currentCount = countSnapshot.data().count
-    
-    if (currentCount !== lastSubmissionCount) {
+
+    lastSubmissionId = latestId
+
+    if (count !== lastSubmissionCount) {
       // Broadcast count change
       const countEvent = {
         type: 'count_update',
-        count: currentCount,
+        count: count,
         timestamp: new Date().toISOString(),
       }
-      
+
       const message = `event: count_update\ndata: ${JSON.stringify(countEvent)}\n\n`
       const encoder = new TextEncoder()
       const encoded = encoder.encode(message)
-      
+
       connections.forEach((controller, connectionId) => {
         try {
           controller.enqueue(encoded)
-        } catch (error) {
+        } catch {
           connections.delete(connectionId)
         }
       })
-      
-      lastSubmissionCount = currentCount
+
+      lastSubmissionCount = count
     }
   } catch (error) {
-    console.error('Polling error:', error)
+    // Silent error - don't spam console
   }
 }
 
-// Start polling interval (5 seconds) - only if there are connections
+// Polling interval management
 let pollingInterval: NodeJS.Timeout | null = null
 
 function startPolling() {
   if (!pollingInterval && connections.size > 0) {
-    pollingInterval = setInterval(pollForChanges, 5000)
+    pollingInterval = setInterval(pollForChanges, 3000) // Poll every 3 seconds
     pollForChanges() // Initial poll
   }
 }
@@ -122,14 +134,14 @@ function stopPolling() {
 export async function GET(request: NextRequest) {
   // Verify authentication
   const token = request.cookies.get('admin-token')?.value
-  
+
   if (!token) {
     return new Response(JSON.stringify({ error: 'Authentication required' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
     })
   }
-  
+
   const decoded = verifyToken(token)
   if (!decoded || decoded.role !== 'admin') {
     return new Response(JSON.stringify({ error: 'Invalid token' }), {
@@ -137,18 +149,18 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-  
+
   const connectionId = crypto.randomUUID()
-  
+
   // Create SSE stream
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       // Store connection
       connections.set(connectionId, controller)
-      
+
       // Start polling if needed
       startPolling()
-      
+
       // Send initial connection event
       const encoder = new TextEncoder()
       const connectEvent = {
@@ -158,8 +170,8 @@ export async function GET(request: NextRequest) {
         activeConnections: connections.size,
       }
       controller.enqueue(encoder.encode(`event: connected\ndata: ${JSON.stringify(connectEvent)}\n\n`))
-      
-      // Send heartbeat every 30 seconds to keep connection alive
+
+      // Send heartbeat every 30 seconds
       const heartbeatInterval = setInterval(() => {
         try {
           const heartbeat = {
@@ -167,13 +179,13 @@ export async function GET(request: NextRequest) {
             timestamp: new Date().toISOString(),
           }
           controller.enqueue(encoder.encode(`event: heartbeat\ndata: ${JSON.stringify(heartbeat)}\n\n`))
-        } catch (error) {
+        } catch {
           clearInterval(heartbeatInterval)
           connections.delete(connectionId)
           stopPolling()
         }
       }, 30000)
-      
+
       // Handle connection close
       request.signal.addEventListener('abort', () => {
         clearInterval(heartbeatInterval)
@@ -191,26 +203,24 @@ export async function GET(request: NextRequest) {
       stopPolling()
     },
   })
-  
+
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
       'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no', // Disable Nginx buffering
+      'X-Accel-Buffering': 'no',
     },
   })
 }
 
 /**
- * POST handler for manually triggering a broadcast (used by submit endpoint)
+ * POST handler for manually triggering a broadcast
  */
 export async function POST(request: NextRequest) {
-  // Verify internal call or admin
   const authHeader = request.headers.get('X-Internal-Token')
   const internalToken = process.env.INTERNAL_API_TOKEN
-  
-  // Allow internal calls or authenticated admins
+
   if (authHeader !== internalToken) {
     const token = request.cookies.get('admin-token')?.value
     if (!token) {
@@ -221,19 +231,19 @@ export async function POST(request: NextRequest) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
   }
-  
+
   try {
     const submission = await request.json()
     broadcastNewSubmission(submission)
-    
-    return new Response(JSON.stringify({ 
-      success: true, 
-      broadcastedTo: connections.size 
+
+    return new Response(JSON.stringify({
+      success: true,
+      broadcastedTo: connections.size
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch (error) {
+  } catch {
     return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 })
   }
 }

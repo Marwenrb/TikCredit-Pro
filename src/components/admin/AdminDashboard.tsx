@@ -36,9 +36,9 @@ const AdminDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<'firebase' | 'local' | 'browser'>('browser')
   const [newSubmissionsCount, setNewSubmissionsCount] = useState(0)
-  
+
   const toast = useToast()
-  
+
   // Real-time updates via SSE
   const { isConnected, reconnect } = useRealtimeSubmissions({
     enabled: true,
@@ -50,18 +50,18 @@ const AdminDashboard: React.FC = () => {
         return [submission, ...prev]
       })
       setNewSubmissionsCount(prev => prev + 1)
-      
+
       // Show notification
       toast.success(
         `طلب جديد من ${submission.data?.fullName || 'عميل'} - ${submission.data?.requestedAmount ? formatCurrency(submission.data.requestedAmount) : ''}`,
         5000
       )
-      
+
       // Play notification sound if available
       try {
         const audio = new Audio('/notification.mp3')
         audio.volume = 0.3
-        audio.play().catch(() => {})
+        audio.play().catch(() => { })
       } catch {
         // Audio not available
       }
@@ -76,10 +76,16 @@ const AdminDashboard: React.FC = () => {
     setIsLoading(true)
     setError(null)
     setNewSubmissionsCount(0)
-    
+
     try {
-      const response = await fetch('/api/submissions/list')
-      
+      const response = await fetch('/api/submissions/list', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
+
       if (response.ok) {
         const data = await response.json()
         if (data.success && data.submissions) {
@@ -93,13 +99,13 @@ const AdminDashboard: React.FC = () => {
         window.location.href = '/admin'
         return
       }
-      
+
       // Fallback to browser localStorage
       console.log('⚠️ Server fetch failed, using browser localStorage')
       const localData = getSubmissions()
       setSubmissions(localData)
       setDataSource('browser')
-      
+
     } catch (err) {
       console.error('Error fetching submissions:', err)
       // Fallback to browser localStorage
@@ -139,7 +145,7 @@ const AdminDashboard: React.FC = () => {
         const response = await fetch(`/api/submissions/list?id=${id}`, {
           method: 'DELETE',
         })
-        
+
         if (response.ok) {
           // Refresh from server
           fetchServerSubmissions()
@@ -148,7 +154,7 @@ const AdminDashboard: React.FC = () => {
       } catch (err) {
         console.error('Server delete failed:', err)
       }
-      
+
       // Fallback to local delete
       deleteLocalSubmission(id)
       setSubmissions(prev => prev.filter(s => s.id !== id))
@@ -227,23 +233,21 @@ const AdminDashboard: React.FC = () => {
               <h1 className="text-4xl font-bold text-elegant-blue">لوحة التحكم</h1>
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-luxury-darkGray font-medium">إدارة طلبات التمويل</p>
-                <span className={`px-2 py-0.5 text-xs rounded-full ${
-                  dataSource === 'firebase' 
-                    ? 'bg-green-100 text-green-700' 
-                    : dataSource === 'local' 
+                <span className={`px-2 py-0.5 text-xs rounded-full ${dataSource === 'firebase'
+                  ? 'bg-green-100 text-green-700'
+                  : dataSource === 'local'
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-gray-100 text-gray-700'
-                }`}>
+                  }`}>
                   {dataSource === 'firebase' ? '☁️ Firebase' : dataSource === 'local' ? '📁 خادم محلي' : '💾 متصفح'}
                 </span>
                 {/* Real-time connection status */}
                 <button
                   onClick={isConnected ? undefined : reconnect}
-                  className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded-full transition-all ${
-                    isConnected 
-                      ? 'bg-green-100 text-green-700 cursor-default' 
-                      : 'bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer'
-                  }`}
+                  className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded-full transition-all ${isConnected
+                    ? 'bg-green-100 text-green-700 cursor-default'
+                    : 'bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer'
+                    }`}
                   title={isConnected ? 'متصل في الوقت الفعلي' : 'انقر لإعادة الاتصال'}
                 >
                   {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
@@ -267,16 +271,16 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="lg"
               onClick={handleRefresh}
               title="تحديث البيانات"
             >
               <RefreshCw className="w-5 h-5" />
             </Button>
-            <Button 
-              variant="glass-blue" 
+            <Button
+              variant="glass-blue"
               size="lg"
               onClick={() => setIsDownloadModalOpen(true)}
             >
@@ -341,8 +345,8 @@ const AdminDashboard: React.FC = () => {
                 onClick={() => {
                   const MIN_LOAN_AMOUNT = 5_000_000
                   const MAX_LOAN_AMOUNT = 20_000_000
-                  const validOnly = filteredSubmissions.filter(s => 
-                    s.data.requestedAmount >= MIN_LOAN_AMOUNT && 
+                  const validOnly = filteredSubmissions.filter(s =>
+                    s.data.requestedAmount >= MIN_LOAN_AMOUNT &&
                     s.data.requestedAmount <= MAX_LOAN_AMOUNT
                   )
                   setFilteredSubmissions(validOnly)
@@ -354,9 +358,9 @@ const AdminDashboard: React.FC = () => {
               </Button>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="gradient" 
-                size="sm" 
+              <Button
+                variant="gradient"
+                size="sm"
                 onClick={() => setIsDownloadModalOpen(true)}
               >
                 <Download className="w-4 h-4 ml-2" />
@@ -404,8 +408,8 @@ const AdminDashboard: React.FC = () => {
                           {(() => {
                             const MIN_LOAN_AMOUNT = 5_000_000
                             const MAX_LOAN_AMOUNT = 20_000_000
-                            const isValid = submission.data.requestedAmount >= MIN_LOAN_AMOUNT && 
-                                          submission.data.requestedAmount <= MAX_LOAN_AMOUNT
+                            const isValid = submission.data.requestedAmount >= MIN_LOAN_AMOUNT &&
+                              submission.data.requestedAmount <= MAX_LOAN_AMOUNT
                             return isValid ? (
                               <span title="المبلغ صحيح">
                                 <CheckCircle2 className="w-4 h-4 text-status-success" />
@@ -473,8 +477,22 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.wilaya}</p>
               </div>
               <div>
+                <span className="text-luxury-darkGray font-medium">المهنة:</span>
+                <p className="text-luxury-charcoal font-bold">
+                  {selectedSubmission.data.profession === 'أخرى (حدد)' && selectedSubmission.data.customProfession
+                    ? selectedSubmission.data.customProfession
+                    : selectedSubmission.data.profession || 'غير محدد'}
+                </p>
+              </div>
+              <div>
                 <span className="text-luxury-darkGray font-medium">نوع التمويل:</span>
                 <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.financingType}</p>
+              </div>
+              <div>
+                <span className="text-luxury-darkGray font-medium">مدة القرض:</span>
+                <p className="text-luxury-charcoal font-bold">
+                  {selectedSubmission.data.loanDuration || 12} {(selectedSubmission.data.loanDuration || 12) === 1 ? 'شهر' : (selectedSubmission.data.loanDuration || 12) <= 10 ? 'أشهر' : 'شهر'}
+                </p>
               </div>
               <div className="col-span-2">
                 <span className="text-luxury-darkGray font-medium">المبلغ المطلوب:</span>
@@ -485,14 +503,13 @@ const AdminDashboard: React.FC = () => {
                   {(() => {
                     const MIN_LOAN_AMOUNT = 5_000_000
                     const MAX_LOAN_AMOUNT = 20_000_000
-                    const isValid = selectedSubmission.data.requestedAmount >= MIN_LOAN_AMOUNT && 
-                                  selectedSubmission.data.requestedAmount <= MAX_LOAN_AMOUNT
+                    const isValid = selectedSubmission.data.requestedAmount >= MIN_LOAN_AMOUNT &&
+                      selectedSubmission.data.requestedAmount <= MAX_LOAN_AMOUNT
                     return (
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                        isValid 
-                          ? 'bg-status-success/20 text-status-success border border-status-success/30' 
-                          : 'bg-status-error/20 text-status-error border border-status-error/30'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${isValid
+                        ? 'bg-status-success/20 text-status-success border border-status-success/30'
+                        : 'bg-status-error/20 text-status-error border border-status-error/30'
+                        }`}>
                         {isValid ? (
                           <>
                             <CheckCircle2 className="w-3 h-3" />

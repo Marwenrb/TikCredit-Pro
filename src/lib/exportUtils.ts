@@ -53,11 +53,11 @@ export const getDateRange = (type: DateRangeType, customStart?: Date, customEnd?
       const monday = new Date(now)
       monday.setDate(now.getDate() + diffToMonday)
       monday.setHours(0, 0, 0, 0)
-      
+
       const sunday = new Date(monday)
       sunday.setDate(monday.getDate() + 6)
       sunday.setHours(23, 59, 59, 999)
-      
+
       return {
         start: monday,
         end: sunday,
@@ -67,7 +67,7 @@ export const getDateRange = (type: DateRangeType, customStart?: Date, customEnd?
     case 'month': {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0)
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-      
+
       return {
         start: firstDay,
         end: lastDay,
@@ -77,7 +77,7 @@ export const getDateRange = (type: DateRangeType, customStart?: Date, customEnd?
     case 'year': {
       const firstDay = new Date(now.getFullYear(), 0, 1, 0, 0, 0)
       const lastDay = new Date(now.getFullYear(), 11, 31, 23, 59, 59)
-      
+
       return {
         start: firstDay,
         end: lastDay,
@@ -178,8 +178,10 @@ export const exportToExcel = async (
       { header: 'رقم الهاتف', key: 'phone', width: 15 },
       { header: 'البريد الإلكتروني', key: 'email', width: 25 },
       { header: 'الولاية', key: 'wilaya', width: 15 },
+      { header: 'المهنة', key: 'profession', width: 20 },
       { header: 'نوع التمويل', key: 'financingType', width: 20 },
       { header: 'المبلغ المطلوب', key: 'amount', width: 15 },
+      { header: 'مدة القرض (شهر)', key: 'loanDuration', width: 15 },
       { header: 'طريقة استلام الراتب', key: 'salaryMethod', width: 20 },
       { header: 'نطاق الدخل الشهري', key: 'incomeRange', width: 20 },
       { header: 'وقت التواصل المفضل', key: 'contactTime', width: 20 },
@@ -204,14 +206,21 @@ export const exportToExcel = async (
 
     // Add data rows
     filteredSubmissions.forEach((submission, index) => {
+      // Get profession with custom profession fallback
+      const profession = submission.data.profession === 'أخرى (حدد)' && submission.data.customProfession
+        ? submission.data.customProfession
+        : (submission.data.profession || 'غير محدد')
+
       const row: Record<string, unknown> = {
         number: index + 1,
         fullName: submission.data.fullName || '',
         phone: submission.data.phone || '',
         email: submission.data.email || 'غير محدد',
         wilaya: submission.data.wilaya || '',
+        profession: profession,
         financingType: submission.data.financingType || '',
         amount: submission.data.requestedAmount || 0,
+        loanDuration: submission.data.loanDuration || 12,
         salaryMethod: submission.data.salaryReceiveMethod || '',
         incomeRange: submission.data.monthlyIncomeRange || 'غير محدد',
         contactTime: submission.data.preferredContactTime || 'غير محدد',
@@ -313,7 +322,7 @@ export const exportToPDF = (
     const tableData = filteredSubmissions.map((submission, index) => {
       // Format amount without Arabic currency
       const amount = submission.data.requestedAmount?.toLocaleString() || '0'
-      
+
       const row = [
         (index + 1).toString(),
         submission.data.phone || '-',
@@ -406,12 +415,12 @@ export const exportToTXT = (
 
     // Build TXT content with proper formatting
     let content = ''
-    
+
     // Header
     content += '═══════════════════════════════════════════════════════════════════════════════\n'
     content += '                         TikCredit Pro - تقرير الطلبات                          \n'
     content += '═══════════════════════════════════════════════════════════════════════════════\n\n'
-    
+
     // Date info
     const dateLabel = formatDateRangeLabel(options.dateRange)
     content += `📅 الفترة: ${dateLabel}\n`
@@ -421,25 +430,36 @@ export const exportToTXT = (
 
     // Submissions
     filteredSubmissions.forEach((submission, index) => {
+      // Get profession with custom profession fallback
+      const profession = submission.data.profession === 'أخرى (حدد)' && submission.data.customProfession
+        ? submission.data.customProfession
+        : (submission.data.profession || 'غير محدد')
+
+      // Format loan duration
+      const loanDuration = submission.data.loanDuration || 12
+      const durationText = loanDuration === 1 ? 'شهر واحد' : loanDuration <= 10 ? `${loanDuration} أشهر` : `${loanDuration} شهر`
+
       content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`
       content += `│ طلب رقم ${index + 1}                                                                      \n`
       content += `├─────────────────────────────────────────────────────────────────────────────┤\n`
-      content += `│ الاسم الكامل:     ${submission.data.fullName || 'غير محدد'}\n`
-      content += `│ رقم الهاتف:       ${submission.data.phone || 'غير محدد'}\n`
-      content += `│ البريد الإلكتروني: ${submission.data.email || 'غير محدد'}\n`
-      content += `│ الولاية:          ${submission.data.wilaya || 'غير محدد'}\n`
-      content += `│ نوع التمويل:      ${submission.data.financingType || 'غير محدد'}\n`
-      content += `│ المبلغ المطلوب:   ${submission.data.requestedAmount?.toLocaleString('ar-DZ') || '0'} دج\n`
-      content += `│ طريقة الراتب:     ${submission.data.salaryReceiveMethod || 'غير محدد'}\n`
-      content += `│ نطاق الدخل:       ${submission.data.monthlyIncomeRange || 'غير محدد'}\n`
-      content += `│ وقت التواصل:      ${submission.data.preferredContactTime || 'غير محدد'}\n`
-      content += `│ عميل موجود:       ${submission.data.isExistingCustomer || 'لا'}\n`
-      content += `│ تاريخ الإرسال:    ${format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm')}\n`
-      
+      content += `│ 👤 الاسم الكامل:     ${submission.data.fullName || 'غير محدد'}\n`
+      content += `│ 📱 رقم الهاتف:       ${submission.data.phone || 'غير محدد'}\n`
+      content += `│ 📧 البريد الإلكتروني: ${submission.data.email || 'غير محدد'}\n`
+      content += `│ 📍 الولاية:          ${submission.data.wilaya || 'غير محدد'}\n`
+      content += `│ 💼 المهنة:           ${profession}\n`
+      content += `│ 💳 نوع التمويل:      ${submission.data.financingType || 'غير محدد'}\n`
+      content += `│ 💵 المبلغ المطلوب:   ${submission.data.requestedAmount?.toLocaleString('ar-DZ') || '0'} دج\n`
+      content += `│ 📅 مدة القرض:        ${durationText}\n`
+      content += `│ 🏦 طريقة الراتب:     ${submission.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : submission.data.salaryReceiveMethod || 'غير محدد'}\n`
+      content += `│ 💰 نطاق الدخل:       ${submission.data.monthlyIncomeRange || 'غير محدد'}\n`
+      content += `│ 🕐 وقت التواصل:      ${submission.data.preferredContactTime || 'غير محدد'}\n`
+      content += `│ 👥 عميل موجود:       ${submission.data.isExistingCustomer === 'نعم' ? 'نعم ✓' : 'لا ✗'}\n`
+      content += `│ 📆 تاريخ الإرسال:    ${format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm')}\n`
+
       if (options.includeNotes && submission.data.notes) {
-        content += `│ الملاحظات:        ${submission.data.notes}\n`
+        content += `│ 📝 الملاحظات:        ${submission.data.notes}\n`
       }
-      
+
       content += `└─────────────────────────────────────────────────────────────────────────────┘\n\n`
     })
 
@@ -451,10 +471,10 @@ export const exportToTXT = (
     // Create Blob with UTF-8 BOM for proper Arabic display
     const BOM = '\uFEFF'
     const blob = new Blob([BOM + content], { type: 'text/plain;charset=utf-8' })
-    
+
     // Generate filename
-    const filename = options.filename?.replace(/\.(xlsx|pdf)$/i, '.txt') || 
-                     `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.txt`
+    const filename = options.filename?.replace(/\.(xlsx|pdf)$/i, '.txt') ||
+      `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.txt`
 
     // Download file
     const url = URL.createObjectURL(blob)
@@ -500,8 +520,10 @@ export const exportToCSV = (
       'رقم الهاتف',
       'البريد الإلكتروني',
       'الولاية',
+      'المهنة',
       'نوع التمويل',
       'المبلغ المطلوب',
+      'مدة القرض (شهر)',
       'طريقة الراتب',
       'نطاق الدخل',
       'وقت التواصل',
@@ -517,15 +539,22 @@ export const exportToCSV = (
     let csvContent = headers.join(',') + '\n'
 
     filteredSubmissions.forEach((submission, index) => {
+      // Get profession with custom profession fallback
+      const profession = submission.data.profession === 'أخرى (حدد)' && submission.data.customProfession
+        ? submission.data.customProfession
+        : (submission.data.profession || 'غير محدد')
+
       const row = [
         index + 1,
         `"${(submission.data.fullName || '').replace(/"/g, '""')}"`,
         `"${submission.data.phone || ''}"`,
         `"${submission.data.email || 'غير محدد'}"`,
         `"${submission.data.wilaya || ''}"`,
+        `"${profession.replace(/"/g, '""')}"`,
         `"${submission.data.financingType || ''}"`,
         submission.data.requestedAmount || 0,
-        `"${submission.data.salaryReceiveMethod || ''}"`,
+        submission.data.loanDuration || 12,
+        `"${submission.data.salaryReceiveMethod === 'CCP' ? 'CCP (البريد)' : submission.data.salaryReceiveMethod || ''}"`,
         `"${submission.data.monthlyIncomeRange || 'غير محدد'}"`,
         `"${submission.data.preferredContactTime || 'غير محدد'}"`,
         `"${submission.data.isExistingCustomer || 'لا'}"`,
@@ -542,10 +571,10 @@ export const exportToCSV = (
     // Create Blob with UTF-8 BOM for proper Arabic display
     const BOM = '\uFEFF'
     const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' })
-    
+
     // Generate filename
-    const filename = options.filename?.replace(/\.(xlsx|pdf|txt)$/i, '.csv') || 
-                     `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.csv`
+    const filename = options.filename?.replace(/\.(xlsx|pdf|txt)$/i, '.csv') ||
+      `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.csv`
 
     // Download file
     const url = URL.createObjectURL(blob)

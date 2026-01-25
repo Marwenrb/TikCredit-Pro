@@ -52,9 +52,9 @@ export function formatSubmissionEmail(data: SubmissionEmailData): EmailPayload {
     dateStyle: 'full',
     timeStyle: 'short',
   })
-  
+
   const subject = `📋 طلب تمويل جديد – ${formData.fullName} – ${formData.requestedAmount.toLocaleString('ar-DZ')} د.ج – ${new Date(timestamp).toLocaleDateString('ar-DZ')}`
-  
+
   const body = `
 === طلب تمويل جديد ===
 
@@ -303,7 +303,7 @@ ${formData.notes || 'لا توجد ملاحظات'}
   `.trim()
 
   return {
-    to: 'weshcredit@gmail.com',
+    to: process.env.NOTIFICATION_EMAIL || process.env.EMAIL_TO || 'admin@example.com',
     subject,
     body,
     html,
@@ -318,7 +318,7 @@ async function sendEmailViaProvider(payload: EmailPayload): Promise<EmailResult>
   // Check for email provider configuration
   const resendApiKey = process.env.RESEND_API_KEY
   const sendgridApiKey = process.env.SENDGRID_API_KEY
-  
+
   // Try Resend (recommended for Next.js)
   if (resendApiKey) {
     try {
@@ -336,22 +336,22 @@ async function sendEmailViaProvider(payload: EmailPayload): Promise<EmailResult>
           html: payload.html,
         }),
       })
-      
+
       if (response.ok) {
         const result = await response.json()
         return { success: true, messageId: result.id }
       }
-      
+
       const error = await response.text()
       return { success: false, error: `Resend error: ${error}` }
     } catch (error) {
-      return { 
-        success: false, 
-        error: `Resend exception: ${error instanceof Error ? error.message : 'Unknown'}` 
+      return {
+        success: false,
+        error: `Resend exception: ${error instanceof Error ? error.message : 'Unknown'}`
       }
     }
   }
-  
+
   // Try SendGrid
   if (sendgridApiKey) {
     try {
@@ -371,21 +371,21 @@ async function sendEmailViaProvider(payload: EmailPayload): Promise<EmailResult>
           ],
         }),
       })
-      
+
       if (response.ok || response.status === 202) {
         return { success: true, messageId: response.headers.get('X-Message-Id') || 'sent' }
       }
-      
+
       const error = await response.text()
       return { success: false, error: `SendGrid error: ${error}` }
     } catch (error) {
-      return { 
-        success: false, 
-        error: `SendGrid exception: ${error instanceof Error ? error.message : 'Unknown'}` 
+      return {
+        success: false,
+        error: `SendGrid exception: ${error instanceof Error ? error.message : 'Unknown'}`
       }
     }
   }
-  
+
   // No email provider configured - log for development
   if (process.env.NODE_ENV === 'development') {
     console.log('📧 [DEV] Email would be sent:')
@@ -394,7 +394,7 @@ async function sendEmailViaProvider(payload: EmailPayload): Promise<EmailResult>
     console.log('   Body preview:', payload.body.substring(0, 200) + '...')
     return { success: true, messageId: 'dev-mode-skipped' }
   }
-  
+
   // Production without email provider
   console.warn('⚠️ No email provider configured. Set RESEND_API_KEY or SENDGRID_API_KEY.')
   return { success: false, error: 'No email provider configured' }
@@ -404,12 +404,12 @@ async function sendEmailViaProvider(payload: EmailPayload): Promise<EmailResult>
  * Send email with retry mechanism
  */
 export async function sendEmailWithRetry(
-  payload: EmailPayload, 
+  payload: EmailPayload,
   emailId: string = crypto.randomUUID()
 ): Promise<EmailResult> {
   let attempts = 0
   let lastError: string | undefined
-  
+
   // Add to queue
   const queuedEmail: QueuedEmail = {
     id: emailId,
@@ -419,35 +419,35 @@ export async function sendEmailWithRetry(
     status: 'pending',
   }
   emailQueue.set(emailId, queuedEmail)
-  
+
   while (attempts < MAX_RETRIES) {
     attempts++
     queuedEmail.attempts = attempts
     queuedEmail.lastAttempt = new Date().toISOString()
-    
+
     const result = await sendEmailViaProvider(payload)
-    
+
     if (result.success) {
       queuedEmail.status = 'sent'
       emailQueue.set(emailId, queuedEmail)
       return { ...result, retryCount: attempts - 1 }
     }
-    
+
     lastError = result.error
     queuedEmail.error = lastError
-    
+
     // Wait before retry (except on last attempt)
     if (attempts < MAX_RETRIES) {
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempts - 1]))
     }
   }
-  
+
   // Mark as failed after all retries
   queuedEmail.status = 'failed'
   emailQueue.set(emailId, queuedEmail)
-  
-  return { 
-    success: false, 
+
+  return {
+    success: false,
     error: `Failed after ${MAX_RETRIES} attempts: ${lastError}`,
     retryCount: attempts - 1,
   }
@@ -458,7 +458,7 @@ export async function sendEmailWithRetry(
  */
 export function getEmailQueueStatus(): { pending: number; sent: number; failed: number } {
   let pending = 0, sent = 0, failed = 0
-  
+
   emailQueue.forEach(email => {
     switch (email.status) {
       case 'pending': pending++; break
@@ -466,7 +466,7 @@ export function getEmailQueueStatus(): { pending: number; sent: number; failed: 
       case 'failed': failed++; break
     }
   })
-  
+
   return { pending, sent, failed }
 }
 
@@ -487,13 +487,13 @@ export async function sendSubmissionNotification(
   baseUrl: string = process.env.NEXT_PUBLIC_APP_URL || 'https://tikcredit.com'
 ): Promise<EmailResult> {
   const adminDashboardUrl = `${baseUrl}/admin`
-  
+
   const emailPayload = formatSubmissionEmail({
     submissionId,
     timestamp,
     data: formData,
     adminDashboardUrl,
   })
-  
+
   return sendEmailWithRetry(emailPayload, submissionId)
 }

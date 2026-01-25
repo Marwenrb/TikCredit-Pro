@@ -1,14 +1,15 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { motion, useScroll, useTransform, type Variants } from 'framer-motion'
 import { ArrowLeft, CreditCard, Shield, Clock, CheckCircle, Sparkles, TrendingUp, Heart, Flag } from 'lucide-react'
 import { Button, GlassCard } from '@/components/ui'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 // Lazy load particles and background for better performance
-const BlueParticles = dynamic(() => import('@/components/ui/BlueParticles'), { 
+const BlueParticles = dynamic(() => import('@/components/ui/BlueParticles'), {
   ssr: false,
   loading: () => null
 })
@@ -42,8 +43,8 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 25, scale: 0.96 },
-  show: { 
-    opacity: 1, 
+  show: {
+    opacity: 1,
     y: 0,
     scale: 1,
     transition: springConfig
@@ -53,13 +54,13 @@ const itemVariants: Variants = {
 // Hero text animation with cascade effect
 const heroTextVariants: Variants = {
   hidden: { opacity: 0, y: 30, filter: 'blur(10px)' },
-  show: { 
-    opacity: 1, 
+  show: {
+    opacity: 1,
     y: 0,
     filter: 'blur(0px)',
-    transition: { 
-      duration: 0.8, 
-      ease: premiumEasing 
+    transition: {
+      duration: 0.8,
+      ease: premiumEasing
     }
   }
 }
@@ -68,15 +69,26 @@ export default function HomePage() {
   const { scrollYProgress } = useScroll()
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+  const router = useRouter()
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PERFORMANCE: Prefetch the form page in the background
+  // This eliminates the perceived "lag" when clicking "Start"
+  // ═══════════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    // Prefetch the form route for instant navigation
+    router.prefetch('/form')
+  }, [router])
+
   return (
     <div className="min-h-screen bg-luxury-gradient relative overflow-hidden">
       {/* Ultra-Premium Animated Background */}
-      <UltraPremiumBackground 
-        variant="aurora" 
-        intensity="high" 
+      <UltraPremiumBackground
+        variant="aurora"
+        intensity="high"
         interactive={true}
       />
-      
+
       <div className="relative z-10">
         {/* Navigation */}
         <nav className="container mx-auto px-6 py-8">
@@ -88,7 +100,7 @@ export default function HomePage() {
             >
               <Sparkles className="w-8 h-8 text-elegant-blue" />
               <span className="text-3xl font-bold bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent">
-              TikCredit Pro
+                TikCredit Pro
               </span>
             </motion.div>
             <motion.div
@@ -125,22 +137,22 @@ export default function HomePage() {
               animate="show"
               className="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-6"
             >
-              <motion.span 
+              <motion.span
                 className="bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold bg-clip-text text-transparent leading-tight inline-block"
-                animate={{ 
+                animate={{
                   backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
                 }}
-                transition={{ 
-                  duration: 8, 
+                transition={{
+                  duration: 8,
                   repeat: Infinity,
                   ease: 'linear'
                 }}
                 style={{ backgroundSize: '200% auto' }}
-            >
-              TikCredit Pro
+              >
+                TikCredit Pro
               </motion.span>
               <br />
-              <motion.span 
+              <motion.span
                 className="text-luxury-charcoal text-4xl md:text-6xl inline-block font-bold"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -149,7 +161,7 @@ export default function HomePage() {
                 تمويلك بثقة وأمان
               </motion.span>
             </motion.h1>
-            
+
             <motion.p
               variants={heroTextVariants}
               initial="hidden"
@@ -159,7 +171,7 @@ export default function HomePage() {
             >
               حلول تمويل احترافية ومبتكرة تناسب احتياجاتك مع أفضل الشروط والأسعار التنافسية
             </motion.p>
-            
+
             <motion.div
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -168,26 +180,26 @@ export default function HomePage() {
             >
               <Link href="/form">
                 <motion.div
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.05,
                     transition: { duration: 0.2, ease: premiumEasing }
                   }}
-                  whileTap={{ 
+                  whileTap={{
                     scale: 0.95,
                     transition: { duration: 0.1 }
                   }}
                 >
                   <Button variant="default" size="xl">
-                  قدم طلبك الآن
+                    قدم طلبك الآن
                     <ArrowLeft className="w-6 h-6 mr-2" />
-                </Button>
+                  </Button>
                 </motion.div>
               </Link>
             </motion.div>
           </div>
 
           {/* Advanced Feature Cards with TypeScript-Powered Animations */}
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
@@ -216,10 +228,10 @@ export default function HomePage() {
               <motion.div
                 key={index}
                 variants={itemVariants}
-                whileHover={{ 
+                whileHover={{
                   y: -12,
                   scale: 1.02,
-                  transition: { 
+                  transition: {
                     type: 'spring',
                     stiffness: 300,
                     damping: 20
@@ -230,33 +242,33 @@ export default function HomePage() {
               >
                 <div className="luxury-card p-8 h-full relative overflow-hidden">
                   {/* Animated gradient overlay */}
-                  <motion.div 
+                  <motion.div
                     className="absolute inset-0 bg-gradient-to-br from-elegant-blue/[0.03] via-elegant-blue-light/[0.02] to-transparent"
                     initial={{ opacity: 0, scale: 0.8 }}
-                    whileHover={{ 
-                      opacity: 1, 
+                    whileHover={{
+                      opacity: 1,
                       scale: 1,
                       transition: { duration: 0.4 }
                     }}
                   />
-                  
+
                   {/* Premium shimmer on hover */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-elegant-blue/10 to-transparent"
                     initial={{ x: '-100%' }}
-                    whileHover={{ 
+                    whileHover={{
                       x: '100%',
                       transition: { duration: 1.2, ease: 'easeInOut' }
                     }}
                   />
-                  
+
                   {/* Icon with advanced animation */}
-                  <motion.div 
+                  <motion.div
                     className={`inline-flex p-4 rounded-luxury-lg bg-gradient-to-br ${feature.color} mb-6 shadow-premium relative z-10`}
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.15,
                       rotate: [0, -5, 5, 0],
-                      transition: { 
+                      transition: {
                         type: 'spring',
                         stiffness: 400,
                         damping: 15
@@ -268,14 +280,14 @@ export default function HomePage() {
                     <motion.div
                       className="absolute inset-0 rounded-luxury-lg bg-white/20"
                       initial={{ opacity: 0, scale: 0.8 }}
-                      whileHover={{ 
+                      whileHover={{
                         opacity: [0, 0.5, 0],
                         scale: [0.8, 1.3, 0.8],
                         transition: { duration: 1, repeat: Infinity }
                       }}
                     />
                   </motion.div>
-                  
+
                   <h3 className="text-2xl font-bold text-luxury-charcoal mb-3 relative z-10 group-hover:text-elegant-blue transition-colors duration-300">
                     {feature.title}
                   </h3>
@@ -300,8 +312,8 @@ export default function HomePage() {
               animate={{ x: ['-100%', '100%'] }}
               transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
             />
-            
-            <motion.h2 
+
+            <motion.h2
               className="text-4xl md:text-5xl font-bold text-center mb-10 relative"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -311,7 +323,7 @@ export default function HomePage() {
                 لماذا تختارنا؟
               </span>
             </motion.h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
               {([
                 'عملية بسيطة وسريعة',
@@ -325,22 +337,22 @@ export default function HomePage() {
                   key={index}
                   initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
-                  transition={{ 
+                  transition={{
                     delay: 1.1 + index * 0.08,
                     type: 'spring',
                     stiffness: 200,
                     damping: 25
                   }}
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.03,
                     x: 5,
                     transition: { type: 'spring', stiffness: 400, damping: 25 }
                   }}
                   className="flex items-center gap-4 p-4 rounded-luxury bg-gradient-to-r from-luxury-offWhite to-white hover:from-elegant-blue/5 hover:to-elegant-blue-light/5 border border-luxury-lightGray hover:border-elegant-blue/30 transition-all duration-300 cursor-default group/item shadow-sm hover:shadow-md"
                 >
-                  <motion.div 
+                  <motion.div
                     className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-elegant-blue to-premium-gold flex items-center justify-center shadow-lg"
-                    whileHover={{ 
+                    whileHover={{
                       rotate: 360,
                       scale: 1.1,
                       transition: { duration: 0.6, type: 'spring', stiffness: 200 }
@@ -363,9 +375,9 @@ export default function HomePage() {
             transition={{ delay: 1.2, type: 'spring', stiffness: 100, damping: 20 }}
             className="text-center mb-20"
           >
-            <motion.div 
+            <motion.div
               className="p-12 rounded-luxury-lg bg-gradient-to-br from-elegant-blue via-elegant-blue-dark to-elegant-blue relative overflow-hidden shadow-luxury-xl"
-              whileHover={{ 
+              whileHover={{
                 scale: 1.01,
                 boxShadow: '0 25px 50px -12px rgba(30, 58, 138, 0.25)',
                 transition: { duration: 0.3 }
@@ -374,7 +386,7 @@ export default function HomePage() {
               {/* Advanced multi-layer shimmer */}
               <motion.div
                 className="absolute inset-0"
-                animate={{ 
+                animate={{
                   background: [
                     'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
                     'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
@@ -382,14 +394,14 @@ export default function HomePage() {
                   ],
                   backgroundPosition: ['-200% 0', '200% 0']
                 }}
-                transition={{ 
-                  duration: 4, 
+                transition={{
+                  duration: 4,
                   repeat: Infinity,
                   ease: 'linear'
                 }}
                 style={{ backgroundSize: '200% 100%' }}
               />
-              
+
               {/* Sophisticated particle system */}
               {([
                 { size: 2, x: '10%', y: '15%', delay: 0 },
@@ -420,7 +432,7 @@ export default function HomePage() {
                   }}
                 />
               ))}
-              
+
               {/* Glow pulse effect */}
               <motion.div
                 className="absolute -inset-[1px] rounded-luxury-lg"
@@ -433,9 +445,9 @@ export default function HomePage() {
                 }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
               />
-              
+
               <div className="relative z-10">
-                <motion.h2 
+                <motion.h2
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 1.4, type: 'spring', stiffness: 200, damping: 25 }}
@@ -443,7 +455,7 @@ export default function HomePage() {
                 >
                   جاهز للبدء؟
                 </motion.h2>
-                <motion.p 
+                <motion.p
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.6, ease: premiumEasing }}
@@ -456,17 +468,17 @@ export default function HomePage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: 1.8, type: 'spring', stiffness: 150, damping: 20 }}
                 >
-              <Link href="/form">
+                  <Link href="/form">
                     <motion.div
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <Button variant="white" size="xl">
-                  ابدأ الآن
+                        ابدأ الآن
                         <ArrowLeft className="w-6 h-6 mr-2" />
-                </Button>
+                      </Button>
                     </motion.div>
-              </Link>
+                  </Link>
                 </motion.div>
               </div>
             </motion.div>
@@ -476,7 +488,7 @@ export default function HomePage() {
         {/* Ultra-Compact Premium Footer */}
         <footer className="relative mt-20">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-elegant-blue/[0.02] to-elegant-blue/[0.05]" />
-          
+
           <div className="relative container mx-auto px-6 py-8">
             {/* Compact Premium Section */}
             <motion.div
@@ -496,12 +508,12 @@ export default function HomePage() {
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 <motion.div
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.15, 1],
                     rotate: [0, -5, 5, 0]
                   }}
-                  transition={{ 
-                    duration: 2, 
+                  transition={{
+                    duration: 2,
                     repeat: Infinity,
                     repeatDelay: 5,
                     ease: "easeInOut"
@@ -515,18 +527,18 @@ export default function HomePage() {
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 5 }}
                   />
                 </motion.div>
-                
+
                 <span className="text-base font-bold bg-gradient-to-r from-elegant-blue via-status-error to-elegant-blue bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient group-hover:scale-105 transition-transform duration-300">
                   صُنع بحب في الجزائر
                 </span>
-                
+
                 <motion.div
-                  animate={{ 
+                  animate={{
                     rotate: [0, 8, -8, 0],
                     y: [0, -2, 0]
                   }}
-                  transition={{ 
-                    duration: 3, 
+                  transition={{
+                    duration: 3,
                     repeat: Infinity,
                     repeatDelay: 6,
                     ease: "easeInOut"
@@ -545,14 +557,14 @@ export default function HomePage() {
                 className="flex items-center justify-center flex-wrap gap-3 text-sm text-luxury-darkGray font-medium"
               >
                 <span className="font-medium">&copy; {new Date().getFullYear()} TikCredit Pro</span>
-                <motion.span 
+                <motion.span
                   className="w-1 h-1 rounded-full bg-elegant-blue"
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.5, 1],
                     opacity: [0.4, 1, 0.4]
                   }}
-                  transition={{ 
-                    duration: 2, 
+                  transition={{
+                    duration: 2,
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}
@@ -561,16 +573,16 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
           </div>
-          
+
           {/* Subtle Shine Effect */}
           <motion.div
             className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-elegant-blue/20 to-transparent"
-            animate={{ 
+            animate={{
               opacity: [0.3, 0.6, 0.3],
               scaleX: [0.8, 1, 0.8]
             }}
-            transition={{ 
-              duration: 3, 
+            transition={{
+              duration: 3,
               repeat: Infinity,
               ease: "easeInOut"
             }}

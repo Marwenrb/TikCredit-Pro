@@ -1,0 +1,26 @@
+{
+  "id": "81cbfdd5-3add-4b0f-a3ef-13680f300271",
+  "timestamp": "2026-01-19T23:11:51.595Z",
+  "data": {
+    "isExistingCustomer": "نعم",
+    "fullName": "hellodadi",
+    "phone": "0611333333",
+    "email": "dadi33@gmail.com",
+    "preferredContactTime": "صباحاً (8:00 - 12:00)",
+    "wilaya": "البليدة",
+    "monthlyIncomeRange": "30,000 - 50,000 د.ج",
+    "salaryReceiveMethod": "CCP",
+    "profession": "شرطة",
+    "customProfession": "",
+    "financingType": "تمويل شخصي",
+    "requestedAmount": 20000000,
+    "loanDuration": 12,
+    "notes": "dadi 20 janvier 33"
+  },
+  "metadata": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "savedAt": "2026-01-19T23:11:51.595Z",
+    "syncedToFirebase": false
+  }
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Phone, Mail, MapPin, DollarSign, FileText,
@@ -18,16 +18,22 @@ import {
   getDraftFromIndexedDB,
   clearDraftFromIndexedDB,
   initAutoSync,
-  syncPendingSubmissions,
-  getStorageStats
+  syncPendingSubmissions
 } from '@/lib/indexedDBService'
 import confetti from 'canvas-confetti'
 import { useToast } from '@/components/ui/Toast'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERFORMANCE CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 // Loan amount validation constants - 5M to 20M DZD
 const MIN_LOAN_AMOUNT = 5_000_000
 const MAX_LOAN_AMOUNT = 20_000_000
 const LOAN_STEP = 500_000
+
+// Debounce delay for IndexedDB saves (prevents UI thread blocking during rapid typing)
+const INDEXEDDB_DEBOUNCE_MS = 750
 
 /**
  * Validate loan amount
@@ -116,8 +122,8 @@ const CleanForm: React.FC = () => {
           setFormData(prev => ({ ...prev, ...indexedDBDraft }))
           return
         }
-      } catch (e) {
-        console.warn('IndexedDB draft load failed, falling back to localStorage')
+      } catch {
+        // IndexedDB draft load failed, falling back to localStorage
       }
 
       // Fallback to localStorage
@@ -135,14 +141,37 @@ const CleanForm: React.FC = () => {
     }
   }, [])
 
-  // Save draft when data changes (to both localStorage and IndexedDB)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // DEBOUNCED INDEXEDDB SAVE - Prevents UI thread blocking during rapid typing
+  // ═══════════════════════════════════════════════════════════════════════════════
+  const indexedDBTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Save draft when data changes (localStorage is instant, IndexedDB is debounced)
   useEffect(() => {
     if (!isSuccess) {
-      // Save to localStorage (fast, synchronous)
+      // Save to localStorage immediately (fast, synchronous, no UI impact)
       saveDraft(formData)
 
-      // Also save to IndexedDB (persistent, survives browser close)
-      saveDraftToIndexedDB(formData).catch(console.error)
+      // Debounce IndexedDB save to prevent UI jank during rapid typing
+      if (indexedDBTimeoutRef.current) {
+        clearTimeout(indexedDBTimeoutRef.current)
+      }
+
+      indexedDBTimeoutRef.current = setTimeout(() => {
+        // Use startTransition for non-urgent state updates
+        startTransition(() => {
+          saveDraftToIndexedDB(formData).catch(() => {
+            // Silent fail - localStorage already has the data
+          })
+        })
+      }, INDEXEDDB_DEBOUNCE_MS)
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (indexedDBTimeoutRef.current) {
+        clearTimeout(indexedDBTimeoutRef.current)
+      }
     }
   }, [formData, isSuccess])
 
@@ -235,12 +264,10 @@ const CleanForm: React.FC = () => {
 
     try {
       // Save to IndexedDB first (for offline resilience)
-      let indexedDBId: string | null = null
       try {
-        indexedDBId = await saveSubmissionToIndexedDB(formData)
-        console.log('✅ Saved to IndexedDB:', indexedDBId)
-      } catch (e) {
-        console.warn('IndexedDB save failed, continuing with server save')
+        await saveSubmissionToIndexedDB(formData)
+      } catch {
+        // Silent fail - continuing with server save
       }
 
       // Try to submit to server
@@ -260,8 +287,8 @@ const CleanForm: React.FC = () => {
         clearDraft()
         try {
           await clearDraftFromIndexedDB()
-        } catch (e) {
-          console.warn('Failed to clear IndexedDB draft')
+        } catch {
+          // Silent fail - draft cleanup is non-critical
         }
 
         setIsSuccess(true)
@@ -437,7 +464,7 @@ const CleanForm: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
-          className="luxury-card p-8 md:p-10 shadow-luxury-xl"
+          className="luxury-card p-4 sm:p-6 md:p-10 shadow-luxury-xl"
         >
           <div className="mb-8">
             <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent mb-3">

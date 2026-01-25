@@ -1,13 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { adminDb } from '@/lib/firebase-admin'
-import { getAllSubmissions, deleteSubmission, getSyncStats, readLocalSubmissions } from '@/lib/persistenceService'
+import {
+  DATA_DIR,
+  SUBMISSIONS_FILE,
+  readSubmissionsFile,
+  deleteLocalSubmission as deleteFromStorage,
+  getLocalSubmissions,
+  isDev
+} from '@/lib/storage-utils'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRITICAL: Force dynamic rendering to prevent stale data
+// ═══════════════════════════════════════════════════════════════════════════════
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 /**
  * GET /api/submissions/list
  * Protected endpoint - requires admin authentication
- * Returns submissions from both Firebase and local storage
+ * Returns submissions from local storage (primary) + Firebase (when available)
  */
+
+// Using types from storage-utils
+type StoredSubmission = {
+  id: string
+  timestamp: string
+  data: Record<string, unknown>
+  syncedToFirebase?: boolean
+  status?: string
+  source?: string
+  metadata?: {
+    ip?: string
+    userAgent?: string
+    savedAt?: string
+    syncedToFirebase?: boolean
+  }
+}
+
+
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('admin-token')?.value
@@ -21,15 +51,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }
 
-    const isDev = process.env.NODE_ENV === 'development'
-    let submissions: Record<string, unknown>[] = []
-    let source: 'firebase' | 'local' | 'firebase+local' | 'combined' = 'local'
+    let submissions: StoredSubmission[] = []
+    let source: 'firebase' | 'local' | 'combined' = 'local'
     let firebaseCount = 0
     let localCount = 0
 
-    // 1. Get submissions from MySQL/Firebase (production)
-    if (adminDb) {
-      try {
+    // 1. Get submissions from local JSON file FIRST (always available)
+    const localSubmissions = await getLocalSubmissions() as StoredSubmission[]
+    localCount = localSubmissions.length
+
+    if (isDev && localCount > 0) {
+      console.log(`✅ Loaded ${localCount} submissions from local storage`)
+    }
+
+    // 2. Try Firebase (optional, may fail)
+    try {
+      const { adminDb } = await import('@/lib/firebase-admin')
+
+      if (adminDb) {
         const snapshot = await adminDb
           .collection('submissions')
           .orderBy('timestamp', 'desc')
@@ -40,91 +79,62 @@ export async function GET(request: NextRequest) {
           const docData = doc.data()
           return {
             id: doc.id,
-            ...docData,
-            data: docData.data || {
-              fullName: docData.fullName || docData.data?.fullName,
-              phone: docData.phone || docData.data?.phone,
-              email: docData.email || docData.data?.email,
-              wilaya: docData.wilaya || docData.data?.wilaya,
-              financingType: docData.financingType || docData.data?.financingType,
-              requestedAmount: docData.requestedAmount || docData.data?.requestedAmount,
-              salaryReceiveMethod: docData.salaryReceiveMethod || docData.data?.salaryReceiveMethod,
-              monthlyIncomeRange: docData.monthlyIncomeRange || docData.data?.monthlyIncomeRange,
-              isExistingCustomer: docData.isExistingCustomer || docData.data?.isExistingCustomer,
-              preferredContactTime: docData.preferredContactTime || docData.data?.preferredContactTime,
-              profession: docData.profession || docData.data?.profession,
-              customProfession: docData.customProfession || docData.data?.customProfession,
-              notes: docData.notes || docData.data?.notes,
-            },
             timestamp: docData.timestamp || docData.createdAt,
+            data: docData.data || {
+              fullName: docData.fullName,
+              phone: docData.phone,
+              email: docData.email,
+              wilaya: docData.wilaya,
+              financingType: docData.financingType,
+              requestedAmount: docData.requestedAmount,
+              salaryReceiveMethod: docData.salaryReceiveMethod,
+              monthlyIncomeRange: docData.monthlyIncomeRange,
+              isExistingCustomer: docData.isExistingCustomer,
+              preferredContactTime: docData.preferredContactTime,
+              profession: docData.profession,
+              customProfession: docData.customProfession,
+              loanDuration: docData.loanDuration,
+              notes: docData.notes,
+            },
             syncedToFirebase: true,
-            source: 'firebase'
+            status: docData.status || 'synced',
+            source: 'firebase' as const
           }
         })
 
-        submissions.push(...firebaseSubmissions)
         firebaseCount = firebaseSubmissions.length
-        source = 'firebase'
 
-        if (isDev) {
+        if (isDev && firebaseCount > 0) {
           console.log(`✅ Loaded ${firebaseCount} submissions from Firebase`)
         }
-      } catch (error) {
-        console.error('❌ Firebase fetch error:', error)
+
+        // Merge: Firebase submissions take priority for duplicates
+        const firebaseIds = new Set(firebaseSubmissions.map((s: StoredSubmission) => s.id))
+        const uniqueLocalSubs = localSubmissions.filter((s: StoredSubmission) => !firebaseIds.has(s.id))
+
+        submissions = [...firebaseSubmissions, ...uniqueLocalSubs]
+        source = firebaseCount > 0 && localCount > 0 ? 'combined' :
+          firebaseCount > 0 ? 'firebase' : 'local'
       }
-    } else {
+    } catch (error) {
+      // Firebase error - silently fall back to local storage
       if (isDev) {
-        console.warn('⚠️ Firebase Admin DB not available')
+        console.log('ℹ️ Firebase unavailable, using local storage only')
       }
     }
 
-    // 2. Get submissions from local JSON file (G:\TikCredit-Pro\data\submissions.json)
-    try {
-      const localData = await readLocalSubmissions()
-      const localSubmissions = localData.submissions
-
-      // Merge local submissions with Firebase submissions (avoid duplicates by ID)
-      const existingIds = new Set(submissions.map(s => s.id as string))
-
-      const uniqueLocalSubs = localSubmissions
-        .filter(s => !existingIds.has(s.id))
-        .map(s => ({
-          id: s.id,
-          timestamp: s.timestamp,
-          data: s.data,
-          syncedToFirebase: s.syncedToFirebase,
-          status: s.status,
-          source: 'local'
-        }))
-
-      submissions.push(...uniqueLocalSubs)
-      localCount = uniqueLocalSubs.length
-
-      if (isDev) {
-        console.log(`✅ Loaded ${localCount} unique local submissions from data/submissions.json`)
-      }
-
-      // Update source based on what we have
-      if (firebaseCount > 0 && localCount > 0) {
-        source = 'combined'
-      } else if (localCount > 0) {
-        source = 'local'
-      }
-    } catch (error) {
-      if (isDev) {
-        console.log('ℹ️ No local submissions file:', error instanceof Error ? error.message : 'Error')
-      }
+    // If no Firebase data, use local submissions
+    if (submissions.length === 0) {
+      submissions = localSubmissions
+      source = 'local'
     }
 
     // Sort by timestamp (newest first)
     submissions.sort((a, b) => {
-      const dateA = new Date((a.timestamp as string) || '0').getTime()
-      const dateB = new Date((b.timestamp as string) || '0').getTime()
+      const dateA = new Date(a.timestamp || '0').getTime()
+      const dateB = new Date(b.timestamp || '0').getTime()
       return dateB - dateA
     })
-
-    // Get sync statistics
-    const syncStats = await getSyncStats()
 
     return NextResponse.json({
       success: true,
@@ -134,8 +144,7 @@ export async function GET(request: NextRequest) {
       stats: {
         firebase: firebaseCount,
         local: localCount,
-        combinedTotal: submissions.length,
-        ...syncStats
+        total: submissions.length,
       }
     })
 
@@ -169,17 +178,29 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Submission ID required' }, { status: 400 })
     }
 
-    // Use the persistence service to delete from all layers
-    const deleted = await deleteSubmission(id)
+    let deleted = false
+
+    // Delete from local file using storage-utils
+    deleted = await deleteFromStorage(id)
+
+    // Try to delete from Firebase too
+    try {
+      const { adminDb } = await import('@/lib/firebase-admin')
+      if (adminDb) {
+        await adminDb.collection('submissions').doc(id).delete()
+      }
+    } catch {
+      // Ignore Firebase errors
+    }
 
     if (!deleted) {
-      return NextResponse.json({ error: 'Submission not found or delete failed' }, { status: 404 })
+      return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
     }
 
     return NextResponse.json({
       success: true,
       deleted: id,
-      message: 'تم حذف الطلب من جميع مصادر التخزين'
+      message: 'تم حذف الطلب بنجاح'
     })
 
   } catch (error) {
