@@ -47,7 +47,7 @@ log('Form submitted', { values })
 ```
 
 ### Browser DevTools Debugging
-
+	
 **Open DevTools:**
 ```
 Windows/Linux: F12 or Ctrl+Shift+I

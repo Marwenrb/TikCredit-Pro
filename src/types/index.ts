@@ -1,5 +1,3 @@
-// Loan duration validation constant
-export const MAX_LOAN_DURATION = 18 // Maximum 18 months
 
 export interface FormData {
   isExistingCustomer: 'نعم' | 'لا' | ''
@@ -14,7 +12,6 @@ export interface FormData {
   customProfession?: string
   financingType: string
   requestedAmount: number
-  loanDuration: number // Duration in months (1-18)
   notes: string
 }
 
@@ -130,7 +127,6 @@ export const INITIAL_FORM_DATA: FormData = {
   customProfession: '',
   financingType: '',
   requestedAmount: 5_000_000, // Minimum 5M DZD
-  loanDuration: 12, // Default 12 months
   notes: ''
 }
 

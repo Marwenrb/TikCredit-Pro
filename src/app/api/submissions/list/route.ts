@@ -93,7 +93,6 @@ export async function GET(request: NextRequest) {
               preferredContactTime: docData.preferredContactTime,
               profession: docData.profession,
               customProfession: docData.customProfession,
-              loanDuration: docData.loanDuration,
               notes: docData.notes,
             },
             syncedToFirebase: true,

@@ -488,12 +488,6 @@ const AdminDashboard: React.FC = () => {
                 <span className="text-luxury-darkGray font-medium">نوع التمويل:</span>
                 <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.financingType}</p>
               </div>
-              <div>
-                <span className="text-luxury-darkGray font-medium">مدة القرض:</span>
-                <p className="text-luxury-charcoal font-bold">
-                  {selectedSubmission.data.loanDuration || 12} {(selectedSubmission.data.loanDuration || 12) === 1 ? 'شهر' : (selectedSubmission.data.loanDuration || 12) <= 10 ? 'أشهر' : 'شهر'}
-                </p>
-              </div>
               <div className="col-span-2">
                 <span className="text-luxury-darkGray font-medium">المبلغ المطلوب:</span>
                 <div className="flex items-center gap-2 mt-1">

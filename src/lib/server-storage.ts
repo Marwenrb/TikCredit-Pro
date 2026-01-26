@@ -198,7 +198,6 @@ ${thinDivider}
 
 Type de Financement / نوع التمويل : ${data.financingType}
 Montant Demandé / المبلغ المطلوب  : ${formatAmount(data.requestedAmount)}
-Durée du Prêt / مدة القرض        : ${data.loanDuration} mois / شهر
 Contact Préféré / وقت التواصل    : ${data.preferredContactTime || 'Non spécifié / غير محدد'}
 
 ${thinDivider}

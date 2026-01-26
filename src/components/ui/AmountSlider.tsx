@@ -3,8 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
-import { DollarSign, AlertCircle, CheckCircle2, Sparkles, Calendar, Edit3 } from 'lucide-react'
-import { MAX_LOAN_DURATION } from '@/types'
+import { DollarSign, AlertCircle, CheckCircle2, Sparkles, Edit3 } from 'lucide-react'
 
 export interface AmountSliderProps {
   min?: number
@@ -17,10 +16,6 @@ export interface AmountSliderProps {
   showTooltip?: boolean
   error?: string
   disabled?: boolean
-  // Loan duration props
-  loanDuration?: number
-  onDurationChange?: (duration: number) => void
-  showDuration?: boolean
 }
 
 /**
@@ -32,7 +27,6 @@ export interface AmountSliderProps {
  * - Luxury grayscale gradients with blue/gold accents
  * - Smooth animations with Framer Motion
  * - Full ARIA accessibility
- * - Integrated loan duration selector (1-18 months)
  */
 const AmountSlider: React.FC<AmountSliderProps> = memo(({
   min = 5_000_000,
@@ -45,9 +39,6 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
   showTooltip = true,
   error,
   disabled = false,
-  loanDuration = 12,
-  onDurationChange,
-  showDuration = true,
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -155,18 +146,12 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     onChange(newValue)
   }, [value, min, max, step, onChange, disabled])
 
-  // Quick amount buttons
   const quickAmounts = useMemo(() => [
     { label: '5 مليون', value: 5_000_000 },
     { label: '10 مليون', value: 10_000_000 },
     { label: '15 مليون', value: 15_000_000 },
     { label: '20 مليون', value: 20_000_000 },
   ], [])
-
-  // Generate duration options (1-18 months)
-  const durationOptions = useMemo(() => {
-    return Array.from({ length: MAX_LOAN_DURATION }, (_, i) => i + 1)
-  }, [])
 
   return (
     <div className={`w-full ${className}`}>
@@ -411,56 +396,6 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
           الخطوة: {formatCurrency(step)}
         </p>
       </div>
-
-      {/* Loan Duration Selector */}
-      {showDuration && onDurationChange && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mt-8 p-6 bg-gradient-to-r from-luxury-offWhite via-white to-luxury-lightGray rounded-2xl border border-luxury-gray/30"
-        >
-          <label
-            htmlFor="loan-duration"
-            className="flex items-center gap-2 text-lg font-bold text-luxury-charcoal mb-4"
-          >
-            <Calendar className="w-5 h-5 text-elegant-blue" />
-            مدة القرض (بالشهور)
-            <span className="text-status-error">*</span>
-            <span className="text-sm font-normal text-luxury-darkGray mr-2">
-              (أقصى حد: {MAX_LOAN_DURATION} شهر)
-            </span>
-          </label>
-
-          <div className="grid grid-cols-6 gap-2">
-            {durationOptions.map((month) => (
-              <motion.button
-                key={month}
-                type="button"
-                onClick={() => onDurationChange(month)}
-                disabled={disabled}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`
-                  py-3 text-sm font-bold rounded-xl transition-all duration-200
-                  ${loanDuration === month
-                    ? 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white shadow-lg'
-                    : 'bg-white text-luxury-charcoal hover:bg-elegant-blue/10 border border-luxury-gray/50'
-                  }
-                  focus:outline-none focus:ring-2 focus:ring-elegant-blue/50
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                `}
-              >
-                {month}
-              </motion.button>
-            ))}
-          </div>
-
-          <p className="text-center text-sm text-luxury-darkGray mt-4">
-            المدة المختارة: <span className="font-bold text-elegant-blue">{loanDuration} {loanDuration === 1 ? 'شهر' : loanDuration <= 10 ? 'أشهر' : 'شهر'}</span>
-          </p>
-        </motion.div>
-      )}
 
       {/* Error Message */}
       <AnimatePresence>

@@ -10,7 +10,7 @@ import {
 import { Button, ProgressBar, Textarea, AmountSlider } from '@/components/ui'
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput'
 import StepIndicator from '@/components/ui/StepIndicator'
-import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS, MAX_LOAN_DURATION } from '@/types'
+import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS } from '@/types'
 import { saveSubmission, saveDraft, getDraft, clearDraft, validatePhone, validateEmail, formatCurrency } from '@/lib/utils'
 import {
   saveSubmissionToIndexedDB,
@@ -57,24 +57,6 @@ const validateLoanAmount = (amount: number): { valid: boolean; error?: string } 
   return { valid: true }
 }
 
-/**
- * Validate loan duration (max 18 months)
- */
-const validateLoanDuration = (duration: number): { valid: boolean; error?: string } => {
-  if (!duration || isNaN(duration)) {
-    return { valid: false, error: 'مدة القرض مطلوبة' }
-  }
-  if (duration < 1) {
-    return { valid: false, error: 'مدة القرض يجب أن تكون شهر واحد على الأقل' }
-  }
-  if (duration > MAX_LOAN_DURATION) {
-    return {
-      valid: false,
-      error: `مدة القرض القصوى هي ${MAX_LOAN_DURATION} شهراً`
-    }
-  }
-  return { valid: true }
-}
 
 const CleanForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -215,11 +197,6 @@ const CleanForm: React.FC = () => {
       const amountValidation = validateLoanAmount(formData.requestedAmount)
       if (!amountValidation.valid) {
         newErrors.requestedAmount = amountValidation.error
-      }
-      // Validate loan duration (max 18 months)
-      const durationValidation = validateLoanDuration(formData.loanDuration)
-      if (!durationValidation.valid) {
-        newErrors.loanDuration = durationValidation.error
       }
     }
 
@@ -698,7 +675,7 @@ const CleanForm: React.FC = () => {
                 {errors.financingType && <p className="mt-1 text-sm text-status-error">{errors.financingType}</p>}
               </div>
 
-              {/* Premium Amount Slider Component with Loan Duration */}
+              {/* Premium Amount Slider Component */}
               <div className="mt-6">
                 <AmountSlider
                   min={MIN_LOAN_AMOUNT}
@@ -708,16 +685,7 @@ const CleanForm: React.FC = () => {
                   onChange={(value) => updateField('requestedAmount', value)}
                   error={errors.requestedAmount}
                   showTooltip={true}
-                  loanDuration={formData.loanDuration}
-                  onDurationChange={(duration) => updateField('loanDuration', duration)}
-                  showDuration={true}
                 />
-                {errors.loanDuration && (
-                  <p className="mt-2 text-sm text-status-error flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.loanDuration}
-                  </p>
-                )}
               </div>
             </div>
           )}
@@ -766,13 +734,6 @@ const CleanForm: React.FC = () => {
                   <div>
                     <p className="text-sm text-luxury-darkGray mb-1 font-medium">نوع التمويل</p>
                     <p className="text-luxury-charcoal font-bold">{formData.financingType}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">مدة القرض</p>
-                    <p className="text-luxury-charcoal font-bold">
-                      {formData.loanDuration} {formData.loanDuration === 1 ? 'شهر' : formData.loanDuration <= 10 ? 'أشهر' : 'شهر'}
-                    </p>
                   </div>
 
                   <div className="md:col-span-2">

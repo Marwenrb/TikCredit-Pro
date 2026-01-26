@@ -319,10 +319,6 @@ function generateArabicReport(file: DailySubmissionsFile): string {
 `
 
     file.submissions.forEach((sub, index) => {
-        // Format loan duration
-        const loanDuration = sub.data.loanDuration || 12
-        const durationText = loanDuration === 1 ? 'شهر واحد' : loanDuration <= 10 ? `${loanDuration} أشهر` : `${loanDuration} شهر`
-
         report += `┌─────────────────────────────────────────────────────────────────────────────┐
 │ الطلب رقم ${index + 1}                                                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -335,7 +331,6 @@ ${sub.data.email ? `│ 📧 البريد الإلكتروني: ${sub.data.email
 │ 🏦 طريقة استلام الراتب: ${sub.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : 'حساب بنكي'}
 ${sub.data.monthlyIncomeRange ? `│ 💰 نطاق الدخل الشهري: ${sub.data.monthlyIncomeRange}\n` : ''}│ 💳 نوع التمويل: ${sub.data.financingType}
 │ 💵 المبلغ المطلوب: ${formatCurrencyAr(sub.data.requestedAmount)}
-│ 📅 مدة القرض: ${durationText}
 │ 👥 عميل موجود: ${sub.data.isExistingCustomer === 'نعم' ? 'نعم ✓' : 'لا ✗'}
 ${sub.data.preferredContactTime ? `│ 🕐 وقت التواصل المفضل: ${sub.data.preferredContactTime}\n` : ''}${sub.data.notes ? `│ 📝 ملاحظات: ${sub.data.notes}\n` : ''}│ 📊 الحالة: ${getStatusArabic(sub.status)}
 │ 📆 تاريخ الإرسال: ${sub.date} ${sub.time}
@@ -414,10 +409,6 @@ function generateFrenchReport(file: DailySubmissionsFile): string {
 `
 
     file.submissions.forEach((sub, index) => {
-        // Format loan duration in French
-        const loanDuration = sub.data.loanDuration || 12
-        const durationText = loanDuration === 1 ? '1 mois' : `${loanDuration} mois`
-
         // Get profession
         const profession = sub.data.profession === 'أخرى (حدد)' && sub.data.customProfession
             ? sub.data.customProfession
@@ -435,7 +426,6 @@ ${sub.data.email ? `│ 📧 Email: ${sub.data.email}\n` : ''}│ 📍 Wilaya: $
 │ 🏦 Mode de réception salaire: ${sub.data.salaryReceiveMethod === 'CCP' ? 'CCP (Poste)' : 'Compte bancaire'}
 ${sub.data.monthlyIncomeRange ? `│ 💰 Tranche de revenu: ${sub.data.monthlyIncomeRange}\n` : ''}│ 💳 Type de financement: ${sub.data.financingType}
 │ 💵 Montant demandé: ${formatCurrencyFr(sub.data.requestedAmount)}
-│ 📅 Durée du prêt: ${durationText}
 │ 👥 Client existant: ${sub.data.isExistingCustomer === 'نعم' ? 'Oui ✓' : 'Non ✗'}
 ${sub.data.preferredContactTime ? `│ 🕐 Heure de contact préférée: ${sub.data.preferredContactTime}\n` : ''}${sub.data.notes ? `│ 📝 Notes: ${sub.data.notes}\n` : ''}│ 📊 Statut: ${getStatusFrench(sub.status)}
 │ 📆 Date de soumission: ${sub.date} ${sub.time}

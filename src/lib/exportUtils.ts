@@ -181,7 +181,6 @@ export const exportToExcel = async (
       { header: 'المهنة', key: 'profession', width: 20 },
       { header: 'نوع التمويل', key: 'financingType', width: 20 },
       { header: 'المبلغ المطلوب', key: 'amount', width: 15 },
-      { header: 'مدة القرض (شهر)', key: 'loanDuration', width: 15 },
       { header: 'طريقة استلام الراتب', key: 'salaryMethod', width: 20 },
       { header: 'نطاق الدخل الشهري', key: 'incomeRange', width: 20 },
       { header: 'وقت التواصل المفضل', key: 'contactTime', width: 20 },
@@ -220,7 +219,6 @@ export const exportToExcel = async (
         profession: profession,
         financingType: submission.data.financingType || '',
         amount: submission.data.requestedAmount || 0,
-        loanDuration: submission.data.loanDuration || 12,
         salaryMethod: submission.data.salaryReceiveMethod || '',
         incomeRange: submission.data.monthlyIncomeRange || 'غير محدد',
         contactTime: submission.data.preferredContactTime || 'غير محدد',
@@ -435,10 +433,6 @@ export const exportToTXT = (
         ? submission.data.customProfession
         : (submission.data.profession || 'غير محدد')
 
-      // Format loan duration
-      const loanDuration = submission.data.loanDuration || 12
-      const durationText = loanDuration === 1 ? 'شهر واحد' : loanDuration <= 10 ? `${loanDuration} أشهر` : `${loanDuration} شهر`
-
       content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`
       content += `│ طلب رقم ${index + 1}                                                                      \n`
       content += `├─────────────────────────────────────────────────────────────────────────────┤\n`
@@ -449,7 +443,6 @@ export const exportToTXT = (
       content += `│ 💼 المهنة:           ${profession}\n`
       content += `│ 💳 نوع التمويل:      ${submission.data.financingType || 'غير محدد'}\n`
       content += `│ 💵 المبلغ المطلوب:   ${submission.data.requestedAmount?.toLocaleString('ar-DZ') || '0'} دج\n`
-      content += `│ 📅 مدة القرض:        ${durationText}\n`
       content += `│ 🏦 طريقة الراتب:     ${submission.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : submission.data.salaryReceiveMethod || 'غير محدد'}\n`
       content += `│ 💰 نطاق الدخل:       ${submission.data.monthlyIncomeRange || 'غير محدد'}\n`
       content += `│ 🕐 وقت التواصل:      ${submission.data.preferredContactTime || 'غير محدد'}\n`
@@ -523,7 +516,6 @@ export const exportToCSV = (
       'المهنة',
       'نوع التمويل',
       'المبلغ المطلوب',
-      'مدة القرض (شهر)',
       'طريقة الراتب',
       'نطاق الدخل',
       'وقت التواصل',
@@ -553,7 +545,6 @@ export const exportToCSV = (
         `"${profession.replace(/"/g, '""')}"`,
         `"${submission.data.financingType || ''}"`,
         submission.data.requestedAmount || 0,
-        submission.data.loanDuration || 12,
         `"${submission.data.salaryReceiveMethod === 'CCP' ? 'CCP (البريد)' : submission.data.salaryReceiveMethod || ''}"`,
         `"${submission.data.monthlyIncomeRange || 'غير محدد'}"`,
         `"${submission.data.preferredContactTime || 'غير محدد'}"`,

@@ -511,7 +511,6 @@ export function generateDemoData(count: number): void {
         customProfession: '',
         financingType: FINANCING_TYPES[Math.floor(Math.random() * FINANCING_TYPES.length)],
         requestedAmount: Math.floor(Math.random() * 15000000) + 5000000,
-        loanDuration: Math.floor(Math.random() * 18) + 1,
         notes: Math.random() > 0.7 ? 'ملاحظات إضافية للطلب' : ''
       }
     })
