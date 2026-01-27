@@ -1,6 +1,6 @@
 /**
- * Ultra-Professional Persistence Service for TikCredit-Pro
- * Triple-layer storage: Firebase + Local JSON + IndexedDB
+ * Ultra-Professional Persistence Service for TikCredit-Pro (Supabase Edition)
+ * Triple-layer storage: Supabase + Local JSON + IndexedDB
  * 
  * Features:
  * - Atomic file writes to prevent corruption
@@ -11,7 +11,7 @@
  */
 
 import { FormData, Submission } from '@/types'
-import { adminDb } from './firebase-admin'
+import { supabaseAdmin, adminSaveSubmission, adminGetAllSubmissions } from './supabase-admin'
 import { promises as fs } from 'fs'
 import path from 'path'
 
@@ -24,8 +24,9 @@ const RETRY_DELAY_MS = 1000
 
 // Types
 export interface StoredSubmission extends Submission {
-  syncedToFirebase: boolean
-  firebaseId?: string
+  syncedToSupabase: boolean
+  syncedToFirebase?: boolean // Legacy compatibility
+  supabaseId?: string
   createdAt: string
   updatedAt: string
   ip?: string
@@ -76,12 +77,12 @@ export async function readLocalSubmissions(): Promise<SubmissionsFile> {
     await ensureDataDir()
     const content = await fs.readFile(SUBMISSIONS_FILE, 'utf-8')
     const data = JSON.parse(content)
-    
+
     // Validate structure
     if (!data.submissions || !Array.isArray(data.submissions)) {
       return createEmptySubmissionsFile()
     }
-    
+
     return data as SubmissionsFile
   } catch (error) {
     // File doesn't exist or is corrupted, create new one
@@ -96,14 +97,14 @@ export async function readLocalSubmissions(): Promise<SubmissionsFile> {
  */
 export async function writeLocalSubmissions(data: SubmissionsFile): Promise<void> {
   await ensureDataDir()
-  
+
   // Update metadata
   data.metadata.lastUpdated = new Date().toISOString()
   data.metadata.totalCount = data.submissions.length
-  
+
   // Atomic write: write to temp file first, then rename
   const tempFile = `${SUBMISSIONS_FILE}.tmp.${Date.now()}`
-  
+
   try {
     await fs.writeFile(tempFile, JSON.stringify(data, null, 2), 'utf-8')
     await fs.rename(tempFile, SUBMISSIONS_FILE)
@@ -111,7 +112,7 @@ export async function writeLocalSubmissions(data: SubmissionsFile): Promise<void
     // Clean up temp file if it exists
     try {
       await fs.unlink(tempFile)
-    } catch {}
+    } catch { }
     throw error
   }
 }
@@ -125,38 +126,37 @@ function createEmptySubmissionsFile(): SubmissionsFile {
     metadata: {
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
-      version: '1.0.0',
+      version: '2.0.0', // Updated for Supabase
       totalCount: 0
     }
   }
 }
 
 /**
- * Save submission to Firebase with retry logic
+ * Save submission to Supabase with retry logic
  */
-export async function saveToFirebase(submission: StoredSubmission): Promise<{ success: boolean; firebaseId?: string; error?: string }> {
-  if (!adminDb) {
-    return { success: false, error: 'Firebase Admin not initialized' }
+export async function saveToSupabase(submission: StoredSubmission): Promise<{ success: boolean; supabaseId?: string; error?: string }> {
+  if (!supabaseAdmin) {
+    return { success: false, error: 'Supabase Admin not initialized' }
   }
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const docRef = adminDb.collection('submissions').doc(submission.id)
-      
-      await docRef.set({
-        ...submission,
-        data: submission.data,
-        syncedToFirebase: true,
-        status: 'synced',
-        updatedAt: new Date().toISOString(),
-        serverTimestamp: new Date(),
-      })
+      const result = await adminSaveSubmission(
+        submission.id,
+        submission.data,
+        { ip: submission.ip, userAgent: submission.userAgent }
+      )
 
-      console.log(`✅ Submission ${submission.id} saved to Firebase (attempt ${attempt + 1})`)
-      return { success: true, firebaseId: submission.id }
+      if (result.success) {
+        console.log(`✅ Submission ${submission.id} saved to Supabase (attempt ${attempt + 1})`)
+        return { success: true, supabaseId: submission.id }
+      } else {
+        console.error(`❌ Supabase save attempt ${attempt + 1} failed:`, result.error)
+      }
     } catch (error) {
-      console.error(`❌ Firebase save attempt ${attempt + 1} failed:`, error)
-      
+      console.error(`❌ Supabase save attempt ${attempt + 1} failed:`, error)
+
       if (attempt < MAX_RETRIES - 1) {
         // Exponential backoff
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, attempt)))
@@ -173,7 +173,7 @@ export async function saveToFirebase(submission: StoredSubmission): Promise<{ su
 export async function saveToLocalFile(submission: StoredSubmission): Promise<{ success: boolean; error?: string }> {
   try {
     const data = await readLocalSubmissions()
-    
+
     // Check for duplicates
     const existingIndex = data.submissions.findIndex(s => s.id === submission.id)
     if (existingIndex >= 0) {
@@ -183,7 +183,7 @@ export async function saveToLocalFile(submission: StoredSubmission): Promise<{ s
       // Add new at the beginning
       data.submissions.unshift(submission)
     }
-    
+
     await writeLocalSubmissions(data)
     console.log(`✅ Submission ${submission.id} saved to local file`)
     return { success: true }
@@ -202,17 +202,17 @@ export async function persistSubmission(
 ): Promise<{
   success: boolean
   submissionId: string
-  savedTo: ('firebase' | 'local')[]
+  savedTo: ('supabase' | 'local')[]
   errors: string[]
 }> {
   const submissionId = crypto.randomUUID()
   const now = new Date().toISOString()
-  
+
   const submission: StoredSubmission = {
     id: submissionId,
     timestamp: now,
     data: formData,
-    syncedToFirebase: false,
+    syncedToSupabase: false,
     createdAt: now,
     updatedAt: now,
     ip: metadata.ip,
@@ -221,18 +221,18 @@ export async function persistSubmission(
     retryCount: 0
   }
 
-  const savedTo: ('firebase' | 'local')[] = []
+  const savedTo: ('supabase' | 'local')[] = []
   const errors: string[] = []
 
-  // 1. Save to Firebase (primary)
-  const firebaseResult = await saveToFirebase(submission)
-  if (firebaseResult.success) {
-    submission.syncedToFirebase = true
-    submission.firebaseId = firebaseResult.firebaseId
+  // 1. Save to Supabase (primary)
+  const supabaseResult = await saveToSupabase(submission)
+  if (supabaseResult.success) {
+    submission.syncedToSupabase = true
+    submission.supabaseId = supabaseResult.supabaseId
     submission.status = 'synced'
-    savedTo.push('firebase')
+    savedTo.push('supabase')
   } else {
-    errors.push(`Firebase: ${firebaseResult.error}`)
+    errors.push(`Supabase: ${supabaseResult.error}`)
     submission.status = 'pending'
   }
 
@@ -244,8 +244,8 @@ export async function persistSubmission(
     errors.push(`Local: ${localResult.error}`)
   }
 
-  // 3. If Firebase failed, add to sync queue
-  if (!firebaseResult.success) {
+  // 3. If Supabase failed, add to sync queue
+  if (!supabaseResult.success) {
     await addToSyncQueue(submissionId)
   }
 
@@ -263,7 +263,7 @@ export async function persistSubmission(
 async function addToSyncQueue(submissionId: string): Promise<void> {
   try {
     let queue: SyncQueue = { queue: [], lastProcessed: '' }
-    
+
     try {
       const content = await fs.readFile(SYNC_QUEUE_FILE, 'utf-8')
       queue = JSON.parse(content)
@@ -279,7 +279,7 @@ async function addToSyncQueue(submissionId: string): Promise<void> {
         lastAttempt: '',
         nextRetry: new Date(Date.now() + 60000).toISOString() // Retry in 1 minute
       })
-      
+
       await fs.writeFile(SYNC_QUEUE_FILE, JSON.stringify(queue, null, 2), 'utf-8')
       console.log(`📋 Added ${submissionId} to sync queue`)
     }
@@ -289,7 +289,7 @@ async function addToSyncQueue(submissionId: string): Promise<void> {
 }
 
 /**
- * Process sync queue - sync pending submissions to Firebase
+ * Process sync queue - sync pending submissions to Supabase
  */
 export async function processSyncQueue(): Promise<{
   processed: number
@@ -300,7 +300,7 @@ export async function processSyncQueue(): Promise<{
 
   try {
     let queue: SyncQueue = { queue: [], lastProcessed: '' }
-    
+
     try {
       const content = await fs.readFile(SYNC_QUEUE_FILE, 'utf-8')
       queue = JSON.parse(content)
@@ -318,7 +318,7 @@ export async function processSyncQueue(): Promise<{
 
     for (const item of itemsToProcess) {
       stats.processed++
-      
+
       const submission = submissions.submissions.find(s => s.id === item.submissionId)
       if (!submission) {
         // Submission not found, remove from queue
@@ -326,24 +326,24 @@ export async function processSyncQueue(): Promise<{
         continue
       }
 
-      if (submission.syncedToFirebase) {
+      if (submission.syncedToSupabase) {
         // Already synced, remove from queue
         queue.queue = queue.queue.filter(q => q.submissionId !== item.submissionId)
         stats.succeeded++
         continue
       }
 
-      const result = await saveToFirebase(submission)
-      
+      const result = await saveToSupabase(submission)
+
       if (result.success) {
-        submission.syncedToFirebase = true
-        submission.firebaseId = result.firebaseId
+        submission.syncedToSupabase = true
+        submission.supabaseId = result.supabaseId
         submission.status = 'synced'
         submission.updatedAt = new Date().toISOString()
-        
+
         // Update local file
         await writeLocalSubmissions(submissions)
-        
+
         // Remove from queue
         queue.queue = queue.queue.filter(q => q.submissionId !== item.submissionId)
         stats.succeeded++
@@ -352,13 +352,13 @@ export async function processSyncQueue(): Promise<{
         item.attempts++
         item.lastAttempt = new Date().toISOString()
         item.error = result.error
-        
+
         // Exponential backoff for next retry
         const delayMs = Math.min(3600000, 60000 * Math.pow(2, item.attempts)) // Max 1 hour
         item.nextRetry = new Date(Date.now() + delayMs).toISOString()
-        
+
         stats.failed++
-        
+
         // Remove if too many attempts
         if (item.attempts >= 10) {
           queue.queue = queue.queue.filter(q => q.submissionId !== item.submissionId)
@@ -383,7 +383,7 @@ export async function processSyncQueue(): Promise<{
  */
 export async function getAllSubmissions(): Promise<StoredSubmission[]> {
   const data = await readLocalSubmissions()
-  return data.submissions.sort((a, b) => 
+  return data.submissions.sort((a, b) =>
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   )
 }
@@ -399,10 +399,10 @@ export async function getSyncStats(): Promise<{
 }> {
   const data = await readLocalSubmissions()
   const submissions = data.submissions
-  
+
   return {
     total: submissions.length,
-    synced: submissions.filter(s => s.syncedToFirebase || s.status === 'synced').length,
+    synced: submissions.filter(s => s.syncedToSupabase || s.status === 'synced').length,
     pending: submissions.filter(s => s.status === 'pending').length,
     failed: submissions.filter(s => s.status === 'failed').length
   }
@@ -424,12 +424,12 @@ export async function deleteSubmission(submissionId: string): Promise<boolean> {
     success = false
   }
 
-  // Delete from Firebase
-  if (adminDb) {
+  // Delete from Supabase
+  if (supabaseAdmin) {
     try {
-      await adminDb.collection('submissions').doc(submissionId).delete()
+      await supabaseAdmin.from('submissions').delete().eq('id', submissionId)
     } catch (error) {
-      console.error('Error deleting from Firebase:', error)
+      console.error('Error deleting from Supabase:', error)
       success = false
     }
   }
@@ -438,16 +438,16 @@ export async function deleteSubmission(submissionId: string): Promise<boolean> {
 }
 
 /**
- * Sync all local submissions to Firebase (bulk sync)
+ * Sync all local submissions to Supabase (bulk sync)
  */
-export async function syncAllToFirebase(): Promise<{
+export async function syncAllToSupabase(): Promise<{
   total: number
   synced: number
   errors: string[]
 }> {
   const data = await readLocalSubmissions()
-  const unsynced = data.submissions.filter(s => !s.syncedToFirebase && s.status !== 'failed')
-  
+  const unsynced = data.submissions.filter(s => !s.syncedToSupabase && s.status !== 'failed')
+
   const result = {
     total: unsynced.length,
     synced: 0,
@@ -455,19 +455,22 @@ export async function syncAllToFirebase(): Promise<{
   }
 
   for (const submission of unsynced) {
-    const firebaseResult = await saveToFirebase(submission)
-    
-    if (firebaseResult.success) {
-      submission.syncedToFirebase = true
-      submission.firebaseId = firebaseResult.firebaseId
+    const supabaseResult = await saveToSupabase(submission)
+
+    if (supabaseResult.success) {
+      submission.syncedToSupabase = true
+      submission.supabaseId = supabaseResult.supabaseId
       submission.status = 'synced'
       submission.updatedAt = new Date().toISOString()
       result.synced++
     } else {
-      result.errors.push(`${submission.id}: ${firebaseResult.error}`)
+      result.errors.push(`${submission.id}: ${supabaseResult.error}`)
     }
   }
 
   await writeLocalSubmissions(data)
   return result
 }
+
+// Legacy compatibility alias
+export const syncAllToFirebase = syncAllToSupabase

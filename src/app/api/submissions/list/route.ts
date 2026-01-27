@@ -18,7 +18,7 @@ export const revalidate = 0
 /**
  * GET /api/submissions/list
  * Protected endpoint - requires admin authentication
- * Returns submissions from local storage (primary) + Firebase (when available)
+ * Returns submissions from local storage (primary) + Supabase (when available)
  */
 
 // Using types from storage-utils
@@ -26,14 +26,15 @@ type StoredSubmission = {
   id: string
   timestamp: string
   data: Record<string, unknown>
-  syncedToFirebase?: boolean
+  syncedToSupabase?: boolean
+  syncedToFirebase?: boolean // Legacy compatibility
   status?: string
   source?: string
   metadata?: {
     ip?: string
     userAgent?: string
     savedAt?: string
-    syncedToFirebase?: boolean
+    syncedToSupabase?: boolean
   }
 }
 
@@ -52,8 +53,8 @@ export async function GET(request: NextRequest) {
     }
 
     let submissions: StoredSubmission[] = []
-    let source: 'firebase' | 'local' | 'combined' = 'local'
-    let firebaseCount = 0
+    let source: 'supabase' | 'local' | 'combined' = 'local'
+    let supabaseCount = 0
     let localCount = 0
 
     // 1. Get submissions from local JSON file FIRST (always available)
@@ -64,65 +65,64 @@ export async function GET(request: NextRequest) {
       console.log(`✅ Loaded ${localCount} submissions from local storage`)
     }
 
-    // 2. Try Firebase (optional, may fail)
+    // 2. Try Supabase (optional, may fail)
     try {
-      const { adminDb } = await import('@/lib/firebase-admin')
+      const { supabaseAdmin } = await import('@/lib/supabase-admin')
 
-      if (adminDb) {
-        const snapshot = await adminDb
-          .collection('submissions')
-          .orderBy('timestamp', 'desc')
+      if (supabaseAdmin) {
+        const { data, error } = await supabaseAdmin
+          .from('submissions')
+          .select('*')
+          .order('created_at', { ascending: false })
           .limit(500)
-          .get()
 
-        const firebaseSubmissions = snapshot.docs.map(doc => {
-          const docData = doc.data()
-          return {
-            id: doc.id,
-            timestamp: docData.timestamp || docData.createdAt,
-            data: docData.data || {
-              fullName: docData.fullName,
-              phone: docData.phone,
-              email: docData.email,
-              wilaya: docData.wilaya,
-              financingType: docData.financingType,
-              requestedAmount: docData.requestedAmount,
-              salaryReceiveMethod: docData.salaryReceiveMethod,
-              monthlyIncomeRange: docData.monthlyIncomeRange,
-              isExistingCustomer: docData.isExistingCustomer,
-              preferredContactTime: docData.preferredContactTime,
-              profession: docData.profession,
-              customProfession: docData.customProfession,
-              notes: docData.notes,
+        if (!error && data) {
+          const supabaseSubmissions = data.map(record => ({
+            id: record.id,
+            timestamp: record.created_at,
+            data: {
+              fullName: record.full_name,
+              phone: record.phone,
+              email: record.email,
+              wilaya: record.wilaya,
+              financingType: record.financing_type,
+              requestedAmount: record.requested_amount,
+              salaryReceiveMethod: record.salary_receive_method,
+              monthlyIncomeRange: record.monthly_income_range,
+              isExistingCustomer: record.is_existing_customer,
+              preferredContactTime: record.preferred_contact_time,
+              profession: record.profession,
+              customProfession: record.custom_profession,
+              notes: record.notes,
             },
-            syncedToFirebase: true,
-            status: docData.status || 'synced',
-            source: 'firebase' as const
+            syncedToSupabase: true,
+            status: record.status || 'synced',
+            source: 'supabase' as const
+          }))
+
+          supabaseCount = supabaseSubmissions.length
+
+          if (isDev && supabaseCount > 0) {
+            console.log(`✅ Loaded ${supabaseCount} submissions from Supabase`)
           }
-        })
 
-        firebaseCount = firebaseSubmissions.length
+          // Merge: Supabase submissions take priority for duplicates
+          const supabaseIds = new Set(supabaseSubmissions.map((s: StoredSubmission) => s.id))
+          const uniqueLocalSubs = localSubmissions.filter((s: StoredSubmission) => !supabaseIds.has(s.id))
 
-        if (isDev && firebaseCount > 0) {
-          console.log(`✅ Loaded ${firebaseCount} submissions from Firebase`)
+          submissions = [...supabaseSubmissions, ...uniqueLocalSubs]
+          source = supabaseCount > 0 && localCount > 0 ? 'combined' :
+            supabaseCount > 0 ? 'supabase' : 'local'
         }
-
-        // Merge: Firebase submissions take priority for duplicates
-        const firebaseIds = new Set(firebaseSubmissions.map((s: StoredSubmission) => s.id))
-        const uniqueLocalSubs = localSubmissions.filter((s: StoredSubmission) => !firebaseIds.has(s.id))
-
-        submissions = [...firebaseSubmissions, ...uniqueLocalSubs]
-        source = firebaseCount > 0 && localCount > 0 ? 'combined' :
-          firebaseCount > 0 ? 'firebase' : 'local'
       }
     } catch (error) {
-      // Firebase error - silently fall back to local storage
+      // Supabase error - silently fall back to local storage
       if (isDev) {
-        console.log('ℹ️ Firebase unavailable, using local storage only')
+        console.log('ℹ️ Supabase unavailable, using local storage only')
       }
     }
 
-    // If no Firebase data, use local submissions
+    // If no Supabase data, use local submissions
     if (submissions.length === 0) {
       submissions = localSubmissions
       source = 'local'
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
       source,
       count: submissions.length,
       stats: {
-        firebase: firebaseCount,
+        supabase: supabaseCount,
         local: localCount,
         total: submissions.length,
       }
@@ -182,14 +182,14 @@ export async function DELETE(request: NextRequest) {
     // Delete from local file using storage-utils
     deleted = await deleteFromStorage(id)
 
-    // Try to delete from Firebase too
+    // Try to delete from Supabase too
     try {
-      const { adminDb } = await import('@/lib/firebase-admin')
-      if (adminDb) {
-        await adminDb.collection('submissions').doc(id).delete()
+      const { supabaseAdmin } = await import('@/lib/supabase-admin')
+      if (supabaseAdmin) {
+        await supabaseAdmin.from('submissions').delete().eq('id', id)
       }
     } catch {
-      // Ignore Firebase errors
+      // Ignore Supabase errors
     }
 
     if (!deleted) {

@@ -7,7 +7,7 @@
  * - Monthly organized folders (e.g., /2026/01-Janvier/)
  * - Daily text files ready for printing (Arabic + French)
  * - Automatic backup and security
- * - Real-time Firebase sync
+ * - Real-time Supabase sync
  * 
  * Folder Structure:
  * G:\TikCredit-Pro\data\
@@ -28,7 +28,7 @@
  */
 
 import { FormData } from '@/types'
-import { adminDb } from './firebase-admin'
+import { supabaseAdmin, adminSaveSubmission } from './supabase-admin'
 import { promises as fs } from 'fs'
 import path from 'path'
 
@@ -106,8 +106,9 @@ export interface EliteSubmission {
     date: string // YYYY-MM-DD
     time: string // HH:MM:SS
     data: FormData
-    syncedToFirebase: boolean
-    firebaseId?: string
+    syncedToSupabase: boolean
+    syncedToFirebase?: boolean // Legacy compatibility
+    supabaseId?: string
     createdAt: string
     updatedAt: string
     ip?: string
@@ -477,33 +478,29 @@ function getStatusFrench(status: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FIREBASE SYNC
+// SUPABASE SYNC
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Save submission to Firebase with retry logic
+ * Save submission to Supabase with retry logic
  */
-async function saveToFirebase(submission: EliteSubmission): Promise<{ success: boolean; firebaseId?: string; error?: string }> {
-    if (!adminDb) {
-        return { success: false, error: 'Firebase Admin not initialized' }
-    }
-
+async function saveToSupabase(submission: EliteSubmission): Promise<{ success: boolean; supabaseId?: string; error?: string }> {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
-            const docRef = adminDb.collection('submissions').doc(submission.id)
+            const result = await adminSaveSubmission(
+                submission.id,
+                submission.data,
+                { ip: submission.ip, userAgent: submission.userAgent }
+            )
 
-            await docRef.set({
-                ...submission,
-                syncedToFirebase: true,
-                status: 'synced',
-                updatedAt: new Date().toISOString(),
-                serverTimestamp: new Date(),
-            })
-
-            console.log(`✅ Firebase: Submission ${submission.id} saved (attempt ${attempt + 1})`)
-            return { success: true, firebaseId: submission.id }
+            if (result.success) {
+                console.log(`✅ Supabase: Submission ${submission.id} saved (attempt ${attempt + 1})`)
+                return { success: true, supabaseId: submission.id }
+            } else {
+                throw new Error(result.error)
+            }
         } catch (error) {
-            console.error(`❌ Firebase attempt ${attempt + 1} failed:`, error)
+            console.error(`❌ Supabase attempt ${attempt + 1} failed:`, error)
 
             if (attempt < MAX_RETRIES - 1) {
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * Math.pow(2, attempt)))
@@ -520,7 +517,7 @@ async function saveToFirebase(submission: EliteSubmission): Promise<{ success: b
 
 /**
  * Elite Submission Persistence
- * Saves to Firebase + Monthly organized folders with print-ready reports
+ * Saves to Supabase + Monthly organized folders with print-ready reports
  */
 export async function elitePersistSubmission(
     formData: FormData,
@@ -541,7 +538,7 @@ export async function elitePersistSubmission(
         date: formatDateISO(now),
         time: formatTime(now),
         data: formData,
-        syncedToFirebase: false,
+        syncedToSupabase: false,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
         ip: metadata.ip,
@@ -554,15 +551,15 @@ export async function elitePersistSubmission(
     const errors: string[] = []
     const paths = getFilePaths(now)
 
-    // 1. Save to Firebase (primary cloud storage)
-    const firebaseResult = await saveToFirebase(submission)
-    if (firebaseResult.success) {
-        submission.syncedToFirebase = true
-        submission.firebaseId = firebaseResult.firebaseId
+    // 1. Save to Supabase (primary cloud storage)
+    const supabaseResult = await saveToSupabase(submission)
+    if (supabaseResult.success) {
+        submission.syncedToSupabase = true
+        submission.supabaseId = supabaseResult.supabaseId
         submission.status = 'synced'
-        savedTo.push('Firebase')
+        savedTo.push('Supabase')
     } else {
-        errors.push(`Firebase: ${firebaseResult.error}`)
+        errors.push(`Supabase: ${supabaseResult.error}`)
     }
 
     // 2. Save to monthly organized folder

@@ -3,15 +3,12 @@ import { validatePhone, validateEmail } from '@/lib/utils'
 import { FormData } from '@/types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRODUCTION-READY SUBMISSION API - TikCredit Pro v3.0
+// PRODUCTION-READY SUBMISSION API - TikCredit Pro v4.0 (Supabase Edition)
 // ═══════════════════════════════════════════════════════════════════════════════
 // 
-// CRITICAL FIX: Vercel has READ-ONLY filesystem. Local storage ONLY works in dev.
-// Production MUST use Firebase. This version is optimized for Vercel deployment.
-//
 // Storage Strategy:
-// - PRODUCTION: Firebase ONLY (local storage disabled)
-// - DEVELOPMENT: Firebase + Local storage (dual persistence)
+// - PRODUCTION: Supabase ONLY (local storage disabled on Vercel)
+// - DEVELOPMENT: Supabase + Local storage (dual persistence)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -26,7 +23,7 @@ const recentSubmissions = new Map<string, number>()
 const DUPLICATE_WINDOW_MS = 60_000
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// LOGGING - Always log in production for debugging
+// LOGGING
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function log(message: string, ...args: unknown[]): void {
@@ -60,10 +57,10 @@ function validateAmount(amount: number): { ok: boolean; msg?: string } {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FIREBASE STORAGE - PRIMARY for Production
+// SUPABASE STORAGE - PRIMARY for Production
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function saveToFirebase(
+async function saveToSupabase(
   submissionId: string,
   data: FormData,
   metadata: { ip?: string; userAgent?: string }
@@ -71,70 +68,29 @@ async function saveToFirebase(
   const startTime = Date.now()
 
   try {
-    log(`Firebase: Attempting to save ${submissionId}...`)
+    log(`Supabase: Attempting to save ${submissionId}...`)
 
-    // Import firebase-admin module
-    const firebaseModule = await import('@/lib/firebase-admin')
-    const { adminDb } = firebaseModule
+    // Import supabase-admin module
+    const { adminSaveSubmission } = await import('@/lib/supabase-admin')
 
-    // Check if Firebase is initialized
-    if (!adminDb) {
-      const envCheck = {
-        projectId: !!process.env.FIREBASE_PROJECT_ID,
-        clientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: !!process.env.FIREBASE_PRIVATE_KEY,
-        privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0
-      }
-
-      logError('Firebase Admin SDK not initialized. Environment check:', envCheck)
-      return {
-        success: false,
-        error: `Firebase not configured. Missing: ${!envCheck.projectId ? 'PROJECT_ID ' : ''}${!envCheck.clientEmail ? 'CLIENT_EMAIL ' : ''}${!envCheck.privateKey ? 'PRIVATE_KEY' : ''}`.trim()
-      }
-    }
-
-    const now = new Date()
-
-    // Save to Firestore
-    await adminDb.collection('submissions').doc(submissionId).set({
-      id: submissionId,
-      timestamp: now.toISOString(),
-      data: {
-        fullName: data.fullName,
-        phone: data.phone,
-        email: data.email || '',
-        wilaya: data.wilaya,
-        profession: data.profession,
-        customProfession: data.customProfession || '',
-        monthlyIncomeRange: data.monthlyIncomeRange || '',
-        salaryReceiveMethod: data.salaryReceiveMethod,
-        financingType: data.financingType,
-        requestedAmount: data.requestedAmount,
-        isExistingCustomer: data.isExistingCustomer || '',
-        preferredContactTime: data.preferredContactTime || '',
-        notes: data.notes || ''
-      },
-      metadata: {
-        ip: metadata.ip || 'unknown',
-        userAgent: metadata.userAgent || 'unknown',
-        savedAt: now.toISOString(),
-        source: isVercel ? 'vercel' : 'local'
-      },
-      status: 'new',
-      createdAt: now,
-    })
+    const result = await adminSaveSubmission(submissionId, data, metadata)
 
     const elapsed = Date.now() - startTime
-    log(`Firebase: SUCCESS - Saved ${submissionId} in ${elapsed}ms`)
 
-    return { success: true }
+    if (result.success) {
+      log(`Supabase: SUCCESS - Saved ${submissionId} in ${elapsed}ms`)
+    } else {
+      logError(`Supabase: FAILED after ${elapsed}ms - ${result.error}`)
+    }
+
+    return result
 
   } catch (error) {
     const elapsed = Date.now() - startTime
-    const errMsg = error instanceof Error ? error.message : 'Firebase save failed'
+    const errMsg = error instanceof Error ? error.message : 'Supabase save failed'
     const errStack = error instanceof Error ? error.stack : ''
 
-    logError(`Firebase: FAILED after ${elapsed}ms - ${errMsg}`)
+    logError(`Supabase: FAILED after ${elapsed}ms - ${errMsg}`)
     if (isDev && errStack) {
       console.error('Stack:', errStack)
     }
@@ -199,6 +155,7 @@ export async function POST(request: NextRequest) {
   log(`═══════════════════════════════════════════════════════`)
   log(`NEW REQUEST - ID: ${submissionId}`)
   log(`Environment: ${isVercel ? 'VERCEL/PRODUCTION' : 'LOCAL/DEVELOPMENT'}`)
+  log(`Backend: SUPABASE`)
   log(`═══════════════════════════════════════════════════════`)
 
   try {
@@ -275,14 +232,11 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || 'unknown'
     const metadata = { ip, userAgent }
 
-    // On Vercel: Firebase ONLY (local storage doesn't work)
-    // In Development: Try both
-
-    let firebaseResult: { success: boolean; error?: string }
+    let supabaseResult: { success: boolean; error?: string }
     let localResult: { success: boolean; error?: string } = { success: false, error: 'skipped' }
 
-    // Try Firebase first (primary storage)
-    firebaseResult = await saveToFirebase(submissionId, data, metadata)
+    // Try Supabase first (primary storage)
+    supabaseResult = await saveToSupabase(submissionId, data, metadata)
 
     // Try local storage only in development
     if (!isVercel) {
@@ -296,10 +250,10 @@ export async function POST(request: NextRequest) {
     const savedTo: string[] = []
     const errors: string[] = []
 
-    if (firebaseResult.success) {
-      savedTo.push('Firebase')
-    } else if (firebaseResult.error) {
-      errors.push(`Firebase: ${firebaseResult.error}`)
+    if (supabaseResult.success) {
+      savedTo.push('Supabase')
+    } else if (supabaseResult.error) {
+      errors.push(`Supabase: ${supabaseResult.error}`)
     }
 
     if (localResult.success) {
@@ -332,8 +286,8 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'تم استلام طلبك بنجاح!',
         submissionId,
-        syncedToFirebase: firebaseResult.success,
-        persisted: firebaseResult.success ? 'firebase' : 'local',
+        syncedToSupabase: supabaseResult.success,
+        persisted: supabaseResult.success ? 'supabase' : 'local',
       }, {
         status: 200,
         headers: { 'Cache-Control': 'no-store' }
