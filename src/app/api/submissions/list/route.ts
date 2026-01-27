@@ -52,6 +52,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }
 
+    // Parse query parameters for filtering
+    const { searchParams } = new URL(request.url)
+    const wilaya = searchParams.get('wilaya')
+    const search = searchParams.get('search')
+    const period = searchParams.get('period') as 'today' | 'week' | 'month' | 'all' | null
+
     let submissions: StoredSubmission[] = []
     let source: 'supabase' | 'local' | 'combined' = 'local'
     let supabaseCount = 0
@@ -65,16 +71,51 @@ export async function GET(request: NextRequest) {
       console.log(`✅ Loaded ${localCount} submissions from local storage`)
     }
 
-    // 2. Try Supabase (optional, may fail)
+    // 2. Try Supabase with server-side filtering
     try {
       const { supabaseAdmin } = await import('@/lib/supabase-admin')
 
       if (supabaseAdmin) {
-        const { data, error } = await supabaseAdmin
+        // Build query with filters
+        let query = supabaseAdmin
           .from('submissions')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(500)
+
+        // Apply wilaya filter
+        if (wilaya && wilaya !== 'all') {
+          query = query.eq('wilaya', wilaya)
+        }
+
+        // Apply search filter (name or phone)
+        if (search && search.trim()) {
+          query = query.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%`)
+        }
+
+        // Apply period filter
+        if (period && period !== 'all') {
+          const now = new Date()
+          let startDate: Date
+
+          switch (period) {
+            case 'today':
+              startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+              break
+            case 'week':
+              startDate = new Date(now)
+              startDate.setDate(now.getDate() - 7)
+              break
+            case 'month':
+              startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0)
+              break
+            default:
+              startDate = new Date(2020, 0, 1)
+          }
+          query = query.gte('created_at', startDate.toISOString())
+        }
+
+        const { data, error } = await query
 
         if (!error && data) {
           const supabaseSubmissions = data.map(record => ({

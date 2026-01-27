@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle, RefreshCw, Loader2, AlertCircle, Wifi, WifiOff, Bell } from 'lucide-react'
+import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle, RefreshCw, Loader2, AlertCircle, Wifi, WifiOff, Bell, Printer, MapPin, CheckSquare, Square } from 'lucide-react'
 import { Button, GlassCard, StatCard, Modal } from '@/components/ui'
 import DownloadModal from './DownloadModal'
-import { Submission } from '@/types'
+import PrintableSubmissions from './PrintableSubmissions'
+import { Submission, WILAYAS } from '@/types'
 import {
   getSubmissions,
   deleteSubmission as deleteLocalSubmission,
@@ -36,6 +37,13 @@ const AdminDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [dataSource, setDataSource] = useState<'firebase' | 'local' | 'browser'>('browser')
   const [newSubmissionsCount, setNewSubmissionsCount] = useState(0)
+
+  // New states for enhanced features
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedWilaya, setSelectedWilaya] = useState<string>('all')
+  const [showPrintView, setShowPrintView] = useState(false)
+  const [serverSearch, setServerSearch] = useState('')
 
   const toast = useToast()
 
@@ -71,14 +79,22 @@ const AdminDashboard: React.FC = () => {
     }, []),
   })
 
-  // Fetch submissions from server API
-  const fetchServerSubmissions = useCallback(async () => {
+  // Fetch submissions from server API with filters
+  const fetchServerSubmissions = useCallback(async (filters?: { wilaya?: string; search?: string; period?: string }) => {
     setIsLoading(true)
     setError(null)
     setNewSubmissionsCount(0)
 
     try {
-      const response = await fetch('/api/submissions/list', {
+      // Build URL with query parameters
+      const params = new URLSearchParams()
+      if (filters?.wilaya && filters.wilaya !== 'all') params.set('wilaya', filters.wilaya)
+      if (filters?.search) params.set('search', filters.search)
+      if (filters?.period && filters.period !== 'all') params.set('period', filters.period)
+
+      const url = `/api/submissions/list${params.toString() ? `?${params.toString()}` : ''}`
+
+      const response = await fetch(url, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -135,7 +151,47 @@ const AdminDashboard: React.FC = () => {
   )
 
   const handleRefresh = () => {
-    fetchServerSubmissions()
+    fetchServerSubmissions({ wilaya: selectedWilaya, search: serverSearch, period })
+  }
+
+  // Selection handlers
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }
+
+  const selectAll = () => {
+    setSelectedIds(new Set(filteredSubmissions.map(s => s.id)))
+  }
+
+  const deselectAll = () => {
+    setSelectedIds(new Set())
+  }
+
+  const getSelectedSubmissions = () => {
+    return filteredSubmissions.filter(s => selectedIds.has(s.id))
+  }
+
+  // Server-side search handler
+  const handleServerSearch = useMemo(
+    () => debounce((query: string) => {
+      setServerSearch(query)
+      fetchServerSubmissions({ wilaya: selectedWilaya, search: query, period })
+    }, 500),
+    [selectedWilaya, period, fetchServerSubmissions]
+  )
+
+  // Wilaya filter handler
+  const handleWilayaChange = (newWilaya: string) => {
+    setSelectedWilaya(newWilaya)
+    fetchServerSubmissions({ wilaya: newWilaya, search: serverSearch, period })
   }
 
   const handleDelete = async (id: string) => {
@@ -318,16 +374,91 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <GlassCard variant="elevated" className="p-6">
+          {/* Selection Action Bar */}
+          <AnimatePresence>
+            {selectMode && selectedIds.size > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-elegant-blue/10 border border-elegant-blue/30 rounded-xl p-4 mb-4 flex flex-wrap items-center gap-4"
+              >
+                <span className="text-elegant-blue font-bold">
+                  {selectedIds.size} طلب محدد
+                </span>
+                <Button variant="outline" size="sm" onClick={selectAll}>
+                  <CheckSquare className="w-4 h-4 ml-1" />
+                  تحديد الكل
+                </Button>
+                <Button variant="outline" size="sm" onClick={deselectAll}>
+                  <Square className="w-4 h-4 ml-1" />
+                  إلغاء التحديد
+                </Button>
+                <Button
+                  variant="glass-blue"
+                  size="sm"
+                  onClick={() => setShowPrintView(true)}
+                >
+                  <Printer className="w-4 h-4 ml-1" />
+                  طباعة المحدد
+                </Button>
+                <Button
+                  variant="gradient"
+                  size="sm"
+                  onClick={() => {
+                    setIsDownloadModalOpen(true)
+                  }}
+                >
+                  <Download className="w-4 h-4 ml-1" />
+                  تصدير المحدد
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex flex-col md:flex-row gap-4 mb-6">
+            {/* Server-side Search */}
             <div className="flex-1 relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-mediumGray" />
               <input
                 type="text"
-                placeholder="بحث بالاسم، الهاتف، أو الولاية..."
-                onChange={(e) => debouncedSearch(e.target.value)}
+                placeholder="بحث في Supabase بالاسم أو الهاتف..."
+                onChange={(e) => handleServerSearch(e.target.value)}
                 className="w-full pr-10 pl-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl text-luxury-charcoal placeholder:text-luxury-mediumGray shadow-sm focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue"
               />
             </div>
+
+            {/* Wilaya Filter */}
+            <div className="relative">
+              <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-mediumGray pointer-events-none" />
+              <select
+                value={selectedWilaya}
+                onChange={(e) => handleWilayaChange(e.target.value)}
+                className="appearance-none pr-10 pl-8 py-3 bg-white border border-luxury-lightGray rounded-xl text-luxury-charcoal shadow-sm focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue min-w-[180px] cursor-pointer"
+              >
+                <option value="all">كل الولايات</option>
+                {WILAYAS.map((w) => (
+                  <option key={w} value={w}>{w}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Select Mode Toggle */}
+            <Button
+              variant={selectMode ? 'default' : 'outline'}
+              size="lg"
+              onClick={() => {
+                setSelectMode(!selectMode)
+                if (selectMode) setSelectedIds(new Set())
+              }}
+            >
+              {selectMode ? <CheckSquare className="w-5 h-5 ml-1" /> : <Square className="w-5 h-5 ml-1" />}
+              {selectMode ? 'إلغاء التحديد' : 'وضع التحديد'}
+            </Button>
+          </div>
+
+          {/* Period and Action Filters */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex gap-2 flex-wrap">
               {(['all', 'today', 'week', 'month'] as const).map((p) => (
                 <Button
@@ -357,7 +488,16 @@ const AdminDashboard: React.FC = () => {
                 صحيحة فقط
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mr-auto">
+              <Button
+                variant="glass-blue"
+                size="sm"
+                onClick={() => setShowPrintView(true)}
+                title="طباعة الكل بالعربية"
+              >
+                <Printer className="w-4 h-4 ml-2" />
+                طباعة عربي
+              </Button>
               <Button
                 variant="gradient"
                 size="sm"
@@ -393,9 +533,25 @@ const AdminDashboard: React.FC = () => {
                   key={submission.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl p-4 hover:border-elegant-blue/40 hover:shadow-md transition-all shadow-sm"
+                  className={`bg-white backdrop-blur-sm border rounded-xl p-4 hover:shadow-md transition-all shadow-sm ${selectedIds.has(submission.id)
+                    ? 'border-elegant-blue bg-elegant-blue/5'
+                    : 'border-luxury-lightGray hover:border-elegant-blue/40'
+                    }`}
                 >
                   <div className="flex justify-between items-start">
+                    {/* Checkbox */}
+                    {selectMode && (
+                      <button
+                        onClick={() => toggleSelection(submission.id)}
+                        className="ml-3 p-1 rounded hover:bg-gray-100 transition-colors"
+                      >
+                        {selectedIds.has(submission.id) ? (
+                          <CheckSquare className="w-5 h-5 text-elegant-blue" />
+                        ) : (
+                          <Square className="w-5 h-5 text-luxury-mediumGray" />
+                        )}
+                      </button>
+                    )}
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-elegant-blue mb-1">
                         {submission.data.fullName}
@@ -555,8 +711,23 @@ const AdminDashboard: React.FC = () => {
       <DownloadModal
         isOpen={isDownloadModalOpen}
         onClose={() => setIsDownloadModalOpen(false)}
-        submissions={submissions}
+        submissions={selectMode && selectedIds.size > 0 ? getSelectedSubmissions() : submissions}
       />
+
+      {/* Print View Modal */}
+      {showPrintView && (
+        <div className="fixed inset-0 z-50 bg-white">
+          <PrintableSubmissions
+            submissions={selectMode && selectedIds.size > 0 ? getSelectedSubmissions() : filteredSubmissions}
+            onClose={() => setShowPrintView(false)}
+            title={selectMode && selectedIds.size > 0
+              ? `الطلبات المحددة (${selectedIds.size})`
+              : selectedWilaya !== 'all'
+                ? `طلبات ولاية ${selectedWilaya}`
+                : 'جميع الطلبات'}
+          />
+        </div>
+      )}
     </div>
   )
 }
