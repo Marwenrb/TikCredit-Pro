@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
     if (!decoded || decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }
@@ -165,7 +165,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
     if (!decoded || decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }

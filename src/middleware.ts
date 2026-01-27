@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Protect admin routes
@@ -16,8 +16,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    // Verify token
-    const decoded = verifyToken(token)
+    // Verify token (now async with jose)
+    const decoded = await verifyToken(token)
 
     if (!decoded || decoded.role !== 'admin') {
       // Invalid token - clear cookie and allow request
@@ -40,4 +40,3 @@ export const config = {
     '/api/admin/:path*',
   ],
 }
-

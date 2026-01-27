@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  const decoded = verifyToken(token)
+  const decoded = await verifyToken(token)
   if (!decoded || decoded.role !== 'admin') {
     return new Response(JSON.stringify({ error: 'Invalid token' }), {
       status: 401,
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
     if (!token) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
     if (!decoded || decoded.role !== 'admin') {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }

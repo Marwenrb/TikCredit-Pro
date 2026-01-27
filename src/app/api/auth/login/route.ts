@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     if (!rateLimitResult.success) {
       return NextResponse.json(
         { error: 'Too many login attempts. Please try again later.' },
-        { 
+        {
           status: 429,
           headers: {
             'X-RateLimit-Limit': rateLimitResult.limit.toString(),
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Get password from environment variable (secure - not exposed in code)
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
-    
+
     if (!ADMIN_PASSWORD) {
       console.error('CRITICAL: ADMIN_PASSWORD not set in environment variables')
       return NextResponse.json(
@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-    
+
     const isValid = password === ADMIN_PASSWORD
-    
+
     if (!isValid) {
       // Add artificial delay to slow down brute force attempts
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       return NextResponse.json(
         { error: 'Invalid password' },
         { status: 401 }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate JWT token
-    const token = generateToken()
+    const token = await generateToken()
 
     // Set token in HTTP-only cookie with enhanced security
     const response = NextResponse.json(
