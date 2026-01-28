@@ -782,10 +782,18 @@ ${submission.data.notes ? `📝 الملاحظات:        ${submission.data.not
       {showPrintView && (
         <div className="fixed inset-0 z-50 bg-white">
           <PrintableSubmissions
-            submissions={selectMode && selectedIds.size > 0 ? getSelectedSubmissions() : filteredSubmissions}
-            onClose={() => setShowPrintView(false)}
-            title={selectMode && selectedIds.size > 0
-              ? `الطلبات المحددة (${selectedIds.size})`
+            submissions={selectedIds.size > 0 ? getSelectedSubmissions() : filteredSubmissions}
+            onClose={() => {
+              setShowPrintView(false)
+              // Clear selection when closing print view if not in select mode
+              if (!selectMode) {
+                setSelectedIds(new Set())
+              }
+            }}
+            title={selectedIds.size > 0
+              ? selectedIds.size === 1
+                ? 'طلب رقم ' + filteredSubmissions.findIndex(s => selectedIds.has(s.id)) + 1
+                : `الطلبات المحددة (${selectedIds.size})`
               : selectedWilaya !== 'all'
                 ? `طلبات ولاية ${selectedWilaya}`
                 : 'جميع الطلبات'}
