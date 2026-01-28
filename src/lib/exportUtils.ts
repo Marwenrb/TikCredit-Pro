@@ -166,21 +166,28 @@ export const exportToExcel = async (
       return
     }
 
-    // Create workbook and worksheet using ExcelJS
+    // Create workbook and worksheets using ExcelJS
     const workbook = new ExcelJS.Workbook()
-    const sheetName = `Submissions_${format(new Date(), 'ddMMyyyy')}`
-    const worksheet = workbook.addWorksheet(sheetName.substring(0, 31)) // Excel sheet name limit
+    workbook.creator = 'TikCredit Pro'
+    workbook.created = new Date()
 
-    // Define columns with headers
+    // ========================================
+    // MAIN SUBMISSIONS SHEET
+    // ========================================
+    const sheetName = `الطلبات_${format(new Date(), 'ddMMyyyy')}`
+    const worksheet = workbook.addWorksheet(sheetName.substring(0, 31))
+
+    // Define columns with headers - now includes ID for tracking
     const columns = [
       { header: 'الرقم', key: 'number', width: 8 },
+      { header: 'معرف الطلب (ID)', key: 'submissionId', width: 20 },
       { header: 'الاسم الكامل', key: 'fullName', width: 25 },
       { header: 'رقم الهاتف', key: 'phone', width: 15 },
       { header: 'البريد الإلكتروني', key: 'email', width: 25 },
       { header: 'الولاية', key: 'wilaya', width: 15 },
       { header: 'المهنة', key: 'profession', width: 20 },
       { header: 'نوع التمويل', key: 'financingType', width: 20 },
-      { header: 'المبلغ المطلوب', key: 'amount', width: 15 },
+      { header: 'المبلغ المطلوب', key: 'amount', width: 18 },
       { header: 'طريقة استلام الراتب', key: 'salaryMethod', width: 20 },
       { header: 'نطاق الدخل الشهري', key: 'incomeRange', width: 20 },
       { header: 'وقت التواصل المفضل', key: 'contactTime', width: 20 },
@@ -195,11 +202,11 @@ export const exportToExcel = async (
     worksheet.columns = columns
 
     // Style header row
-    worksheet.getRow(1).font = { bold: true, size: 12 }
+    worksheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } }
     worksheet.getRow(1).fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FFE3F2FD' }
+      fgColor: { argb: 'FF1E3A8A' } // Elegant blue
     }
     worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' }
 
@@ -212,6 +219,7 @@ export const exportToExcel = async (
 
       const row: Record<string, unknown> = {
         number: index + 1,
+        submissionId: submission.id || 'N/A',
         fullName: submission.data.fullName || '',
         phone: submission.data.phone || '',
         email: submission.data.email || 'غير محدد',
@@ -219,7 +227,7 @@ export const exportToExcel = async (
         profession: profession,
         financingType: submission.data.financingType || '',
         amount: submission.data.requestedAmount || 0,
-        salaryMethod: submission.data.salaryReceiveMethod || '',
+        salaryMethod: submission.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : (submission.data.salaryReceiveMethod || ''),
         incomeRange: submission.data.monthlyIncomeRange || 'غير محدد',
         contactTime: submission.data.preferredContactTime || 'غير محدد',
         existingCustomer: submission.data.isExistingCustomer || 'لا',
@@ -247,6 +255,143 @@ export const exportToExcel = async (
       }
     })
 
+    // ========================================
+    // SUMMARY BY WILAYA SHEET
+    // ========================================
+    const wilayaSummarySheet = workbook.addWorksheet('ملخص حسب الولاية')
+
+    // Group submissions by wilaya
+    const wilayaStats: Record<string, { count: number; totalAmount: number }> = {}
+    filteredSubmissions.forEach(sub => {
+      const wilaya = sub.data.wilaya || 'غير محدد'
+      if (!wilayaStats[wilaya]) {
+        wilayaStats[wilaya] = { count: 0, totalAmount: 0 }
+      }
+      wilayaStats[wilaya].count++
+      wilayaStats[wilaya].totalAmount += sub.data.requestedAmount || 0
+    })
+
+    // Sort by count descending
+    const sortedWilayas = Object.entries(wilayaStats)
+      .sort((a, b) => b[1].count - a[1].count)
+
+    wilayaSummarySheet.columns = [
+      { header: 'الترتيب', key: 'rank', width: 10 },
+      { header: 'الولاية', key: 'wilaya', width: 20 },
+      { header: 'عدد الطلبات', key: 'count', width: 15 },
+      { header: 'إجمالي المبالغ', key: 'totalAmount', width: 20 },
+      { header: 'متوسط المبلغ', key: 'avgAmount', width: 20 },
+      { header: 'النسبة %', key: 'percentage', width: 12 },
+    ]
+
+    // Style header
+    wilayaSummarySheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } }
+    wilayaSummarySheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF16A34A' } // Green
+    }
+    wilayaSummarySheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' }
+
+    sortedWilayas.forEach(([wilaya, stats], index) => {
+      wilayaSummarySheet.addRow({
+        rank: index + 1,
+        wilaya: wilaya,
+        count: stats.count,
+        totalAmount: stats.totalAmount,
+        avgAmount: Math.round(stats.totalAmount / stats.count),
+        percentage: ((stats.count / filteredSubmissions.length) * 100).toFixed(1) + '%',
+      })
+    })
+
+    // Add total row
+    const totalAmount = filteredSubmissions.reduce((sum, sub) => sum + (sub.data.requestedAmount || 0), 0)
+    wilayaSummarySheet.addRow({
+      rank: '',
+      wilaya: 'الإجمالي',
+      count: filteredSubmissions.length,
+      totalAmount: totalAmount,
+      avgAmount: Math.round(totalAmount / filteredSubmissions.length),
+      percentage: '100%',
+    })
+    const lastWilayaRow = wilayaSummarySheet.lastRow
+    if (lastWilayaRow) {
+      lastWilayaRow.font = { bold: true }
+      lastWilayaRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE5E7EB' }
+      }
+    }
+
+    // ========================================
+    // SUMMARY BY FINANCING TYPE SHEET
+    // ========================================
+    const typeSummarySheet = workbook.addWorksheet('ملخص حسب نوع التمويل')
+
+    // Group submissions by financing type
+    const typeStats: Record<string, { count: number; totalAmount: number }> = {}
+    filteredSubmissions.forEach(sub => {
+      const type = sub.data.financingType || 'غير محدد'
+      if (!typeStats[type]) {
+        typeStats[type] = { count: 0, totalAmount: 0 }
+      }
+      typeStats[type].count++
+      typeStats[type].totalAmount += sub.data.requestedAmount || 0
+    })
+
+    // Sort by count descending
+    const sortedTypes = Object.entries(typeStats)
+      .sort((a, b) => b[1].count - a[1].count)
+
+    typeSummarySheet.columns = [
+      { header: 'الترتيب', key: 'rank', width: 10 },
+      { header: 'نوع التمويل', key: 'type', width: 25 },
+      { header: 'عدد الطلبات', key: 'count', width: 15 },
+      { header: 'إجمالي المبالغ', key: 'totalAmount', width: 20 },
+      { header: 'متوسط المبلغ', key: 'avgAmount', width: 20 },
+      { header: 'النسبة %', key: 'percentage', width: 12 },
+    ]
+
+    // Style header
+    typeSummarySheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } }
+    typeSummarySheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFD97706' } // Amber/Gold
+    }
+    typeSummarySheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' }
+
+    sortedTypes.forEach(([type, stats], index) => {
+      typeSummarySheet.addRow({
+        rank: index + 1,
+        type: type,
+        count: stats.count,
+        totalAmount: stats.totalAmount,
+        avgAmount: Math.round(stats.totalAmount / stats.count),
+        percentage: ((stats.count / filteredSubmissions.length) * 100).toFixed(1) + '%',
+      })
+    })
+
+    // Add total row
+    typeSummarySheet.addRow({
+      rank: '',
+      type: 'الإجمالي',
+      count: filteredSubmissions.length,
+      totalAmount: totalAmount,
+      avgAmount: Math.round(totalAmount / filteredSubmissions.length),
+      percentage: '100%',
+    })
+    const lastTypeRow = typeSummarySheet.lastRow
+    if (lastTypeRow) {
+      lastTypeRow.font = { bold: true }
+      lastTypeRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE5E7EB' }
+      }
+    }
+
     // Generate filename
     const filename = options.filename || `TikCredit_Submissions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.xlsx`
 
@@ -262,7 +407,7 @@ export const exportToExcel = async (
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
 
-    console.log(`✅ تم تصدير ${filteredSubmissions.length} طلب إلى Excel بنجاح`)
+    console.log(`✅ تم تصدير ${filteredSubmissions.length} طلب إلى Excel مع ملخصات بنجاح`)
   } catch (error) {
     console.error('Excel export error:', error)
     alert('حدث خطأ أثناء تصدير الملف. يرجى المحاولة مرة أخرى.')
@@ -435,6 +580,7 @@ export const exportToTXT = (
 
       content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`
       content += `│ طلب رقم ${index + 1}                                                                      \n`
+      content += `│ 🔖 معرف الطلب:       ${submission.id || 'N/A'}\n`
       content += `├─────────────────────────────────────────────────────────────────────────────┤\n`
       content += `│ 👤 الاسم الكامل:     ${submission.data.fullName || 'غير محدد'}\n`
       content += `│ 📱 رقم الهاتف:       ${submission.data.phone || 'غير محدد'}\n`
@@ -506,9 +652,10 @@ export const exportToCSV = (
       return
     }
 
-    // CSV Headers
+    // CSV Headers - includes ID for tracking
     let headers = [
       'الرقم',
+      'معرف الطلب (ID)',
       'الاسم الكامل',
       'رقم الهاتف',
       'البريد الإلكتروني',
@@ -538,6 +685,7 @@ export const exportToCSV = (
 
       const row = [
         index + 1,
+        `"${submission.id || 'N/A'}"`,
         `"${(submission.data.fullName || '').replace(/"/g, '""')}"`,
         `"${submission.data.phone || ''}"`,
         `"${submission.data.email || 'غير محدد'}"`,

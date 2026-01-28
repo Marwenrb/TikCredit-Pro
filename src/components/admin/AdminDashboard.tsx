@@ -465,7 +465,11 @@ const AdminDashboard: React.FC = () => {
                   key={p}
                   variant={period === p ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setPeriod(p)}
+                  onClick={() => {
+                    setPeriod(p)
+                    // Trigger server-side filtering
+                    fetchServerSubmissions({ wilaya: selectedWilaya, search: serverSearch, period: p })
+                  }}
                 >
                   {p === 'all' ? 'الكل' : p === 'today' ? 'اليوم' : p === 'week' ? 'الأسبوع' : 'الشهر'}
                 </Button>
@@ -582,18 +586,78 @@ const AdminDashboard: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleViewDetails(submission)}
+                        title="عرض التفاصيل"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => {
+                          setSelectedIds(new Set([submission.id]))
+                          setShowPrintView(true)
+                        }}
+                        title="طباعة هذا الطلب"
+                      >
+                        <Printer className="w-4 h-4 text-elegant-blue" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          // Quick download single submission as TXT
+                          const content = `
+═══════════════════════════════════════════════════════════════════════════════
+                         TikCredit Pro - طلب تمويل                          
+═══════════════════════════════════════════════════════════════════════════════
+
+🔖 معرف الطلب: ${submission.id}
+📆 تاريخ الإرسال: ${format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm')}
+
+───────────────────────────────────────────────────────────────────────────────
+
+👤 الاسم الكامل:     ${submission.data.fullName || 'غير محدد'}
+📱 رقم الهاتف:       ${submission.data.phone || 'غير محدد'}
+📧 البريد الإلكتروني: ${submission.data.email || 'غير محدد'}
+📍 الولاية:          ${submission.data.wilaya || 'غير محدد'}
+💼 المهنة:           ${submission.data.profession || 'غير محدد'}
+💳 نوع التمويل:      ${submission.data.financingType || 'غير محدد'}
+💵 المبلغ المطلوب:   ${formatCurrency(submission.data.requestedAmount)}
+🏦 طريقة الراتب:     ${submission.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : submission.data.salaryReceiveMethod || 'غير محدد'}
+💰 نطاق الدخل:       ${submission.data.monthlyIncomeRange || 'غير محدد'}
+🕐 وقت التواصل:      ${submission.data.preferredContactTime || 'غير محدد'}
+👥 عميل موجود:       ${submission.data.isExistingCustomer || 'لا'}
+${submission.data.notes ? `📝 الملاحظات:        ${submission.data.notes}` : ''}
+
+═══════════════════════════════════════════════════════════════════════════════
+                    TikCredit Pro © ${new Date().getFullYear()}              
+═══════════════════════════════════════════════════════════════════════════════
+`.trim()
+                          const BOM = '\uFEFF'
+                          const blob = new Blob([BOM + content], { type: 'text/plain;charset=utf-8' })
+                          const url = URL.createObjectURL(blob)
+                          const link = document.createElement('a')
+                          link.href = url
+                          link.download = `TikCredit_${submission.data.phone || submission.id}_${format(new Date(), 'yyyyMMdd')}.txt`
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                          URL.revokeObjectURL(url)
+                        }}
+                        title="تحميل هذا الطلب"
+                      >
+                        <Download className="w-4 h-4 text-premium-gold" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleDelete(submission.id)}
+                        title="حذف"
                       >
                         <Trash2 className="w-4 h-4 text-status-error" />
                       </Button>

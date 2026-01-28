@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, FileSpreadsheet, FileText, X, Calendar, TrendingUp } from 'lucide-react'
+import { Download, FileSpreadsheet, FileText, X, Calendar, TrendingUp, CheckSquare } from 'lucide-react'
 import { Modal, Button } from '@/components/ui'
 import DateRangeFilter from './DateRangeFilter'
-import { 
-  DateRange, 
-  exportToExcel, 
+import {
+  DateRange,
+  exportToExcel,
   exportToPDF,
   exportToTXT,
   exportToCSV,
@@ -141,7 +141,15 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
               <Download className="w-6 h-6 text-white" />
             </motion.div>
             <div>
-              <h2 className="text-2xl font-bold text-elegant-blue">تصدير الطلبات</h2>
+              <h2 className="text-2xl font-bold text-elegant-blue flex items-center gap-2">
+                تصدير الطلبات
+                {submissions.length < 10 && (
+                  <span className="text-sm font-normal bg-premium-gold/20 text-premium-gold-dark px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckSquare className="w-3 h-3" />
+                    طلبات محددة ({submissions.length})
+                  </span>
+                )}
+              </h2>
               <p className="text-sm text-luxury-darkGray">اختر الفترة الزمنية والصيغة المطلوبة</p>
             </div>
           </div>

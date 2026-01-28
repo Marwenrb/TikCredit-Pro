@@ -109,7 +109,9 @@ export default function PrintableSubmissions({
                                     <span className="text-lg font-bold text-blue-800">
                                         طلب رقم {index + 1}
                                     </span>
-                                    <p className="text-sm text-gray-500">ID: {submission.id}</p>
+                                    <p className="text-sm text-gray-600 font-mono mt-1">
+                                        🔖 ID: <span className="bg-gray-100 px-2 py-0.5 rounded">{submission.id}</span>
+                                    </p>
                                 </div>
                                 <div className="text-left">
                                     <p className="text-sm text-gray-600">

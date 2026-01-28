@@ -1,0 +1,233 @@
+/**
+ * TikCredit Pro - Print Styles
+ * Optimized for Arabic RTL printing
+ */
+
+/* ===========================================
+   PRINT MEDIA QUERIES
+   =========================================== */
+
+@media print {
+  /* Hide non-printable elements */
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+  
+  .print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* Hide no-print elements */
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Submission card styles */
+  .submission-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 16px;
+    border: 2px solid #374151 !important;
+    background: #f9fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Page settings */
+  @page {
+    margin: 1cm;
+    size: A4;
+  }
+
+  /* RTL text direction */
+  body {
+    direction: rtl;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #111827;
+    background: white !important;
+  }
+
+  /* Remove shadows and unnecessary styling */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Links - show URL */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #6b7280;
+  }
+
+  /* Table styling for print */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #d1d5db;
+    padding: 8px;
+    text-align: right;
+  }
+
+  table th {
+    background-color: #1e3a8a !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Alternating row colors */
+  table tr:nth-child(even) {
+    background-color: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Headers */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    color: #1e3a8a;
+  }
+
+  /* Prevent orphans and widows */
+  p, h2, h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Ensure images don't break across pages */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Print-friendly colors */
+  .text-elegant-blue {
+    color: #1e3a8a !important;
+  }
+
+  .text-premium-gold {
+    color: #d97706 !important;
+  }
+
+  .text-status-success {
+    color: #16a34a !important;
+  }
+
+  .text-status-error {
+    color: #dc2626 !important;
+  }
+
+  /* Footer styling */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10pt;
+    color: #6b7280;
+    padding: 8px 0;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  /* Header styling */
+  .print-header {
+    text-align: center;
+    border-bottom: 2px solid #1e3a8a;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+
+  .print-header h1 {
+    font-size: 24pt;
+    margin-bottom: 8px;
+  }
+
+  .print-header h2 {
+    font-size: 18pt;
+    color: #374151;
+  }
+
+  /* Submission details grid */
+  .submission-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .submission-grid .field {
+    padding: 8px;
+    border-bottom: 1px dashed #e5e7eb;
+  }
+
+  .submission-grid .field-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 10pt;
+  }
+
+  .submission-grid .field-value {
+    color: #111827;
+    font-size: 11pt;
+  }
+
+  /* Amount highlighting */
+  .amount-highlight {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1e3a8a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ID badge */
+  .id-badge {
+    font-family: monospace;
+    font-size: 9pt;
+    background-color: #f3f4f6 !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* ===========================================
+   SCREEN PREVIEW STYLES
+   =========================================== */
+
+/* These styles apply to the print preview on screen */
+.print-preview-mode {
+  background: white;
+  padding: 24px;
+  direction: rtl;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+.print-preview-mode .submission-card {
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+.print-preview-mode .submission-card:hover {
+  border-color: #1e3a8a;
+}
