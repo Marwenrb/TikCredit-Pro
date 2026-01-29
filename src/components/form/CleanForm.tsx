@@ -35,6 +35,9 @@ const LOAN_STEP = 500_000
 // Debounce delay for IndexedDB saves (prevents UI thread blocking during rapid typing)
 const INDEXEDDB_DEBOUNCE_MS = 750
 
+// Common email domains for auto-suggestion
+const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com']
+
 /**
  * Validate loan amount
  */
@@ -67,6 +70,7 @@ const CleanForm: React.FC = () => {
   const [amountValidation, setAmountValidation] = useState<{ valid: boolean; error?: string }>({ valid: true })
   const [isOnline, setIsOnline] = useState(true)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'offline'>('idle')
+  const [showEmailSuggestions, setShowEmailSuggestions] = useState(false)
   const toast = useToast()
 
   // Initialize auto-sync and load draft on mount
@@ -513,14 +517,65 @@ const CleanForm: React.FC = () => {
                 icon={<Phone className="w-5 h-5" />}
               />
 
-              <FloatingLabelInput
-                label="البريد الإلكتروني"
-                type="email"
-                value={formData.email}
-                onChange={(e) => updateField('email', e.target.value)}
-                error={errors.email}
-                icon={<Mail className="w-5 h-5" />}
-              />
+              <div className="relative">
+                <FloatingLabelInput
+                  label="البريد الإلكتروني"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => {
+                    updateField('email', e.target.value)
+                    // Show suggestions when @ is typed
+                    const value = e.target.value
+                    if (value.includes('@') && !value.includes('.', value.indexOf('@'))) {
+                      setShowEmailSuggestions(true)
+                    } else {
+                      setShowEmailSuggestions(false)
+                    }
+                  }}
+                  onFocus={() => {
+                    if (formData.email.includes('@') && !formData.email.includes('.', formData.email.indexOf('@'))) {
+                      setShowEmailSuggestions(true)
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay hiding to allow click on suggestion
+                    setTimeout(() => setShowEmailSuggestions(false), 200)
+                  }}
+                  error={errors.email}
+                  icon={<Mail className="w-5 h-5" />}
+                />
+                {/* Email Domain Suggestions */}
+                <AnimatePresence>
+                  {showEmailSuggestions && formData.email.includes('@') && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute z-50 w-full mt-1 bg-white rounded-luxury border-2 border-elegant-blue/20 shadow-luxury overflow-hidden"
+                    >
+                      {EMAIL_DOMAINS.map((domain) => {
+                        const emailPrefix = formData.email.split('@')[0]
+                        const suggestion = `${emailPrefix}@${domain}`
+                        return (
+                          <motion.button
+                            key={domain}
+                            type="button"
+                            onClick={() => {
+                              updateField('email', suggestion)
+                              setShowEmailSuggestions(false)
+                            }}
+                            className="w-full px-4 py-3 text-right hover:bg-elegant-blue/10 transition-colors flex items-center gap-2 border-b border-luxury-lightGray/50 last:border-b-0"
+                            whileHover={{ backgroundColor: 'rgba(30, 58, 138, 0.1)' }}
+                          >
+                            <Mail className="w-4 h-4 text-elegant-blue" />
+                            <span className="text-luxury-charcoal">{suggestion}</span>
+                          </motion.button>
+                        )
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-luxury-charcoal mb-2">
