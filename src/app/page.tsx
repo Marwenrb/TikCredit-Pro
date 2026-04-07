@@ -200,20 +200,65 @@ export default function HomePage() {
               </Link>
             </motion.div>
 
-            {/* Trust Indicators */}
+            {/* Trust Indicators — Premium Stat Cards */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-8 mt-10"
-              variants={itemVariants}
+              className="grid grid-cols-3 gap-3 sm:gap-5 mt-12 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, type: 'spring', stiffness: 120, damping: 20 }}
             >
               {[
-                { label: 'آمن 100%', color: '#1E3A8A' },
-                { label: 'رد خلال 48 ساعة', color: '#B8941F' },
-                { label: '+5000 عميل', color: '#059669' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="font-semibold text-lux-slate">{item.label}</span>
-                </div>
+                {
+                  value: '100%',
+                  label: 'حماية مشفّرة',
+                  icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+                  gradient: 'from-lux-sapphire to-elegant-blue',
+                  glow: 'rgba(30,58,138,0.12)',
+                },
+                {
+                  value: '24h',
+                  label: 'قبول الطلبات',
+                  icon: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4v6l4 2',
+                  gradient: 'from-premium-gold-dark to-premium-gold',
+                  glow: 'rgba(184,148,31,0.12)',
+                },
+                {
+                  value: '+5K',
+                  label: 'عميل يثق بنا',
+                  icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+                  gradient: 'from-status-success to-status-success-light',
+                  glow: 'rgba(5,150,105,0.12)',
+                },
+              ].map((stat, i) => (
+                <motion.div
+                  key={i}
+                  whileHover={{ y: -4, scale: 1.03 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="relative bg-white rounded-2xl border border-lux-silver/80 p-4 sm:p-5 text-center shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden group"
+                >
+                  {/* Top accent line */}
+                  <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${stat.gradient}`} />
+
+                  {/* Icon */}
+                  <div
+                    className={`w-10 h-10 sm:w-11 sm:h-11 mx-auto mb-3 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-md`}
+                    style={{ boxShadow: `0 4px 14px ${stat.glow}` }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={stat.icon} />
+                    </svg>
+                  </div>
+
+                  {/* Value */}
+                  <p className={`text-2xl sm:text-3xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent leading-none mb-1`}>
+                    {stat.value}
+                  </p>
+
+                  {/* Label */}
+                  <p className="text-xs sm:text-sm font-semibold text-lux-slate leading-tight">
+                    {stat.label}
+                  </p>
+                </motion.div>
               ))}
             </motion.div>
           </div>
@@ -227,25 +272,31 @@ export default function HomePage() {
           >
             {([
               {
-                title: 'تمويل سريع',
-                description: 'احصل على قرار فوري خلال دقائق معدودة',
+                title: 'تمويل فوري',
+                subtitle: 'قرار خلال 24 ساعة',
+                description: 'لا انتظار، لا تعقيدات — نراجع طلبك ونوافق عليه بسرعة قياسية',
                 gradient: 'from-lux-sapphire to-elegant-blue',
                 accentColor: '#1E3A8A',
                 iconPath: 'M13 10V3L4 14h7v7l9-11h-7z',
+                badge: 'الأسرع',
               },
               {
-                title: 'آمن ومضمون',
-                description: 'بياناتك محمية بأعلى معايير الأمان العالمية',
+                title: 'حماية مطلقة',
+                subtitle: 'تشفير 256-bit',
+                description: 'بياناتك مؤمّنة بنفس تقنيات البنوك العالمية — خصوصيتك أولويتنا',
                 gradient: 'from-premium-gold-dark to-premium-gold',
                 accentColor: '#B8941F',
                 iconPath: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+                badge: 'موثوق',
               },
               {
-                title: 'معالجة سريعة',
-                description: 'معالجة احترافية لطلبك في أقل وقت ممكن',
+                title: 'بدون تعقيدات',
+                subtitle: 'إجراءات مبسّطة',
+                description: 'نموذج واحد فقط — بدون أوراق، بدون طوابير، كل شيء رقمي بالكامل',
                 gradient: 'from-elegant-blue to-elegant-blue-light',
                 accentColor: '#2563EB',
-                iconPath: 'M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83',
+                iconPath: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+                badge: 'سهل',
               },
             ] as const).map((feature, index) => (
               <motion.div
@@ -275,9 +326,14 @@ export default function HomePage() {
                     whileHover={{ x: '100%', transition: { duration: 1.2, ease: 'easeInOut' } }}
                   />
 
+                  {/* Badge */}
+                  <div className={`absolute top-4 left-4 px-3 py-1 rounded-full bg-gradient-to-r ${feature.gradient} z-20`}>
+                    <span className="text-[10px] font-bold text-white tracking-wider">{feature.badge}</span>
+                  </div>
+
                   {/* Custom SVG Icon */}
                   <motion.div
-                    className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-6 shadow-lg relative z-10`}
+                    className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-5 shadow-lg relative z-10`}
                     style={{ boxShadow: `0 8px 24px ${feature.accentColor}30` }}
                     whileHover={{
                       scale: 1.15,
@@ -295,9 +351,12 @@ export default function HomePage() {
                     />
                   </motion.div>
 
-                  <h3 className="text-2xl font-bold text-lux-navy mb-3 relative z-10 group-hover:text-lux-sapphire transition-colors duration-300">
+                  <h3 className="text-2xl font-bold text-lux-navy mb-1 relative z-10 group-hover:text-lux-sapphire transition-colors duration-300">
                     {feature.title}
                   </h3>
+                  <p className={`text-sm font-bold mb-3 relative z-10 bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent`}>
+                    {feature.subtitle}
+                  </p>
                   <p className="text-lux-slate leading-relaxed relative z-10 font-medium">
                     {feature.description}
                   </p>
