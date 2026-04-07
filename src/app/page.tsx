@@ -3,24 +3,12 @@
 import React, { useEffect } from 'react'
 import { motion, useScroll, useTransform, type Variants } from 'framer-motion'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
-import { Button, GlassCard } from '@/components/ui'
-import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-// Lazy load particles and background for better performance
-const BlueParticles = dynamic(() => import('@/components/ui/BlueParticles'), {
-  ssr: false,
-  loading: () => null
-})
-
-const UltraPremiumBackground = dynamic(() => import('@/components/ui/UltraPremiumBackground'), {
-  ssr: false,
-  loading: () => null
-})
-
 // ============================================
-// ADVANCED TYPESCRIPT ANIMATION SYSTEM
+// ANIMATION SYSTEM
 // ============================================
 
 const premiumEasing = [0.16, 1, 0.3, 1] as const
@@ -63,9 +51,6 @@ const heroTextVariants: Variants = {
 }
 
 export default function HomePage() {
-  const { scrollYProgress } = useScroll()
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
   const router = useRouter()
 
   useEffect(() => {
@@ -81,23 +66,44 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-3.5"
             >
-              {/* Custom Brand Logo Mark — Layered geometric T+C monogram */}
-              <div className="relative w-11 h-11">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-lux-sapphire via-elegant-blue to-elegant-blue-light shadow-lg shadow-elegant-blue/25" />
-                <div className="absolute inset-0 rounded-2xl flex items-center justify-center">
-                  <span className="text-white font-black text-lg tracking-tighter leading-none" style={{ fontFamily: 'var(--font-sans)' }}>TC</span>
+              {/* ═══ ENGINEERED LOGO MARK ═══ */}
+              <div className="relative w-12 h-12 group">
+                {/* Outer glow ring */}
+                <div className="absolute -inset-0.5 rounded-[14px] bg-gradient-to-br from-lux-sapphire via-elegant-blue to-elegant-blue-light opacity-20 blur-sm group-hover:opacity-30 transition-opacity" />
+                {/* Main shape */}
+                <div className="relative w-12 h-12 rounded-[14px] bg-gradient-to-br from-lux-sapphire via-elegant-blue to-elegant-blue-light shadow-xl overflow-hidden">
+                  {/* Inner light refraction */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/5" />
+                  {/* Monogram */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
+                      {/* T letterform — geometric */}
+                      <rect x="3" y="2" width="12" height="2.5" rx="1" fill="white" opacity="0.95"/>
+                      <rect x="8" y="2" width="2.5" height="13" rx="1" fill="white" opacity="0.95"/>
+                      {/* C letterform — arc */}
+                      <path d="M22 6.5C22 4.567 20.433 3 18.5 3H17.5C17.5 3 15 3 15 6.5V15.5C15 19 17.5 19 17.5 19H18.5C20.433 19 22 17.433 22 15.5" stroke="white" strokeWidth="2.3" strokeLinecap="round" fill="none" opacity="0.9"/>
+                    </svg>
+                  </div>
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-md bg-gradient-to-br from-premium-gold to-premium-gold-light border-2 border-white shadow-sm" />
+                {/* Gold accent dot */}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3">
+                  <div className="w-full h-full rounded-[4px] bg-gradient-to-br from-premium-gold to-premium-gold-light border-[1.5px] border-white shadow-sm" />
+                </div>
               </div>
+              {/* ═══ BRAND TYPE ═══ */}
               <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-lux-navy via-lux-sapphire to-elegant-blue bg-clip-text text-transparent leading-none">
-                  TikCredit
+                <span className="text-[22px] font-black tracking-tight leading-none" style={{ fontFamily: 'var(--font-sans)', color: '#0A1628' }}>
+                  Tik<span className="bg-gradient-to-r from-lux-sapphire to-elegant-blue bg-clip-text text-transparent">Credit</span>
                 </span>
-                <span className="text-[10px] font-bold tracking-[0.35em] uppercase text-premium-gold leading-none mt-0.5">
-                  PRO
-                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="h-[1.5px] w-4 bg-gradient-to-r from-premium-gold to-premium-gold-light rounded-full" />
+                  <span className="text-[9px] font-extrabold tracking-[0.4em] uppercase leading-none" style={{ fontFamily: 'var(--font-sans)', color: '#B8941F' }}>
+                    PRO
+                  </span>
+                  <div className="h-[1.5px] w-4 bg-gradient-to-r from-premium-gold-light to-premium-gold rounded-full" />
+                </div>
               </div>
             </motion.div>
             <motion.div
@@ -122,7 +128,7 @@ export default function HomePage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-lux-sapphire/[0.06] backdrop-blur-sm rounded-full border border-lux-sapphire/15 mb-8"
+              className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-lux-sapphire/[0.07] backdrop-blur-sm rounded-full border border-lux-sapphire/15 mb-8"
             >
               <div className="w-2 h-2 rounded-full bg-elegant-blue animate-pulse-soft" />
               <span className="text-sm font-semibold text-lux-sapphire tracking-wide">منصة التمويل الأكثر ثقة في الجزائر</span>
@@ -200,13 +206,13 @@ export default function HomePage() {
               variants={itemVariants}
             >
               {[
-                { label: 'آمن 100%', accent: 'text-lux-sapphire' },
-                { label: 'رد خلال 48 ساعة', accent: 'text-premium-gold-dark' },
-                { label: '+5000 عميل', accent: 'text-status-success' },
+                { label: 'آمن 100%', color: '#1E3A8A' },
+                { label: 'رد خلال 48 ساعة', color: '#B8941F' },
+                { label: '+5000 عميل', color: '#059669' },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-lux-navy/60">
-                  <div className={`w-1.5 h-1.5 rounded-full ${item.accent} bg-current`} />
-                  <span className="font-semibold">{item.label}</span>
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="font-semibold text-lux-slate">{item.label}</span>
                 </div>
               ))}
             </motion.div>
@@ -258,25 +264,15 @@ export default function HomePage() {
                 className="group cursor-pointer"
               >
                 <div className="luxury-card p-8 h-full relative overflow-hidden">
-                  {/* Animated gradient overlay */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-br from-elegant-blue/[0.03] via-elegant-blue-light/[0.02] to-transparent"
                     initial={{ opacity: 0, scale: 0.8 }}
-                    whileHover={{
-                      opacity: 1,
-                      scale: 1,
-                      transition: { duration: 0.4 }
-                    }}
+                    whileHover={{ opacity: 1, scale: 1, transition: { duration: 0.4 } }}
                   />
-
-                  {/* Premium shimmer on hover */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-elegant-blue/10 to-transparent"
                     initial={{ x: '-100%' }}
-                    whileHover={{
-                      x: '100%',
-                      transition: { duration: 1.2, ease: 'easeInOut' }
-                    }}
+                    whileHover={{ x: '100%', transition: { duration: 1.2, ease: 'easeInOut' } }}
                   />
 
                   {/* Custom SVG Icon */}
@@ -286,11 +282,7 @@ export default function HomePage() {
                     whileHover={{
                       scale: 1.15,
                       rotate: [0, -5, 5, 0],
-                      transition: {
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 15
-                      }
+                      transition: { type: 'spring', stiffness: 400, damping: 15 }
                     }}
                   >
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -299,11 +291,7 @@ export default function HomePage() {
                     <motion.div
                       className="absolute inset-0 rounded-2xl bg-white/20"
                       initial={{ opacity: 0, scale: 0.8 }}
-                      whileHover={{
-                        opacity: [0, 0.5, 0],
-                        scale: [0.8, 1.3, 0.8],
-                        transition: { duration: 1, repeat: Infinity }
-                      }}
+                      whileHover={{ opacity: [0, 0.5, 0], scale: [0.8, 1.3, 0.8], transition: { duration: 1, repeat: Infinity } }}
                     />
                   </motion.div>
 
@@ -372,8 +360,7 @@ export default function HomePage() {
                     className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-lux-sapphire to-elegant-blue flex items-center justify-center shadow-md"
                     style={{ boxShadow: '0 4px 12px rgba(30,58,138,0.2)' }}
                     whileHover={{
-                      rotate: 360,
-                      scale: 1.1,
+                      rotate: 360, scale: 1.1,
                       transition: { duration: 0.6, type: 'spring', stiffness: 200 }
                     }}
                   >
@@ -395,50 +382,33 @@ export default function HomePage() {
             className="text-center mb-20"
           >
             <motion.div
-              className="p-12 rounded-luxury-lg bg-gradient-to-br from-lux-sapphire via-elegant-blue to-elegant-blue-light relative overflow-hidden shadow-luxury-xl"
+              className="p-12 rounded-luxury-lg relative overflow-hidden shadow-luxury-xl"
+              style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A8A 40%, #2563EB 80%, #3B82F6 100%)' }}
               whileHover={{
                 scale: 1.01,
-                boxShadow: '0 25px 50px -12px rgba(30, 58, 138, 0.25)',
+                boxShadow: '0 25px 50px -12px rgba(10, 22, 40, 0.35)',
                 transition: { duration: 0.3 }
               }}
             >
-              {/* Multi-layer shimmer */}
+              {/* Shimmer */}
               <motion.div
                 className="absolute inset-0"
                 animate={{
                   background: [
-                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
-                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
-                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
+                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)',
+                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)',
+                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)',
                   ],
                   backgroundPosition: ['-200% 0', '200% 0']
                 }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: 'linear'
-                }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                 style={{ backgroundSize: '200% 100%' }}
               />
 
-              {/* Subtle geometric accents */}
-              <div className="absolute top-6 right-8 w-20 h-20 border border-white/10 rounded-2xl rotate-12" />
-              <div className="absolute bottom-8 left-10 w-16 h-16 border border-white/10 rounded-full" />
-              <div className="absolute top-1/2 right-1/4 w-2 h-2 rounded-full bg-premium-gold/40" />
-              <div className="absolute top-1/3 left-1/3 w-1.5 h-1.5 rounded-full bg-white/20" />
-
-              {/* Glow pulse */}
-              <motion.div
-                className="absolute -inset-[1px] rounded-luxury-lg"
-                animate={{
-                  boxShadow: [
-                    '0 0 0 0 rgba(30, 58, 138, 0)',
-                    '0 0 0 4px rgba(30, 58, 138, 0.1)',
-                    '0 0 0 0 rgba(30, 58, 138, 0)'
-                  ]
-                }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-              />
+              {/* Geometric accents */}
+              <div className="absolute top-6 right-8 w-20 h-20 border border-white/[0.06] rounded-2xl rotate-12" />
+              <div className="absolute bottom-8 left-10 w-16 h-16 border border-white/[0.06] rounded-full" />
+              <div className="absolute top-1/2 right-1/4 w-2 h-2 rounded-full bg-premium-gold/30" />
 
               <div className="relative z-10">
                 <motion.h2
@@ -453,7 +423,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.6, ease: premiumEasing }}
-                  className="text-xl text-white/80 mb-8 max-w-2xl mx-auto"
+                  className="text-xl text-white/70 mb-8 max-w-2xl mx-auto"
                 >
                   قدم طلبك الآن واحصل على التمويل الذي تحتاجه بأفضل الشروط
                 </motion.p>
@@ -463,10 +433,7 @@ export default function HomePage() {
                   transition={{ delay: 1.8, type: 'spring', stiffness: 150, damping: 20 }}
                 >
                   <Link href="/form">
-                    <motion.div
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
+                    <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
                       <Button variant="white" size="xl">
                         ابدأ الآن
                         <ArrowLeft className="w-6 h-6 mr-2" />
@@ -482,7 +449,6 @@ export default function HomePage() {
         {/* Footer */}
         <footer className="relative mt-20">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-lux-sapphire/[0.02] to-lux-sapphire/[0.04]" />
-
           <div className="relative container mx-auto px-6 py-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -490,36 +456,13 @@ export default function HomePage() {
               transition={{ delay: 2, type: 'spring', stiffness: 200 }}
               className="text-center"
             >
-              {/* Made in Algeria Badge */}
-              <motion.div
-                className="inline-flex items-center gap-3 mb-6 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-luxury-lg border border-lux-silver/50"
-              >
-                <motion.div
-                  animate={{
-                    scale: [1, 1.15, 1],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 5,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <span className="text-xl">🇩🇿</span>
-                </motion.div>
-
-                <span className="text-sm font-bold text-lux-navy">
-                  صُنع بإتقان في الجزائر
-                </span>
-
+              <motion.div className="inline-flex items-center gap-3 mb-6 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-luxury-lg border border-lux-silver/50">
+                <span className="text-xl">🇩🇿</span>
+                <span className="text-sm font-bold text-lux-navy">صُنع بإتقان في الجزائر</span>
                 <div className="w-px h-4 bg-lux-silver" />
-
-                <span className="text-xs font-medium text-lux-slate">
-                  {new Date().getFullYear()}
-                </span>
+                <span className="text-xs font-semibold text-lux-slate">{new Date().getFullYear()}</span>
               </motion.div>
 
-              {/* Copyright */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -527,36 +470,11 @@ export default function HomePage() {
                 className="flex items-center justify-center flex-wrap gap-3 text-sm text-lux-slate font-medium"
               >
                 <span>&copy; {new Date().getFullYear()} TikCredit Pro</span>
-                <motion.span
-                  className="w-1 h-1 rounded-full bg-elegant-blue/40"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.4, 1, 0.4]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
-                <span className="opacity-60">جميع الحقوق محفوظة</span>
+                <span className="w-1 h-1 rounded-full bg-lux-sapphire/30" />
+                <span>جميع الحقوق محفوظة</span>
               </motion.div>
             </motion.div>
           </div>
-
-          {/* Bottom Line */}
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-lux-sapphire/15 to-transparent"
-            animate={{
-              opacity: [0.3, 0.6, 0.3],
-              scaleX: [0.8, 1, 0.8]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
         </footer>
       </div>
     </div>

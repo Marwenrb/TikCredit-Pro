@@ -741,7 +741,7 @@ const CleanForm: React.FC = () => {
                       <span className="text-white font-black text-sm tracking-tight" style={{ fontFamily: 'var(--font-sans)' }}>CCP</span>
                     </div>
                     <span className="font-bold text-lux-navy text-sm">بريد الجزائر</span>
-                    <span className="text-[11px] text-lux-slate mt-0.5">Algérie Poste</span>
+                    <span className="text-xs text-lux-slate mt-0.5">Algérie Poste</span>
                   </motion.button>
 
                   {/* Bank Option */}
@@ -766,7 +766,7 @@ const CleanForm: React.FC = () => {
                       </svg>
                     </div>
                     <span className="font-bold text-lux-navy text-sm">حساب بنكي</span>
-                    <span className="text-[11px] text-lux-slate mt-0.5">Compte Bancaire</span>
+                    <span className="text-xs text-lux-slate mt-0.5">Compte Bancaire</span>
                   </motion.button>
                 </div>
               </div>
@@ -786,7 +786,7 @@ const CleanForm: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-sm text-lux-navy">معلومات حساب بريد الجزائر (CCP)</h3>
-                      <p className="text-[11px] text-lux-slate">Algérie Poste — Compte Chèque Postal</p>
+                      <p className="text-xs text-lux-slate">Algérie Poste — Compte Chèque Postal</p>
                     </div>
                   </div>
 
@@ -826,7 +826,7 @@ const CleanForm: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    <p className="text-[11px] text-lux-slate text-right mt-2">
+                    <p className="text-xs text-lux-slate text-right mt-2">
                       10 أرقام بدون مسافات — كما هو مكتوب على بطاقة بريد الجزائر
                     </p>
                   </div>
@@ -869,7 +869,7 @@ const CleanForm: React.FC = () => {
                       </div>
                     </div>
                     {bankingErrors.ccpKey && <p className="mt-1 text-sm text-status-error">{bankingErrors.ccpKey}</p>}
-                    <p className="text-[11px] text-lux-slate text-right mt-2">
+                    <p className="text-xs text-lux-slate text-right mt-2">
                       الرقمان الأخيران المطبوعان على بطاقة بريد الجزائر
                     </p>
                   </div>
@@ -893,7 +893,7 @@ const CleanForm: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-sm font-bold text-lux-navy leading-relaxed mb-1">نستخدم هذه المعلومات فقط للتحقق من هويتك وتسريع دراسة ملف التمويل.</p>
-                        <p className="text-[11px] text-status-success font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث.</p>
+                        <p className="text-xs text-status-success font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث.</p>
                       </div>
                     </div>
                   </div>
@@ -917,7 +917,7 @@ const CleanForm: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-sm text-lux-navy">معلومات الحساب البنكي</h3>
-                      <p className="text-[11px] text-lux-slate">Compte Bancaire Algérien</p>
+                      <p className="text-xs text-lux-slate">Compte Bancaire Algérien</p>
                     </div>
                   </div>
 
@@ -1008,7 +1008,7 @@ const CleanForm: React.FC = () => {
 
                     <div className="flex justify-between mt-1.5">
                       <span className="text-xs text-lux-slate font-mono">{bankAccountNumber.length}/20</span>
-                      <p className="text-[11px] text-lux-slate">
+                      <p className="text-xs text-lux-slate">
                         رقم التعريف البنكي (RIB) — 20 رقم
                       </p>
                     </div>
@@ -1033,7 +1033,7 @@ const CleanForm: React.FC = () => {
                       className="w-full px-4 py-4 bg-white border-2 border-elegant-blue/15 rounded-xl text-center font-mono font-bold outline-none transition-all duration-200 focus:border-elegant-blue focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                       style={{ color: '#1E3A8A' }}
                     />
-                    <p className="text-[11px] text-lux-slate text-right mt-1">اختياري — يُوجد على كشف حسابك البنكي</p>
+                    <p className="text-xs text-lux-slate text-right mt-1">اختياري — يُوجد على كشف حسابك البنكي</p>
                   </div>
 
                   {/* Security badge */}
@@ -1045,7 +1045,7 @@ const CleanForm: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-sm font-bold text-lux-navy leading-relaxed mb-1">نستخدم هذه المعلومات فقط للتحقق من هويتك وتسريع دراسة ملف التمويل.</p>
-                        <p className="text-[11px] text-status-success font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث.</p>
+                        <p className="text-xs text-status-success font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث.</p>
                       </div>
                     </div>
                   </div>

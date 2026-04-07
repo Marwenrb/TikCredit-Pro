@@ -16,7 +16,8 @@ const config: Config = {
         'lux-pearl':    '#F8F9FC',
         'lux-ivory':    '#F0F2F8',
         'lux-silver':   '#E8EAF2',
-        'lux-slate':    '#CBD5E1',
+        'lux-slate':    '#64748B',
+        'lux-muted':    '#94A3B8',
 
         // Deep Navy + Royal Blue
         'lux-navy':     '#0A1628',
