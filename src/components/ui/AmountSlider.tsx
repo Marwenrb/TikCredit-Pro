@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
+import React, { useState, useCallback, useRef, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
-import { DollarSign, AlertCircle, CheckCircle2, Sparkles, Edit3 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Sparkles, Edit3 } from 'lucide-react'
 
 export interface AmountSliderProps {
   min?: number
@@ -20,10 +20,11 @@ export interface AmountSliderProps {
 
 /**
  * Ultra-Premium Amount Slider with Manual Input
- * 
+ *
  * Features:
  * - Fully functional range slider (5M - 20M DZD)
- * - Manual input field for typing the exact amount
+ * - Manual input field for typing any custom amount
+ * - Popular quick-select buttons + "مبلغ آخر" custom option
  * - Luxury grayscale gradients with blue/gold accents
  * - Smooth animations with Framer Motion
  * - Full ARIA accessibility
@@ -42,6 +43,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isCustomMode, setIsCustomMode] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const sliderRef = useRef<HTMLInputElement>(null)
@@ -60,12 +62,20 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     }).format(value)
   }, [value])
 
+  // Live formatted input preview
+  const formattedInputPreview = useMemo(() => {
+    const num = parseInt(inputValue, 10)
+    if (isNaN(num) || num === 0) return ''
+    return new Intl.NumberFormat('fr-DZ', { style: 'decimal', maximumFractionDigits: 0 }).format(num)
+  }, [inputValue])
+
   // Validation state
   const isValid = value >= min && value <= max
 
   // Handle slider change
   const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value)
+    setIsCustomMode(false)
     onChange(newValue)
   }, [onChange])
 
@@ -79,9 +89,8 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
   const handleInputBlur = useCallback(() => {
     setIsEditing(false)
     const numValue = parseInt(inputValue, 10)
-    if (!isNaN(numValue)) {
-      // Clamp to valid range
-      const clampedValue = Math.min(max, Math.max(min, numValue))
+    if (!isNaN(numValue) && numValue >= min) {
+      const clampedValue = Math.min(max, numValue)
       onChange(clampedValue)
     }
     setInputValue('')
@@ -104,6 +113,14 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     setInputValue(value.toString())
     setTimeout(() => inputRef.current?.focus(), 50)
   }, [value])
+
+  // Start custom mode
+  const startCustomMode = useCallback(() => {
+    setIsCustomMode(true)
+    setIsEditing(true)
+    setInputValue('')
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }, [])
 
   // Handle keyboard navigation on slider
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -153,6 +170,8 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     { label: '20 مليون', value: 20_000_000 },
   ], [])
 
+  const isQuickAmount = quickAmounts.some(qa => qa.value === value)
+
   return (
     <div className={`w-full ${className}`}>
       {/* Label */}
@@ -164,19 +183,19 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
         </label>
       </div>
 
-      {/* Quick Amount Buttons */}
-      <div className="grid grid-cols-4 gap-2 mb-6">
+      {/* Quick Amount Buttons + Custom */}
+      <div className="grid grid-cols-5 gap-2 mb-6">
         {quickAmounts.map((qa) => (
           <motion.button
             key={qa.value}
             type="button"
-            onClick={() => onChange(qa.value)}
+            onClick={() => { setIsCustomMode(false); onChange(qa.value) }}
             disabled={disabled}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             className={`
-              px-3 py-3 text-sm font-bold rounded-xl transition-all duration-200
-              ${value === qa.value
+              px-2 py-3 text-sm font-bold rounded-xl transition-all duration-200
+              ${!isCustomMode && value === qa.value
                 ? 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white shadow-lg shadow-elegant-blue/30'
                 : 'bg-gray-50 text-lux-navy hover:bg-elegant-blue/10 hover:text-elegant-blue border-2 border-luxury-gray/50 hover:border-elegant-blue/50'
               }
@@ -187,6 +206,25 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
             {qa.label}
           </motion.button>
         ))}
+        {/* Custom Amount Button */}
+        <motion.button
+          type="button"
+          onClick={startCustomMode}
+          disabled={disabled}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className={`
+            px-2 py-3 text-sm font-bold rounded-xl transition-all duration-200
+            ${isCustomMode || (!isQuickAmount && !isCustomMode && value !== 5_000_000)
+              ? 'bg-gradient-to-r from-premium-gold to-amber-500 text-white shadow-lg shadow-amber-400/30'
+              : 'bg-gray-50 text-lux-navy hover:bg-amber-50 hover:text-amber-700 border-2 border-luxury-gray/50 hover:border-amber-400/50'
+            }
+            focus:outline-none focus:ring-2 focus:ring-amber-400/50
+            disabled:opacity-50 disabled:cursor-not-allowed
+          `}
+        >
+          مبلغ آخر
+        </motion.button>
       </div>
 
       {/* Main Amount Display with Manual Input */}
@@ -233,8 +271,21 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
                   className="w-full text-center text-4xl md:text-5xl font-bold bg-transparent border-none outline-none text-elegant-blue placeholder:text-luxury-gray"
                   autoFocus
                 />
+                {/* Live preview of typed amount */}
+                {formattedInputPreview && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-base font-semibold text-elegant-blue/60 mt-1"
+                  >
+                    {formattedInputPreview} د.ج
+                  </motion.p>
+                )}
                 <p className="text-sm text-gray-500 mt-2">
-                  اكتب المبلغ ثم اضغط Enter
+                  اكتب المبلغ المطلوب ثم اضغط Enter
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  الحد الأدنى {formatCurrency(min)} — الحد الأقصى {formatCurrency(max)}
                 </p>
               </div>
             ) : (
@@ -366,7 +417,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
           >
             <div
               className={`
-                w-7 h-7 rounded-full bg-surface-card shadow-xl border-[3px] border-elegant-blue 
+                w-7 h-7 rounded-full bg-surface-card shadow-xl border-[3px] border-elegant-blue
                 flex items-center justify-center
                 ${isDragging ? 'ring-4 ring-elegant-blue/30' : 'ring-2 ring-elegant-blue/10'}
               `}

@@ -142,8 +142,8 @@ export const FORM_STEPS: FormStep[] = [
   },
   {
     id: 3,
-    title: 'معلومات الدفع',
-    description: 'معلومات الحساب البنكي أو البريدي'
+    title: 'معلومات الحساب البنكي أو البريدي',
+    description: 'أين تستلم راتبك الشهري؟'
   },
   {
     id: 4,

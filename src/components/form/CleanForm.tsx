@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Phone, Mail, MapPin, DollarSign, FileText,
   CheckCircle2, ArrowRight, ArrowLeft, XCircle, AlertCircle,
-  Cloud, CloudOff, Loader2, Shield, Building2, CreditCard
+  Cloud, CloudOff, Loader2, Building2
 } from 'lucide-react'
 import { Button, ProgressBar, Textarea, AmountSlider } from '@/components/ui'
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput'
@@ -393,7 +393,7 @@ const CleanForm: React.FC = () => {
         </motion.h2>
 
         <motion.p
-          className="text-xl text-gray-500 mb-8 max-w-2xl mx-auto"
+          className="text-xl text-lux-slate mb-8 max-w-2xl mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
@@ -433,10 +433,10 @@ const CleanForm: React.FC = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-lux-navy mb-3">
               {FORM_STEPS[currentStep - 1].title}
             </h2>
-            <p className="text-lg text-gray-500">
+            <p className="text-lg text-lux-slate">
               {FORM_STEPS[currentStep - 1].description}
             </p>
-            <div className="w-16 h-[3px] mt-3 rounded-full" style={{ background: 'var(--gradient-cta)' }} />
+            <div className="w-16 h-[3px] mt-3 rounded-full bg-gradient-to-r from-lux-sapphire to-elegant-blue" />
           </div>
 
           {/* Step 1: Personal Information */}
@@ -446,15 +446,15 @@ const CleanForm: React.FC = () => {
                 <motion.label
                   className={`flex items-center gap-3 p-5 rounded-xl cursor-pointer transition-all duration-300 border-2
                     ${formData.isExistingCustomer === 'نعم'
-                      ? 'border-lux-azure bg-lux-mist shadow-premium'
-                      : 'border-gray-200 hover:border-lux-azure/50 bg-white'
+                      ? 'border-elegant-blue bg-elegant-blue-50 shadow-premium'
+                      : 'border-lux-silver hover:border-elegant-blue/40 bg-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => updateField('isExistingCustomer', 'نعم')}
                 >
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
-                    ${formData.isExistingCustomer === 'نعم' ? 'border-lux-azure bg-lux-azure' : 'border-gray-300'}`}>
+                    ${formData.isExistingCustomer === 'نعم' ? 'border-elegant-blue bg-elegant-blue' : 'border-lux-slate'}`}>
                     {formData.isExistingCustomer === 'نعم' && (
                       <motion.div className="w-3 h-3 bg-white rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
                     )}
@@ -465,15 +465,15 @@ const CleanForm: React.FC = () => {
                 <motion.label
                   className={`flex items-center gap-3 p-5 rounded-xl cursor-pointer transition-all duration-300 border-2
                     ${formData.isExistingCustomer === 'لا'
-                      ? 'border-lux-azure bg-lux-mist shadow-premium'
-                      : 'border-gray-200 hover:border-lux-azure/50 bg-white'
+                      ? 'border-elegant-blue bg-elegant-blue-50 shadow-premium'
+                      : 'border-lux-silver hover:border-elegant-blue/40 bg-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => updateField('isExistingCustomer', 'لا')}
                 >
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
-                    ${formData.isExistingCustomer === 'لا' ? 'border-lux-azure bg-lux-azure' : 'border-gray-300'}`}>
+                    ${formData.isExistingCustomer === 'لا' ? 'border-elegant-blue bg-elegant-blue' : 'border-lux-slate'}`}>
                     {formData.isExistingCustomer === 'لا' && (
                       <motion.div className="w-3 h-3 bg-white rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
                     )}
@@ -561,13 +561,13 @@ const CleanForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-lux-navy mb-2">
                   وقت التواصل المفضل
                 </label>
                 <select
                   value={formData.preferredContactTime}
                   onChange={(e) => updateField('preferredContactTime', e.target.value)}
-                  className="w-full px-4 py-4 bg-white border-2 border-gray-200 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all"
+                  className="w-full px-4 py-4 bg-white border-2 border-lux-silver rounded-xl text-lux-navy focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/15 transition-all"
                 >
                   <option value="">اختر الوقت</option>
                   {CONTACT_TIMES.map(time => (
@@ -582,14 +582,14 @@ const CleanForm: React.FC = () => {
           {currentStep === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-lux-navy mb-2">
                   الولاية *
                 </label>
                 <select
                   value={formData.wilaya}
                   onChange={(e) => updateField('wilaya', e.target.value)}
-                  className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all
-                    ${errors.wilaya ? 'border-status-error' : 'border-gray-200'}`}
+                  className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/15 transition-all
+                    ${errors.wilaya ? 'border-status-error' : 'border-lux-silver'}`}
                 >
                   <option value="">اختر الولاية</option>
                   {WILAYAS.map(wilaya => (
@@ -601,13 +601,13 @@ const CleanForm: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-lux-navy mb-2">
                     نطاق الدخل الشهري
                   </label>
                   <select
                     value={formData.monthlyIncomeRange}
                     onChange={(e) => updateField('monthlyIncomeRange', e.target.value)}
-                    className="w-full px-4 py-4 bg-white border-2 border-gray-200 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all"
+                    className="w-full px-4 py-4 bg-white border-2 border-lux-silver rounded-xl text-lux-navy focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/15 transition-all"
                   >
                     <option value="">اختر النطاق</option>
                     {INCOME_RANGES.map(range => (
@@ -617,7 +617,7 @@ const CleanForm: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-lux-navy mb-2">
                     طبيعة العمل/المهنة *
                   </label>
                   <select
@@ -628,8 +628,8 @@ const CleanForm: React.FC = () => {
                         updateField('customProfession', '')
                       }
                     }}
-                    className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all
-                      ${errors.profession ? 'border-status-error' : 'border-gray-200'}`}
+                    className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/15 transition-all
+                      ${errors.profession ? 'border-status-error' : 'border-lux-silver'}`}
                   >
                     <option value="">اختر المهنة</option>
                     {PROFESSIONS.map(prof => (
@@ -653,7 +653,7 @@ const CleanForm: React.FC = () => {
               )}
 
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-semibold text-lux-navy">
                   نوع التمويل *
                 </label>
                 {FINANCING_TYPES.map((type) => (
@@ -661,16 +661,16 @@ const CleanForm: React.FC = () => {
                     key={type}
                     className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all
                       ${formData.financingType === type
-                        ? 'border-lux-azure bg-lux-mist shadow-premium'
-                        : 'border-gray-200 hover:border-lux-azure/50 bg-white'}`}
+                        ? 'border-elegant-blue bg-elegant-blue-50 shadow-premium'
+                        : 'border-lux-silver hover:border-elegant-blue/40 bg-white'}`}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => updateField('financingType', type)}
                   >
                     <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center
-                      ${formData.financingType === type ? 'border-lux-azure' : 'border-gray-300'}`}>
+                      ${formData.financingType === type ? 'border-elegant-blue' : 'border-lux-slate'}`}>
                       {formData.financingType === type && (
-                        <motion.div className="w-2.5 h-2.5 bg-lux-azure rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
+                        <motion.div className="w-2.5 h-2.5 bg-elegant-blue rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
                       )}
                     </div>
                     <span className="text-lux-navy font-medium">{type}</span>
@@ -697,93 +697,103 @@ const CleanForm: React.FC = () => {
               STEP 3: معلومات الدفع — Payment Step
               ============================================ */}
           {currentStep === 3 && (
-            <div className="space-y-6 animate-fadeSlideUp" dir="rtl">
+            <div className="space-y-8 animate-fadeSlideUp" dir="rtl">
 
-              {/* Header */}
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-                  style={{ background: 'var(--gradient-cta)', boxShadow: 'var(--shadow-cta)' }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
-                    <rect x="1" y="4" width="22" height="16" rx="2"/>
-                    <line x1="1" y1="10" x2="23" y2="10"/>
+              {/* Header — Refined with theme-matched design */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5 bg-gradient-to-br from-lux-sapphire to-elegant-blue"
+                  style={{ boxShadow: '0 8px 24px rgba(30,58,138,0.25)' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                    <path d="M1 10h22"/>
+                    <path d="M6 15h4"/>
                   </svg>
                 </div>
-                <h2 className="text-2xl font-black text-lux-navy mb-2">معلومات الدفع</h2>
-                <p className="text-sm text-gray-500">اختر طريقة استلام التمويل المناسبة لك</p>
-                <div className="w-16 h-[3px] mx-auto mt-3 rounded-full" style={{ background: 'var(--gradient-cta)' }} />
+                <h2 className="text-2xl font-black mb-2 text-lux-navy">معلومات الحساب البنكي أو البريدي</h2>
+                <p className="text-sm text-lux-slate font-medium">أين تستلم راتبك الشهري؟</p>
+                <div className="w-16 h-[3px] mx-auto mt-4 rounded-full bg-gradient-to-r from-lux-sapphire to-elegant-blue" />
               </div>
 
-              {/* Payment Method Selector */}
+              {/* Payment Method Selector — Unified theme */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-4 text-right">
-                  طريقة الاستلام <span className="text-red-500">*</span>
+                <label className="block text-sm font-bold text-lux-navy mb-4 text-right">
+                  طريقة الاستلام <span className="text-status-error">*</span>
                 </label>
                 {errors.salaryReceiveMethod && <p className="mb-2 text-sm text-status-error">{errors.salaryReceiveMethod}</p>}
                 <div className="grid grid-cols-2 gap-4">
                   {/* CCP Option */}
-                  <button type="button" onClick={() => setPaymentMethod('CCP')}
-                    className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 relative ${
+                  <motion.button type="button" onClick={() => setPaymentMethod('CCP')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 relative ${
                       paymentMethod === 'CCP'
-                        ? 'border-orange-400 bg-gradient-to-br from-orange-50 to-amber-50 shadow-[0_0_0_1px_#FB923C,0_4px_20px_rgba(251,146,60,0.2)]'
-                        : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50'
-                    }`}>
+                        ? 'border-premium-gold bg-gradient-to-br from-premium-gold-50 to-white shadow-lg'
+                        : 'border-lux-silver bg-white hover:border-premium-gold/40 hover:shadow-md'
+                    }`}
+                    style={paymentMethod === 'CCP' ? { boxShadow: '0 4px 20px rgba(212,175,55,0.15)' } : {}}>
                     {paymentMethod === 'CCP' && (
-                      <div className="absolute top-2.5 left-2.5 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                      <div className="absolute top-3 left-3 w-5 h-5 bg-premium-gold rounded-full flex items-center justify-center">
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
                     )}
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 shadow-md"
-                      style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)' }}>
-                      <span className="text-white font-black text-base tracking-tight">CCP</span>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 bg-gradient-to-br from-premium-gold to-premium-gold-dark"
+                      style={{ boxShadow: '0 4px 12px rgba(212,175,55,0.3)' }}>
+                      <span className="text-white font-black text-sm tracking-tight" style={{ fontFamily: 'var(--font-sans)' }}>CCP</span>
                     </div>
-                    <span className="font-bold text-gray-800 text-sm">بريد الجزائر</span>
-                    <span className="text-xs text-gray-400 mt-0.5">Algérie Poste</span>
-                  </button>
+                    <span className="font-bold text-lux-navy text-sm">بريد الجزائر</span>
+                    <span className="text-[11px] text-lux-slate mt-0.5">Algérie Poste</span>
+                  </motion.button>
 
                   {/* Bank Option */}
-                  <button type="button" onClick={() => setPaymentMethod('بنك')}
-                    className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 relative ${
+                  <motion.button type="button" onClick={() => setPaymentMethod('بنك')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 relative ${
                       paymentMethod === 'بنك'
-                        ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-[0_0_0_1px_#3B82F6,0_4px_20px_rgba(59,130,246,0.2)]'
-                        : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
-                    }`}>
+                        ? 'border-elegant-blue bg-gradient-to-br from-elegant-blue-50 to-white shadow-lg'
+                        : 'border-lux-silver bg-white hover:border-elegant-blue/40 hover:shadow-md'
+                    }`}
+                    style={paymentMethod === 'بنك' ? { boxShadow: '0 4px 20px rgba(37,99,235,0.15)' } : {}}>
                     {paymentMethod === 'بنك' && (
-                      <div className="absolute top-2.5 left-2.5 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="absolute top-3 left-3 w-5 h-5 bg-elegant-blue rounded-full flex items-center justify-center">
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
                     )}
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 shadow-md"
-                      style={{ background: 'var(--gradient-cta)' }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
-                        <path d="M3 22V9M12 22V9M21 22V9M2 9h20M12 3L2 9h20L12 3z"/>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 bg-gradient-to-br from-lux-sapphire to-elegant-blue"
+                      style={{ boxShadow: '0 4px 12px rgba(30,58,138,0.25)' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M8 10v11M12 10v11M16 10v11M20 10v11"/>
                       </svg>
                     </div>
-                    <span className="font-bold text-gray-800 text-sm">حساب بنكي</span>
-                    <span className="text-xs text-gray-400 mt-0.5">Compte Bancaire</span>
-                  </button>
+                    <span className="font-bold text-lux-navy text-sm">حساب بنكي</span>
+                    <span className="text-[11px] text-lux-slate mt-0.5">Compte Bancaire</span>
+                  </motion.button>
                 </div>
               </div>
 
-              {/* ===== CCP FIELDS ===== */}
+              {/* ===== CCP FIELDS — Theme-matched ===== */}
               {paymentMethod === 'CCP' && (
-                <div className="animate-fadeSlideUp p-6 rounded-2xl border-2 border-orange-200 space-y-6"
-                  style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FFF7ED 100%)' }}>
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="p-6 rounded-2xl border border-premium-gold/20 space-y-6 bg-gradient-to-br from-premium-gold-50/50 via-white to-lux-pearl">
 
-                  <div className="flex items-center gap-3 pb-4 border-b border-orange-200">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-                      style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)' }}>
-                      <span className="text-white font-black text-xs">CCP</span>
+                  <div className="flex items-center gap-3 pb-4 border-b border-premium-gold/15">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-premium-gold to-premium-gold-dark"
+                      style={{ boxShadow: '0 2px 8px rgba(212,175,55,0.25)' }}>
+                      <span className="text-white font-black text-[10px] tracking-tight" style={{ fontFamily: 'var(--font-sans)' }}>CCP</span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800 text-sm">معلومات حساب بريد الجزائر (CCP)</h3>
-                      <p className="text-xs text-gray-500">Algérie Poste — Compte Chèque Postal</p>
+                      <h3 className="font-bold text-sm text-lux-navy">معلومات حساب بريد الجزائر (CCP)</h3>
+                      <p className="text-[11px] text-lux-slate">Algérie Poste — Compte Chèque Postal</p>
                     </div>
                   </div>
 
                   {/* CCP Number */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
-                      رقم الحساب البريدي <span className="text-red-500">*</span>
+                    <label className="block text-sm font-bold text-lux-navy mb-2 text-right">
+                      رقم الحساب البريدي <span className="text-status-error">*</span>
                     </label>
                     <input
                       type="text"
@@ -799,33 +809,32 @@ const CleanForm: React.FC = () => {
                       maxLength={10}
                       inputMode="numeric"
                       dir="ltr"
-                      className="w-full px-4 py-4 bg-white border-2 border-orange-300 rounded-xl text-center font-mono font-bold text-xl tracking-[0.3em] outline-none transition-all duration-200 focus:border-orange-500 focus:shadow-[0_0_0_3px_rgba(249,115,22,0.15),0_0_0_1px_rgba(249,115,22,0.5)]"
-                      style={{ color: '#92400E' }}
+                      className="w-full px-4 py-4 bg-white border-2 border-premium-gold/30 rounded-xl text-center font-mono font-bold text-xl tracking-[0.3em] outline-none transition-all duration-200 focus:border-premium-gold focus:shadow-[0_0_0_3px_rgba(212,175,55,0.12)]"
+                      style={{ color: '#1E3A8A' }}
                     />
                     {bankingErrors.ccpNumber && <p className="mt-1 text-sm text-status-error">{bankingErrors.ccpNumber}</p>}
 
                     {/* Digit visualizer */}
                     <div className="flex gap-1.5 justify-center mt-3" dir="ltr">
                       {Array.from({ length: 10 }).map((_, i) => (
-                        <div key={i} className={`w-8 h-9 border-2 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all duration-200 ${
+                        <div key={i} className={`w-8 h-9 border-2 rounded-lg flex items-center justify-center text-sm font-bold font-mono transition-all duration-200 ${
                           ccpNumber[i]
-                            ? 'border-orange-400 bg-orange-50 text-orange-800'
-                            : 'border-gray-200 bg-gray-50 text-gray-300'
+                            ? 'border-premium-gold/50 bg-premium-gold-50 text-lux-navy'
+                            : 'border-lux-silver bg-lux-pearl text-lux-slate'
                         }`}>
                           {ccpNumber[i] || '·'}
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-500 text-right mt-2 flex items-center gap-1 justify-end">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <p className="text-[11px] text-lux-slate text-right mt-2">
                       10 أرقام بدون مسافات — كما هو مكتوب على بطاقة بريد الجزائر
                     </p>
                   </div>
 
                   {/* CCP Key */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
-                      مفتاح الحساب (Clé) <span className="text-red-500">*</span>
+                    <label className="block text-sm font-bold text-lux-navy mb-2 text-right">
+                      مفتاح الحساب (Clé) <span className="text-status-error">*</span>
                     </label>
                     <div className="flex justify-end gap-3">
                       <div className="w-40">
@@ -843,16 +852,16 @@ const CleanForm: React.FC = () => {
                           maxLength={2}
                           inputMode="numeric"
                           dir="ltr"
-                          className="w-full px-4 py-4 bg-white border-2 border-orange-300 rounded-xl text-center font-mono font-bold text-2xl tracking-[0.5em] outline-none transition-all duration-200 focus:border-orange-500 focus:shadow-[0_0_0_3px_rgba(249,115,22,0.15),0_0_0_1px_rgba(249,115,22,0.5)]"
-                          style={{ color: '#92400E' }}
+                          className="w-full px-4 py-4 bg-white border-2 border-premium-gold/30 rounded-xl text-center font-mono font-bold text-2xl tracking-[0.5em] outline-none transition-all duration-200 focus:border-premium-gold focus:shadow-[0_0_0_3px_rgba(212,175,55,0.12)]"
+                          style={{ color: '#1E3A8A' }}
                         />
                       </div>
                       <div className="flex gap-2 items-center">
                         {Array.from({ length: 2 }).map((_, i) => (
-                          <div key={i} className={`w-12 h-12 border-2 rounded-lg flex items-center justify-center text-xl font-bold font-mono transition-all duration-200 ${
+                          <div key={i} className={`w-12 h-12 border-2 rounded-xl flex items-center justify-center text-xl font-bold font-mono transition-all duration-200 ${
                             ccpKey[i]
-                              ? 'border-orange-400 bg-orange-50 text-orange-800'
-                              : 'border-gray-200 bg-gray-50 text-gray-300'
+                              ? 'border-premium-gold/50 bg-premium-gold-50 text-lux-navy'
+                              : 'border-lux-silver bg-lux-pearl text-lux-slate'
                           }`}>
                             {ccpKey[i] || '·'}
                           </div>
@@ -860,8 +869,7 @@ const CleanForm: React.FC = () => {
                       </div>
                     </div>
                     {bankingErrors.ccpKey && <p className="mt-1 text-sm text-status-error">{bankingErrors.ccpKey}</p>}
-                    <p className="text-xs text-gray-500 text-right mt-2 flex items-center gap-1 justify-end">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <p className="text-[11px] text-lux-slate text-right mt-2">
                       الرقمان الأخيران المطبوعان على بطاقة بريد الجزائر
                     </p>
                   </div>
@@ -869,43 +877,54 @@ const CleanForm: React.FC = () => {
                   {/* CCP Full Number Preview */}
                   {ccpNumber.length >= 8 && ccpKey.length === 2 && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="p-3 rounded-xl bg-white border border-orange-200">
-                      <p className="text-sm font-medium text-gray-700">
-                        رقم CCP الكامل: <span className="font-bold text-orange-700" dir="ltr">{computeCCPFullNumber(ccpNumber, ccpKey)}</span>
+                      className="p-3.5 rounded-xl bg-white border border-premium-gold/15">
+                      <p className="text-sm font-medium text-lux-navy">
+                        رقم CCP الكامل: <span className="font-bold text-lux-sapphire" dir="ltr">{computeCCPFullNumber(ccpNumber, ccpKey)}</span>
                       </p>
                     </motion.div>
                   )}
 
                   {/* Security badge */}
-                  <div className="flex items-center gap-2.5 p-3.5 bg-white rounded-xl border border-orange-200">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-                    <span className="text-xs text-green-700 font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث. نستخدم هذه المعلومات فقط للتحقق من هويتك وتسريع دراسة ملف التمويل والحصول عليه.</span>
+                  <div className="p-4 bg-gradient-to-br from-status-success/[0.06] via-white to-status-success-light/[0.04] rounded-xl border border-status-success/15">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 bg-gradient-to-br from-status-success to-status-success-light"
+                        style={{ boxShadow: '0 2px 8px rgba(5,150,105,0.2)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-lux-navy leading-relaxed mb-1">نستخدم هذه المعلومات فقط للتحقق من هويتك وتسريع دراسة ملف التمويل.</p>
+                        <p className="text-[11px] text-status-success font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث.</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               )}
 
-              {/* ===== BANK FIELDS ===== */}
+              {/* ===== BANK FIELDS — Theme-matched ===== */}
               {paymentMethod === 'بنك' && (
-                <div className="animate-fadeSlideUp p-6 rounded-2xl border-2 border-blue-200 space-y-6"
-                  style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 100%)' }}>
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="p-6 rounded-2xl border border-elegant-blue/15 space-y-6 bg-gradient-to-br from-elegant-blue-50/50 via-white to-lux-pearl">
 
-                  <div className="flex items-center gap-3 pb-4 border-b border-blue-200">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-                      style={{ background: 'var(--gradient-cta)' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
-                        <path d="M3 22V9M12 22V9M21 22V9M2 9h20M12 3L2 9h20L12 3z"/>
+                  <div className="flex items-center gap-3 pb-4 border-b border-elegant-blue/10">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-lux-sapphire to-elegant-blue"
+                      style={{ boxShadow: '0 2px 8px rgba(30,58,138,0.2)' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M8 10v11M12 10v11M16 10v11M20 10v11"/>
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800 text-sm">معلومات الحساب البنكي</h3>
-                      <p className="text-xs text-gray-500">Compte Bancaire Algérien</p>
+                      <h3 className="font-bold text-sm text-lux-navy">معلومات الحساب البنكي</h3>
+                      <p className="text-[11px] text-lux-slate">Compte Bancaire Algérien</p>
                     </div>
                   </div>
 
                   {/* Bank Name */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
-                      اسم البنك <span className="text-red-500">*</span>
+                    <label className="block text-sm font-bold text-lux-navy mb-2 text-right">
+                      اسم البنك <span className="text-status-error">*</span>
                     </label>
                     <select
                       value={bankName}
@@ -915,8 +934,8 @@ const CleanForm: React.FC = () => {
                           setBankingErrors(prev => { const n = { ...prev }; delete n.bankName; return n })
                         }
                       }}
-                      className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all
-                        ${bankingErrors.bankName ? 'border-status-error' : 'border-blue-300'}`}
+                      className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/15 transition-all
+                        ${bankingErrors.bankName ? 'border-status-error' : 'border-elegant-blue/25'}`}
                       dir="rtl">
                       <option value="">-- اختر البنك --</option>
                       <optgroup label="البنوك العمومية">
@@ -945,8 +964,8 @@ const CleanForm: React.FC = () => {
 
                   {/* Bank Account Number (RIB) */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
-                      رقم الحساب البنكي (RIB) <span className="text-red-500">*</span>
+                    <label className="block text-sm font-bold text-lux-navy mb-2 text-right">
+                      رقم الحساب البنكي (RIB) <span className="text-status-error">*</span>
                     </label>
                     <input
                       type="text"
@@ -962,7 +981,7 @@ const CleanForm: React.FC = () => {
                       maxLength={20}
                       inputMode="numeric"
                       dir="ltr"
-                      className="w-full px-4 py-4 bg-white border-2 border-blue-300 rounded-xl text-center font-mono font-bold text-base tracking-[0.15em] outline-none transition-all duration-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15),0_0_0_1px_rgba(37,99,235,0.5)]"
+                      className="w-full px-4 py-4 bg-white border-2 border-elegant-blue/25 rounded-xl text-center font-mono font-bold text-base tracking-[0.15em] outline-none transition-all duration-200 focus:border-elegant-blue focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                       style={{ color: '#1E3A8A' }}
                     />
                     {bankingErrors.bankAccountNumber && <p className="mt-1 text-sm text-status-error">{bankingErrors.bankAccountNumber}</p>}
@@ -971,26 +990,25 @@ const CleanForm: React.FC = () => {
                     {bankAccountNumber.length > 0 && (
                       <div className="flex gap-2 justify-center mt-3 flex-wrap" dir="ltr">
                         {[
-                          { label: 'Banque', start: 0, len: 3, color: 'bg-blue-100 border-blue-300 text-blue-800' },
-                          { label: 'Agence', start: 3, len: 5, color: 'bg-indigo-100 border-indigo-300 text-indigo-800' },
-                          { label: 'Compte', start: 8, len: 10, color: 'bg-violet-100 border-violet-300 text-violet-800' },
-                          { label: 'Clé', start: 18, len: 2, color: 'bg-purple-100 border-purple-300 text-purple-800' },
+                          { label: 'Banque', start: 0, len: 3, color: 'bg-elegant-blue-50 border-elegant-blue/20 text-lux-sapphire' },
+                          { label: 'Agence', start: 3, len: 5, color: 'bg-elegant-blue-50 border-elegant-blue/15 text-elegant-blue' },
+                          { label: 'Compte', start: 8, len: 10, color: 'bg-lux-pearl border-lux-silver text-lux-navy' },
+                          { label: 'Clé', start: 18, len: 2, color: 'bg-premium-gold-50 border-premium-gold/20 text-premium-gold-dark' },
                         ].map((seg) => (
                           <div key={seg.label} className="text-center">
                             <div className={`px-2 py-2 border-2 rounded-lg font-mono font-bold text-sm ${seg.color}`}
                               style={{ minWidth: `${Math.max(seg.len * 13, 32)}px` }}>
                               {bankAccountNumber.slice(seg.start, seg.start + seg.len) || '·'.repeat(seg.len)}
                             </div>
-                            <div className="text-[10px] text-gray-400 mt-1">{seg.label}</div>
+                            <div className="text-[10px] text-lux-slate mt-1 font-medium">{seg.label}</div>
                           </div>
                         ))}
                       </div>
                     )}
 
                     <div className="flex justify-between mt-1.5">
-                      <span className="text-xs text-gray-400 font-mono">{bankAccountNumber.length}/20</span>
-                      <p className="text-xs text-gray-500 flex items-center gap-1">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                      <span className="text-xs text-lux-slate font-mono">{bankAccountNumber.length}/20</span>
+                      <p className="text-[11px] text-lux-slate">
                         رقم التعريف البنكي (RIB) — 20 رقم
                       </p>
                     </div>
@@ -998,7 +1016,7 @@ const CleanForm: React.FC = () => {
 
                   {/* Agency Code (optional) */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
+                    <label className="block text-sm font-bold text-lux-navy mb-2 text-right">
                       كود الوكالة (اختياري)
                     </label>
                     <input
@@ -1012,27 +1030,38 @@ const CleanForm: React.FC = () => {
                       maxLength={5}
                       inputMode="numeric"
                       dir="ltr"
-                      className="w-full px-4 py-4 bg-white border-2 border-blue-200 rounded-xl text-center font-mono font-bold outline-none transition-all duration-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15)]"
+                      className="w-full px-4 py-4 bg-white border-2 border-elegant-blue/15 rounded-xl text-center font-mono font-bold outline-none transition-all duration-200 focus:border-elegant-blue focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                       style={{ color: '#1E3A8A' }}
                     />
-                    <p className="text-xs text-gray-500 text-right mt-1">اختياري — يُوجد على كشف حسابك البنكي</p>
+                    <p className="text-[11px] text-lux-slate text-right mt-1">اختياري — يُوجد على كشف حسابك البنكي</p>
                   </div>
 
                   {/* Security badge */}
-                  <div className="flex items-center gap-2.5 p-3.5 bg-white rounded-xl border border-blue-200">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-                    <span className="text-xs text-green-700 font-semibold">بياناتك محمية بتشفير SSL — معلوماتك سرية ومحمية بالكامل. لن نشارك معلوماتك مع أي طرف ثالث. نستخدمها فقط للتحقق وتسريع الحصول على التمويل.</span>
+                  <div className="p-4 bg-gradient-to-br from-status-success/[0.06] via-white to-status-success-light/[0.04] rounded-xl border border-status-success/15">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 bg-gradient-to-br from-status-success to-status-success-light"
+                        style={{ boxShadow: '0 2px 8px rgba(5,150,105,0.2)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-lux-navy leading-relaxed mb-1">نستخدم هذه المعلومات فقط للتحقق من هويتك وتسريع دراسة ملف التمويل.</p>
+                        <p className="text-[11px] text-status-success font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث.</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               )}
 
-              {/* Empty state */}
+              {/* Empty state — theme-matched */}
               {!paymentMethod && (
-                <div className="p-5 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl text-center">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" className="mx-auto mb-2">
-                    <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                  </svg>
-                  <p className="text-sm text-gray-400">اختر طريقة الاستلام أعلاه لإدخال تفاصيل حسابك</p>
+                <div className="p-8 bg-lux-pearl/50 border-2 border-dashed border-lux-silver rounded-2xl text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-lux-silver/30 flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                      <path d="M1 10h22"/>
+                    </svg>
+                  </div>
+                  <p className="text-sm text-lux-slate font-medium">اختر طريقة الاستلام أعلاه لإدخال تفاصيل حسابك</p>
                 </div>
               )}
             </div>
@@ -1049,25 +1078,25 @@ const CleanForm: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm text-gray-500 mb-1 font-medium">الاسم الكامل</p>
+                    <p className="text-sm text-lux-slate mb-1 font-medium">الاسم الكامل</p>
                     <p className="text-lux-navy font-bold">{formData.fullName}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1 font-medium">رقم الهاتف</p>
+                    <p className="text-sm text-lux-slate mb-1 font-medium">رقم الهاتف</p>
                     <p className="text-lux-navy font-bold">{formatPhoneDisplay(formData.phone)}</p>
                   </div>
                   {formData.email && (
                     <div>
-                      <p className="text-sm text-gray-500 mb-1 font-medium">البريد الإلكتروني</p>
+                      <p className="text-sm text-lux-slate mb-1 font-medium">البريد الإلكتروني</p>
                       <p className="text-lux-navy font-bold">{formData.email}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-sm text-gray-500 mb-1 font-medium">الولاية</p>
+                    <p className="text-sm text-lux-slate mb-1 font-medium">الولاية</p>
                     <p className="text-lux-navy font-bold">{formData.wilaya}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1 font-medium">طبيعة العمل/المهنة</p>
+                    <p className="text-sm text-lux-slate mb-1 font-medium">طبيعة العمل/المهنة</p>
                     <p className="text-lux-navy font-bold">
                       {formData.profession === 'أخرى (حدد)' && formData.customProfession
                         ? formData.customProfession
@@ -1075,11 +1104,11 @@ const CleanForm: React.FC = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1 font-medium">نوع التمويل</p>
+                    <p className="text-sm text-lux-slate mb-1 font-medium">نوع التمويل</p>
                     <p className="text-lux-navy font-bold">{formData.financingType}</p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-500 mb-1">المبلغ المطلوب</p>
+                    <p className="text-sm text-lux-slate mb-1">المبلغ المطلوب</p>
                     <p className="text-2xl font-bold bg-gradient-to-r from-lux-sapphire to-lux-champagne bg-clip-text text-transparent">
                       {formatCurrency(formData.requestedAmount)}
                     </p>
@@ -1089,24 +1118,26 @@ const CleanForm: React.FC = () => {
                 {/* Banking Info Summary */}
                 {formData.banking && (
                   <div className="mt-4 pt-4 border-t border-lux-silver">
-                    <h4 className="text-lg font-bold text-lux-navy mb-3 flex items-center gap-2">
+                    <h4 className="text-lg font-bold mb-3 flex items-center gap-2 text-lux-navy">
                       {formData.banking.paymentMethod === 'CCP' ? (
-                        <CreditCard className="w-5 h-5 text-orange-500" />
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B8941F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M1 10h22"/>
+                        </svg>
                       ) : (
-                        <Building2 className="w-5 h-5 text-lux-azure" />
+                        <Building2 className="w-5 h-5 text-elegant-blue" />
                       )}
-                      معلومات الدفع
+                      معلومات الحساب البنكي أو البريدي
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-500 mb-1 font-medium">طريقة الدفع</p>
+                        <p className="text-sm text-lux-slate mb-1 font-medium">طريقة الدفع</p>
                         <p className="text-lux-navy font-bold">
                           {formData.banking.paymentMethod === 'CCP' ? 'حساب بريد الجزائر (CCP)' : 'حساب بنكي'}
                         </p>
                       </div>
                       {formData.banking.paymentMethod === 'CCP' && (
                         <div>
-                          <p className="text-sm text-gray-500 mb-1 font-medium">رقم CCP</p>
+                          <p className="text-sm text-lux-slate mb-1 font-medium">رقم CCP</p>
                           <p className="text-lux-navy font-bold" dir="ltr">
                             {maskCCPNumber(formData.banking.ccpNumber)} / {formData.banking.ccpKey}
                           </p>
@@ -1118,11 +1149,11 @@ const CleanForm: React.FC = () => {
                         return (
                           <>
                             <div>
-                              <p className="text-sm text-gray-500 mb-1 font-medium">البنك</p>
+                              <p className="text-sm text-lux-slate mb-1 font-medium">البنك</p>
                               <p className="text-lux-navy font-bold">{bankLabel}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500 mb-1 font-medium">رقم الحساب (RIB)</p>
+                              <p className="text-sm text-lux-slate mb-1 font-medium">رقم الحساب (RIB)</p>
                               <p className="text-lux-navy font-bold" dir="ltr">
                                 {maskBankAccount(bankInfo.bankAccountNumber)}
                               </p>
@@ -1136,7 +1167,7 @@ const CleanForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-lux-navy mb-2">
                   ملاحظات إضافية (اختياري)
                 </label>
                 <Textarea
@@ -1162,7 +1193,7 @@ const CleanForm: React.FC = () => {
           variant="outline"
           onClick={handleBack}
           disabled={currentStep === 1}
-          className="min-w-[140px] border-2 border-lux-azure/30 text-lux-azure hover:bg-lux-mist"
+          className="min-w-[140px] border-2 border-elegant-blue/25 text-elegant-blue hover:bg-elegant-blue-50"
         >
           <ArrowRight className="w-5 h-5 ml-2" />
           السابق

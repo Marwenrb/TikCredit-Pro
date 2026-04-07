@@ -71,11 +71,11 @@ export default function FormPage() {
             className="text-center mb-10"
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-lux-navy via-lux-sapphire to-elegant-blue bg-clip-text text-transparent">
                 نموذج طلب التمويل
               </span>
             </h1>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            <p className="text-lg text-lux-slate max-w-2xl mx-auto">
               املأ النموذج التالي بدقة وسنقوم بمراجعة طلبك في أقرب وقت ممكن
             </p>
           </motion.div>
