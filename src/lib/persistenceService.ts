@@ -25,7 +25,8 @@ const RETRY_DELAY_MS = 1000
 // Types
 export interface StoredSubmission extends Submission {
   syncedToSupabase: boolean
-  syncedToFirebase?: boolean // Legacy compatibility
+  /** @deprecated Use syncedToSupabase instead */
+  syncedToFirebase?: boolean
   supabaseId?: string
   createdAt: string
   updatedAt: string
@@ -472,5 +473,5 @@ export async function syncAllToSupabase(): Promise<{
   return result
 }
 
-// Legacy compatibility alias
+/** @deprecated Use syncAllToSupabase directly */
 export const syncAllToFirebase = syncAllToSupabase

@@ -27,7 +27,7 @@ type StoredSubmission = {
   timestamp: string
   data: Record<string, unknown>
   syncedToSupabase?: boolean
-  syncedToFirebase?: boolean // Legacy compatibility
+  syncedToFirebase?: boolean
   status?: string
   source?: string
   metadata?: {
@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
     const wilaya = searchParams.get('wilaya')
     const search = searchParams.get('search')
     const period = searchParams.get('period') as 'today' | 'week' | 'month' | 'all' | null
+    const paymentMethod = searchParams.get('paymentMethod')
 
     let submissions: StoredSubmission[] = []
     let source: 'supabase' | 'local' | 'combined' = 'local'
@@ -91,6 +92,11 @@ export async function GET(request: NextRequest) {
         // Apply search filter (name or phone)
         if (search && search.trim()) {
           query = query.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%`)
+        }
+
+        // Apply payment method filter
+        if (paymentMethod && paymentMethod !== 'all') {
+          query = query.eq('payment_method', paymentMethod)
         }
 
         // Apply period filter
@@ -135,6 +141,11 @@ export async function GET(request: NextRequest) {
               profession: record.profession,
               customProfession: record.custom_profession,
               notes: record.notes,
+              banking: record.payment_method === 'CCP'
+                ? { paymentMethod: 'CCP' as const, ccpNumber: record.ccp_number || '', ccpKey: record.ccp_key || '', ccpFullNumber: record.ccp_full_number || '' }
+                : record.payment_method === 'بنك'
+                ? { paymentMethod: 'بنك' as const, bankName: record.bank_name || '', bankAccountNumber: record.bank_account_number || '', bankAgencyCode: record.bank_agency_code || '' }
+                : null,
             },
             syncedToSupabase: true,
             status: record.status || 'synced',

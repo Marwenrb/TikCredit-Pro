@@ -12,7 +12,7 @@ import { Button } from '@/components/ui'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-luxury-gradient flex items-center justify-center p-6">
+    <div className="min-h-screen bg-lux-ivory flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -42,7 +42,7 @@ export default function NotFound() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-lg text-luxury-darkGray mb-8 max-w-md mx-auto"
+          className="text-lg text-gray-500 mb-8 max-w-md mx-auto"
         >
           عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها إلى موقع آخر.
         </motion.p>

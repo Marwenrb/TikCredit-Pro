@@ -1,16 +1,16 @@
 /**
- * TikCredit Pro - Design System Tokens
+ * TikCredit Pro - Design System Tokens (White Luxury Theme)
  * Centralized design tokens for consistent UI/UX across the application
  */
 
 export const colors = {
   // Primary Brand Colors
   primary: {
-    50: '#EFF6FF',
-    100: '#DBEAFE',
-    200: '#BFDBFE',
-    300: '#93C5FD',
-    400: '#60A5FA',
+    50: '#0C1629',
+    100: '#0F1D3D',
+    200: '#162D5A',
+    300: '#1E3F7A',
+    400: '#2563EB',
     500: '#3B82F6',
     600: '#2563EB',
     700: '#1D4ED8',
@@ -18,55 +18,55 @@ export const colors = {
     900: '#1E3A8A',
     950: '#172554',
   },
-  
+
   // Accent Gold
   gold: {
-    50: '#FFFBEB',
-    100: '#FEF3C7',
-    200: '#FDE68A',
-    300: '#FCD34D',
-    400: '#FBBF24',
-    500: '#F59E0B',
-    600: '#D97706',
-    700: '#B45309',
-    800: '#92400E',
-    900: '#78350F',
+    50: '#1A1608',
+    100: '#2D2610',
+    200: '#4A3D1A',
+    300: '#8B7018',
+    400: '#D0AF67',
+    500: '#D4AF37',
+    600: '#B8941F',
+    700: '#8B7018',
+    800: '#5E4C10',
+    900: '#312808',
   },
-  
+
   // Semantic Colors
   success: {
-    light: '#D1FAE5',
-    DEFAULT: '#10B981',
-    dark: '#059669',
+    light: '#052E16',
+    DEFAULT: '#22C55E',
+    dark: '#16A34A',
   },
   warning: {
-    light: '#FEF3C7',
+    light: '#2D2610',
     DEFAULT: '#F59E0B',
     dark: '#D97706',
   },
   error: {
-    light: '#FEE2E2',
+    light: '#2D0A0A',
     DEFAULT: '#EF4444',
     dark: '#DC2626',
   },
   info: {
-    light: '#DBEAFE',
+    light: '#0C1629',
     DEFAULT: '#3B82F6',
     dark: '#2563EB',
   },
-  
-  // Neutral Grays
+
+  // Neutral Grays (white luxury theme)
   gray: {
-    50: '#F9FAFB',
-    100: '#F3F4F6',
-    200: '#E5E7EB',
-    300: '#D1D5DB',
-    400: '#9CA3AF',
-    500: '#6B7280',
-    600: '#4B5563',
-    700: '#374151',
-    800: '#1F2937',
-    900: '#111827',
+    50: '#F8FAFC',
+    100: '#F1F5F9',
+    200: '#E2E8F0',
+    300: '#CBD5E1',
+    400: '#94A3B8',
+    500: '#64748B',
+    600: '#475569',
+    700: '#334155',
+    800: '#1E293B',
+    900: '#0F172A',
   },
 } as const
 
@@ -230,11 +230,11 @@ export const animations = {
   },
 } as const
 
-// Focus ring styles for accessibility
+// Focus ring styles for accessibility (white luxury theme offset)
 export const focusRing = {
-  default: 'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-  error: 'focus:outline-none focus:ring-2 focus:ring-error focus:ring-offset-2',
-  success: 'focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2',
+  default: 'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white',
+  error: 'focus:outline-none focus:ring-2 focus:ring-error focus:ring-offset-2 focus:ring-offset-white',
+  success: 'focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2 focus:ring-offset-white',
 } as const
 
 export default {

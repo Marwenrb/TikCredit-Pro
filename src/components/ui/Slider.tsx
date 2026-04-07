@@ -39,13 +39,13 @@ const Slider: React.FC<SliderProps> = ({
   return (
     <div className={className}>
       {label && (
-        <label className="block text-sm font-medium text-luxury-charcoal mb-4">
+        <label className="block text-sm font-medium text-lux-navy mb-4">
           {label}
         </label>
       )}
       <div className="relative">
         <div className="flex justify-between items-center mb-4">
-          <span className="text-sm text-luxury-darkGray font-medium">{formatCurrency(min)}</span>
+          <span className="text-sm text-gray-500 font-medium">{formatCurrency(min)}</span>
           <motion.div
             className="px-4 py-2 bg-elegant-blue/10 backdrop-blur-sm border border-elegant-blue/30 rounded-lg shadow-sm"
             animate={{ scale: isDragging ? 1.05 : 1 }}
@@ -54,9 +54,9 @@ const Slider: React.FC<SliderProps> = ({
               {formatCurrency(value)}
             </span>
           </motion.div>
-          <span className="text-sm text-luxury-darkGray font-medium">{formatCurrency(max)}</span>
+          <span className="text-sm text-gray-500 font-medium">{formatCurrency(max)}</span>
         </div>
-        <div className="relative h-4 bg-gradient-to-r from-white via-luxury-offWhite to-white rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] border border-luxury-lightGray/60">
+        <div className="relative h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] border border-gray-200/60">
           <motion.div
             className="absolute h-full bg-gradient-to-r from-elegant-blue via-elegant-blue-light to-premium-gold rounded-full shadow-[0_0_18px_rgba(30,58,138,0.35)]"
             style={{ width: `${percentage}%` }}
@@ -75,7 +75,7 @@ const Slider: React.FC<SliderProps> = ({
           />
           {/* Premium thumb with live value bubble */}
           <motion.div
-            className="absolute top-1/2 w-8 h-8 bg-white rounded-full shadow-[0_10px_20px_rgba(30,58,138,0.18)] border-2 border-elegant-blue flex items-center justify-center"
+            className="absolute top-1/2 w-8 h-8 bg-surface-card rounded-full shadow-[0_10px_20px_rgba(37,99,235,0.25)] border-2 border-elegant-blue flex items-center justify-center"
             style={{ left: `calc(${percentage}% - 16px)`, transform: 'translateY(-50%)' }}
             animate={{
               scale: isDragging ? 1.15 : 1,

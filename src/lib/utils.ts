@@ -175,6 +175,9 @@ export function exportToCSV(submissions: Submission[]): void {
     'طبيعة العمل/المهنة',
     'نوع التمويل',
     'المبلغ المطلوب (د.ج)',
+    'طريقة الدفع',
+    'رقم الحساب',
+    'اسم البنك',
     'ملاحظات'
   ]
 
@@ -202,6 +205,11 @@ export function exportToCSV(submissions: Submission[]): void {
         s.data.customProfession : s.data.profession) : 'غير محدد',
     s.data.financingType,
     s.data.requestedAmount.toLocaleString('ar-DZ'),
+    s.data.banking?.paymentMethod === 'CCP' ? 'CCP' :
+      s.data.banking?.paymentMethod === 'بنك' ? 'حساب بنكي' : 'غير محدد',
+    s.data.banking?.paymentMethod === 'CCP' ? `****${s.data.banking.ccpNumber.slice(-4)}` :
+      s.data.banking?.paymentMethod === 'بنك' ? `****${s.data.banking.bankAccountNumber.slice(-4)}` : '',
+    s.data.banking?.paymentMethod === 'بنك' ? s.data.banking.bankName : '',
     s.data.notes || 'لا توجد'
   ])
 

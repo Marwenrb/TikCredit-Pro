@@ -23,14 +23,14 @@ export default function FormPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-luxury-gradient relative overflow-hidden">
+    <div className="min-h-screen bg-lux-ivory relative overflow-hidden">
       {/* Subtle Background Pattern - GPU accelerated with will-change */}
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{ willChange: 'opacity' }}
       >
         <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 2px 2px, #1E3A8A 1px, transparent 0)`,
+          backgroundImage: `radial-gradient(circle at 2px 2px, #2563EB 1px, transparent 0)`,
           backgroundSize: '40px 40px'
         }} />
       </div>
@@ -75,7 +75,7 @@ export default function FormPage() {
                 نموذج طلب التمويل
               </span>
             </h1>
-            <p className="text-lg text-luxury-darkGray max-w-2xl mx-auto">
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
               املأ النموذج التالي بدقة وسنقوم بمراجعة طلبك في أقرب وقت ممكن
             </p>
           </motion.div>

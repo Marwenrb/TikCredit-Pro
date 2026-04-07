@@ -1,16 +1,17 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react'
+import React, { useState, useEffect, useRef, useMemo, startTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Phone, Mail, MapPin, DollarSign, FileText,
   CheckCircle2, ArrowRight, ArrowLeft, XCircle, AlertCircle,
-  Cloud, CloudOff, Loader2
+  Cloud, CloudOff, Loader2, Shield, Building2, CreditCard
 } from 'lucide-react'
 import { Button, ProgressBar, Textarea, AmountSlider } from '@/components/ui'
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput'
 import StepIndicator from '@/components/ui/StepIndicator'
-import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS } from '@/types'
+import { FormData, FORM_STEPS, INITIAL_FORM_DATA, WILAYAS, CONTACT_TIMES, INCOME_RANGES, FINANCING_TYPES, PROFESSIONS, ALGERIAN_BANKS, BankingInfo } from '@/types'
+import { bankingInfoSchema, formatCCPNumber, formatRIB, computeCCPFullNumber, maskCCPNumber, maskBankAccount } from '@/lib/validators'
 import { saveSubmission, saveDraft, getDraft, clearDraft, validatePhone, validateEmail, formatCurrency } from '@/lib/utils'
 import {
   saveSubmissionToIndexedDB,
@@ -27,39 +28,33 @@ import { useToast } from '@/components/ui/Toast'
 // PERFORMANCE CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Loan amount validation constants - 5M to 20M DZD
 const MIN_LOAN_AMOUNT = 5_000_000
 const MAX_LOAN_AMOUNT = 20_000_000
 const LOAN_STEP = 500_000
-
-// Debounce delay for IndexedDB saves (prevents UI thread blocking during rapid typing)
 const INDEXEDDB_DEBOUNCE_MS = 750
-
-// Common email domains for auto-suggestion
 const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com']
 
-/**
- * Validate loan amount
- */
 const validateLoanAmount = (amount: number): { valid: boolean; error?: string } => {
   if (!amount || isNaN(amount)) {
     return { valid: false, error: 'المبلغ المطلوب مطلوب' }
   }
   if (amount < MIN_LOAN_AMOUNT) {
-    return {
-      valid: false,
-      error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج`
-    }
+    return { valid: false, error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
   }
   if (amount > MAX_LOAN_AMOUNT) {
-    return {
-      valid: false,
-      error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج`
-    }
+    return { valid: false, error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
   }
   return { valid: true }
 }
 
+const formatPhoneDisplay = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 10)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`
+  if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`
+  if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`
+  return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`
+}
 
 const CleanForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -71,15 +66,19 @@ const CleanForm: React.FC = () => {
   const [isOnline, setIsOnline] = useState(true)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'offline'>('idle')
   const [showEmailSuggestions, setShowEmailSuggestions] = useState(false)
+  const [bankingErrors, setBankingErrors] = useState<Record<string, string>>({})
+  const [ccpNumber, setCcpNumber] = useState('')
+  const [ccpKey, setCcpKey] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [bankAccountNumber, setBankAccountNumber] = useState('')
+  const [bankAgencyCode, setBankAgencyCode] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<'CCP' | 'بنك' | ''>('')
   const toast = useToast()
 
-  // Initialize auto-sync and load draft on mount
   useEffect(() => {
-    // Initialize online status
     setIsOnline(navigator.onLine)
     setSyncStatus(navigator.onLine ? 'idle' : 'offline')
 
-    // Online/offline listeners
     const handleOnline = () => {
       setIsOnline(true)
       setSyncStatus('syncing')
@@ -95,31 +94,7 @@ const CleanForm: React.FC = () => {
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-
-    // Initialize auto-sync
     initAutoSync()
-
-    // Load draft from both localStorage and IndexedDB
-    const loadDraft = async () => {
-      // Try IndexedDB first (more reliable)
-      try {
-        const indexedDBDraft = await getDraftFromIndexedDB()
-        if (indexedDBDraft) {
-          setFormData(prev => ({ ...prev, ...indexedDBDraft }))
-          return
-        }
-      } catch {
-        // IndexedDB draft load failed, falling back to localStorage
-      }
-
-      // Fallback to localStorage
-      const localDraft = getDraft()
-      if (localDraft) {
-        setFormData(prev => ({ ...prev, ...localDraft }))
-      }
-    }
-
-    // loadDraft() // Disabled to ensure "0 mode" (fresh start) for every user
 
     return () => {
       window.removeEventListener('online', handleOnline)
@@ -127,39 +102,44 @@ const CleanForm: React.FC = () => {
     }
   }, [])
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // DEBOUNCED INDEXEDDB SAVE - Prevents UI thread blocking during rapid typing
-  // ═══════════════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    const savedStep = sessionStorage.getItem('tikcredit_current_step')
+    if (savedStep) {
+      const step = parseInt(savedStep, 10)
+      if (step >= 1 && step <= 4) setCurrentStep(step)
+    }
+  }, [])
+
   const indexedDBTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Save draft when data changes (localStorage is instant, IndexedDB is debounced)
   useEffect(() => {
     if (!isSuccess) {
-      // Save to localStorage immediately (fast, synchronous, no UI impact)
       saveDraft(formData)
 
-      // Debounce IndexedDB save to prevent UI jank during rapid typing
       if (indexedDBTimeoutRef.current) {
         clearTimeout(indexedDBTimeoutRef.current)
       }
 
       indexedDBTimeoutRef.current = setTimeout(() => {
-        // Use startTransition for non-urgent state updates
         startTransition(() => {
-          saveDraftToIndexedDB(formData).catch(() => {
-            // Silent fail - localStorage already has the data
-          })
+          saveDraftToIndexedDB(formData).catch(() => {})
         })
       }, INDEXEDDB_DEBOUNCE_MS)
     }
 
-    // Cleanup timeout on unmount
     return () => {
       if (indexedDBTimeoutRef.current) {
         clearTimeout(indexedDBTimeoutRef.current)
       }
     }
   }, [formData, isSuccess])
+
+  // Sync paymentMethod with salaryReceiveMethod
+  useEffect(() => {
+    if (paymentMethod) {
+      setFormData(prev => ({ ...prev, salaryReceiveMethod: paymentMethod }))
+    }
+  }, [paymentMethod])
 
   const validateStep = (step: number): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {}
@@ -182,25 +162,89 @@ const CleanForm: React.FC = () => {
       if (!formData.wilaya) {
         newErrors.wilaya = 'الولاية مطلوبة'
       }
-      if (!formData.salaryReceiveMethod) {
-        newErrors.salaryReceiveMethod = 'طريقة استلام الراتب مطلوبة'
-      }
       if (!formData.profession) {
         newErrors.profession = 'طبيعة العمل مطلوبة'
       }
       if (formData.profession === 'أخرى (حدد)' && !formData.customProfession?.trim()) {
         newErrors.customProfession = 'يرجى تحديد طبيعة عملك'
       }
-    }
-
-    if (step === 3) {
       if (!formData.financingType) {
         newErrors.financingType = 'نوع التمويل مطلوب'
       }
-      // Validate loan amount
-      const amountValidation = validateLoanAmount(formData.requestedAmount)
-      if (!amountValidation.valid) {
-        newErrors.requestedAmount = amountValidation.error
+      const amountCheck = validateLoanAmount(formData.requestedAmount)
+      if (!amountCheck.valid) {
+        newErrors.requestedAmount = amountCheck.error
+      }
+    }
+
+    if (step === 3) {
+      const newBankingErrors: Record<string, string> = {}
+
+      if (!paymentMethod) {
+        newErrors.salaryReceiveMethod = 'يرجى اختيار طريقة الاستلام'
+        setErrors(newErrors)
+        return false
+      }
+
+      if (paymentMethod === 'CCP') {
+        const result = bankingInfoSchema.safeParse({
+          paymentMethod: 'CCP',
+          ccpNumber: ccpNumber.replace(/\s/g, ''),
+          ccpKey: ccpKey.replace(/\s/g, ''),
+        })
+        if (!result.success) {
+          for (const err of result.error.errors) {
+            const field = err.path[0] as string
+            newBankingErrors[field] = err.message
+          }
+        }
+      } else if (paymentMethod === 'بنك') {
+        const result = bankingInfoSchema.safeParse({
+          paymentMethod: 'بنك',
+          bankName,
+          bankAccountNumber: bankAccountNumber.replace(/\s/g, ''),
+          bankAgencyCode: bankAgencyCode || undefined,
+        })
+        if (!result.success) {
+          for (const err of result.error.errors) {
+            const field = err.path[0] as string
+            newBankingErrors[field] = err.message
+          }
+        }
+      }
+
+      setBankingErrors(newBankingErrors)
+      if (Object.keys(newBankingErrors).length > 0) {
+        setErrors(newErrors)
+        return false
+      }
+
+      // Assemble banking info
+      if (paymentMethod === 'CCP') {
+        const cleanCcp = ccpNumber.replace(/\s/g, '')
+        const cleanKey = ccpKey.replace(/\s/g, '')
+        setFormData(prev => ({
+          ...prev,
+          salaryReceiveMethod: 'CCP',
+          banking: {
+            paymentMethod: 'CCP',
+            ccpNumber: cleanCcp,
+            ccpKey: cleanKey,
+            ccpFullNumber: computeCCPFullNumber(cleanCcp, cleanKey),
+          }
+        }))
+      } else {
+        const cleanRib = bankAccountNumber.replace(/\s/g, '')
+        setFormData(prev => ({
+          ...prev,
+          salaryReceiveMethod: 'بنك',
+          banking: {
+            paymentMethod: 'بنك',
+            bankName,
+            bankAccountNumber: cleanRib,
+            bankAgencyCode: bankAgencyCode || '',
+          }
+        }))
       }
     }
 
@@ -210,32 +254,31 @@ const CleanForm: React.FC = () => {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, FORM_STEPS.length))
+      const newStep = Math.min(currentStep + 1, FORM_STEPS.length)
+      setCurrentStep(newStep)
+      sessionStorage.setItem('tikcredit_current_step', String(newStep))
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
   const handleBack = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1))
+    const newStep = Math.max(currentStep - 1, 1)
+    setCurrentStep(newStep)
+    sessionStorage.setItem('tikcredit_current_step', String(newStep))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleSubmit = async () => {
-    // Validate all steps including loan amount
     if (!validateStep(currentStep)) {
       toast.warning('يرجى إكمال الحقول المطلوبة قبل المتابعة')
       return
     }
 
-    // Double-check loan amount validation before submission
     const finalAmountValidation = validateLoanAmount(formData.requestedAmount)
     if (!finalAmountValidation.valid) {
-      setErrors(prev => ({
-        ...prev,
-        requestedAmount: finalAmountValidation.error
-      }))
-      // Scroll to step 3 to show the error
-      setCurrentStep(3)
+      setErrors(prev => ({ ...prev, requestedAmount: finalAmountValidation.error }))
+      setCurrentStep(2)
+      sessionStorage.setItem('tikcredit_current_step', '2')
       toast.warning(finalAmountValidation.error || 'يرجى تصحيح المبلغ المطلوب قبل الإرسال')
       return
     }
@@ -244,14 +287,10 @@ const CleanForm: React.FC = () => {
     setSyncStatus('syncing')
 
     try {
-      // Save to IndexedDB first (for offline resilience)
       try {
         await saveSubmissionToIndexedDB(formData)
-      } catch {
-        // Silent fail - continuing with server save
-      }
+      } catch {}
 
-      // Try to submit to server
       const response = await fetch('/api/submissions/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,90 +300,49 @@ const CleanForm: React.FC = () => {
       const responseData = await response.json()
 
       if (response.ok) {
-        // Save to localStorage as additional backup
         saveSubmission(formData)
-
-        // Clear all drafts (localStorage and IndexedDB)
         clearDraft()
-        try {
-          await clearDraftFromIndexedDB()
-        } catch {
-          // Silent fail - draft cleanup is non-critical
-        }
+        try { await clearDraftFromIndexedDB() } catch {}
 
         setIsSuccess(true)
         setSyncStatus('synced')
+        sessionStorage.removeItem('tikcredit_current_step')
 
         const persisted = responseData.persisted as 'server' | 'local' | undefined
-        const savedTo = responseData.savedTo as string[] | undefined
 
         if (persisted === 'local') {
           toast.info('تم حفظ طلبك محلياً. سيتم المزامنة تلقائياً عند توفر الاتصال.', 5000)
         } else {
-          // Clean success message without storage details
           toast.success('تم استلام طلبك بنجاح! سنتصل بك قريباً.', 5000)
         }
 
-        // Celebration confetti
         const duration = 3000
         const animationEnd = Date.now() + duration
-
         const interval = setInterval(() => {
           const timeLeft = animationEnd - Date.now()
-          if (timeLeft <= 0) {
-            return clearInterval(interval)
-          }
-
-          confetti({
-            particleCount: 50,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#1E3A8A', '#D4AF37', '#3B82F6'],
-          })
-          confetti({
-            particleCount: 50,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#1E3A8A', '#D4AF37', '#3B82F6'],
-          })
+          if (timeLeft <= 0) return clearInterval(interval)
+          confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#1E3A8A', '#D4AF37', '#3B82F6'] })
+          confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#1E3A8A', '#D4AF37', '#3B82F6'] })
         }, 250)
       } else {
-        // Enhanced error handling
         const errorMessage = responseData.message || responseData.error || 'فشل إرسال الطلب'
         const errorDetails = responseData.errors || []
-
-        console.error('Submission failed:', {
-          status: response.status,
-          message: errorMessage,
-          errors: errorDetails
-        })
-
-        // Show user-friendly error message
         if (errorDetails.length > 0) {
           toast.error(`يرجى تصحيح الأخطاء التالية:\n${errorDetails.join('\n')}`, 7000)
         } else {
           toast.error(`حدث خطأ: ${errorMessage}`, 7000)
         }
-
         throw new Error(errorMessage)
       }
     } catch (error) {
-      console.error('Error submitting form:', error)
       const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال الطلب'
-
       if (!navigator.onLine) {
-        // Offline mode - submission was saved to IndexedDB
         setSyncStatus('offline')
         toast.warning('الاتصال غير متوفر. تم حفظ بياناتك محلياً، وسنحاول الإرسال تلقائياً عند عودة الاتصال.', 7000)
-
-        // Show success since it's saved locally
         setIsSuccess(true)
+        sessionStorage.removeItem('tikcredit_current_step')
         clearDraft()
-        try {
-          await clearDraftFromIndexedDB()
-        } catch { }
+        try { await clearDraftFromIndexedDB() } catch {}
       } else {
         setSyncStatus('idle')
         toast.error(`تعذر الاتصال بالخادم: ${errorMessage}`, 7000)
@@ -356,29 +354,16 @@ const CleanForm: React.FC = () => {
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-
-    // Real-time validation for loan amount
     if (field === 'requestedAmount') {
       const validation = validateLoanAmount(value as number)
       setAmountValidation(validation)
       if (validation.valid) {
-        setErrors(prev => {
-          const newErrors = { ...prev }
-          delete newErrors.requestedAmount
-          return newErrors
-        })
+        setErrors(prev => { const n = { ...prev }; delete n.requestedAmount; return n })
       } else {
-        setErrors(prev => ({
-          ...prev,
-          requestedAmount: validation.error
-        }))
+        setErrors(prev => ({ ...prev, requestedAmount: validation.error }))
       }
     } else if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
+      setErrors(prev => { const n = { ...prev }; delete n[field]; return n })
     }
   }
 
@@ -390,7 +375,8 @@ const CleanForm: React.FC = () => {
         className="text-center py-16 px-6"
       >
         <motion.div
-          className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-status-success to-elegant-blue rounded-full flex items-center justify-center shadow-luxury-xl"
+          className="w-32 h-32 mx-auto mb-8 rounded-full flex items-center justify-center shadow-luxury-xl"
+          style={{ background: 'linear-gradient(135deg, #059669, #2563EB)' }}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200 }}
@@ -399,7 +385,7 @@ const CleanForm: React.FC = () => {
         </motion.div>
 
         <motion.h2
-          className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent"
+          className="text-4xl md:text-5xl font-bold mb-4 text-lux-navy"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -407,7 +393,7 @@ const CleanForm: React.FC = () => {
         </motion.h2>
 
         <motion.p
-          className="text-xl text-luxury-darkGray mb-8 max-w-2xl mx-auto"
+          className="text-xl text-gray-500 mb-8 max-w-2xl mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
@@ -415,11 +401,7 @@ const CleanForm: React.FC = () => {
           شكراً لك! سنتصل بك قريباً لتأكيد تفاصيل طلبك
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Button
             size="lg"
             className="premium-button"
@@ -448,12 +430,13 @@ const CleanForm: React.FC = () => {
           className="luxury-card p-4 sm:p-6 md:p-10 shadow-luxury-xl"
         >
           <div className="mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent mb-3">
+            <h2 className="text-3xl md:text-4xl font-bold text-lux-navy mb-3">
               {FORM_STEPS[currentStep - 1].title}
             </h2>
-            <p className="text-lg text-luxury-darkGray">
+            <p className="text-lg text-gray-500">
               {FORM_STEPS[currentStep - 1].description}
             </p>
+            <div className="w-16 h-[3px] mt-3 rounded-full" style={{ background: 'var(--gradient-cta)' }} />
           </div>
 
           {/* Step 1: Personal Information */}
@@ -461,41 +444,41 @@ const CleanForm: React.FC = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <motion.label
-                  className={`flex items-center gap-3 p-5 rounded-luxury cursor-pointer transition-all duration-300 border-2
+                  className={`flex items-center gap-3 p-5 rounded-xl cursor-pointer transition-all duration-300 border-2
                     ${formData.isExistingCustomer === 'نعم'
-                      ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium'
-                      : 'border-luxury-mediumGray/30 hover:border-elegant-blue/50 bg-luxury-offWhite'
+                      ? 'border-lux-azure bg-lux-mist shadow-premium'
+                      : 'border-gray-200 hover:border-lux-azure/50 bg-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => updateField('isExistingCustomer', 'نعم')}
                 >
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
-                    ${formData.isExistingCustomer === 'نعم' ? 'border-elegant-blue bg-elegant-blue' : 'border-luxury-darkGray'}`}>
+                    ${formData.isExistingCustomer === 'نعم' ? 'border-lux-azure bg-lux-azure' : 'border-gray-300'}`}>
                     {formData.isExistingCustomer === 'نعم' && (
                       <motion.div className="w-3 h-3 bg-white rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
                     )}
                   </div>
-                  <span className="text-luxury-charcoal font-medium">نعم، أنا عميل موجود</span>
+                  <span className="text-lux-navy font-medium">نعم، أنا عميل موجود</span>
                 </motion.label>
 
                 <motion.label
-                  className={`flex items-center gap-3 p-5 rounded-luxury cursor-pointer transition-all duration-300 border-2
+                  className={`flex items-center gap-3 p-5 rounded-xl cursor-pointer transition-all duration-300 border-2
                     ${formData.isExistingCustomer === 'لا'
-                      ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium'
-                      : 'border-luxury-mediumGray/30 hover:border-elegant-blue/50 bg-luxury-offWhite'
+                      ? 'border-lux-azure bg-lux-mist shadow-premium'
+                      : 'border-gray-200 hover:border-lux-azure/50 bg-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => updateField('isExistingCustomer', 'لا')}
                 >
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
-                    ${formData.isExistingCustomer === 'لا' ? 'border-elegant-blue bg-elegant-blue' : 'border-luxury-darkGray'}`}>
+                    ${formData.isExistingCustomer === 'لا' ? 'border-lux-azure bg-lux-azure' : 'border-gray-300'}`}>
                     {formData.isExistingCustomer === 'لا' && (
                       <motion.div className="w-3 h-3 bg-white rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
                     )}
                   </div>
-                  <span className="text-luxury-charcoal font-medium">لا، عميل جديد</span>
+                  <span className="text-lux-navy font-medium">لا، عميل جديد</span>
                 </motion.label>
               </div>
 
@@ -510,10 +493,13 @@ const CleanForm: React.FC = () => {
               <FloatingLabelInput
                 label="رقم الهاتف *"
                 type="tel"
-                value={formData.phone}
-                onChange={(e) => updateField('phone', e.target.value)}
+                value={formatPhoneDisplay(formData.phone)}
+                onChange={(e) => {
+                  const rawDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                  updateField('phone', rawDigits)
+                }}
                 error={errors.phone}
-                placeholder="05XX XXX XXX"
+                placeholder="05XX XX XX XX"
                 icon={<Phone className="w-5 h-5" />}
               />
 
@@ -524,7 +510,6 @@ const CleanForm: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => {
                     updateField('email', e.target.value)
-                    // Show suggestions when @ is typed
                     const value = e.target.value
                     if (value.includes('@') && !value.includes('.', value.indexOf('@'))) {
                       setShowEmailSuggestions(true)
@@ -538,20 +523,18 @@ const CleanForm: React.FC = () => {
                     }
                   }}
                   onBlur={() => {
-                    // Delay hiding to allow click on suggestion
                     setTimeout(() => setShowEmailSuggestions(false), 200)
                   }}
                   error={errors.email}
                   icon={<Mail className="w-5 h-5" />}
                 />
-                {/* Email Domain Suggestions */}
                 <AnimatePresence>
                   {showEmailSuggestions && formData.email.includes('@') && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute z-50 w-full mt-1 bg-white rounded-luxury border-2 border-elegant-blue/20 shadow-luxury overflow-hidden"
+                      className="absolute z-50 w-full mt-1 bg-white rounded-xl border-2 border-lux-azure/20 shadow-luxury-lg overflow-hidden"
                     >
                       {EMAIL_DOMAINS.map((domain) => {
                         const emailPrefix = formData.email.split('@')[0]
@@ -564,11 +547,11 @@ const CleanForm: React.FC = () => {
                               updateField('email', suggestion)
                               setShowEmailSuggestions(false)
                             }}
-                            className="w-full px-4 py-3 text-right hover:bg-elegant-blue/10 transition-colors flex items-center gap-2 border-b border-luxury-lightGray/50 last:border-b-0"
-                            whileHover={{ backgroundColor: 'rgba(30, 58, 138, 0.1)' }}
+                            className="w-full px-4 py-3 text-right hover:bg-lux-mist transition-colors flex items-center gap-2 border-b border-gray-100 last:border-b-0"
+                            whileHover={{ backgroundColor: 'rgba(37, 99, 235, 0.05)' }}
                           >
-                            <Mail className="w-4 h-4 text-elegant-blue" />
-                            <span className="text-luxury-charcoal">{suggestion}</span>
+                            <Mail className="w-4 h-4 text-lux-azure" />
+                            <span className="text-lux-navy">{suggestion}</span>
                           </motion.button>
                         )
                       })}
@@ -578,13 +561,13 @@ const CleanForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-luxury-charcoal mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   وقت التواصل المفضل
                 </label>
                 <select
                   value={formData.preferredContactTime}
                   onChange={(e) => updateField('preferredContactTime', e.target.value)}
-                  className="w-full px-4 py-4 bg-luxury-offWhite border-2 border-luxury-mediumGray/30 rounded-luxury text-luxury-charcoal focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/20 transition-all"
+                  className="w-full px-4 py-4 bg-white border-2 border-gray-200 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all"
                 >
                   <option value="">اختر الوقت</option>
                   {CONTACT_TIMES.map(time => (
@@ -595,18 +578,18 @@ const CleanForm: React.FC = () => {
             </div>
           )}
 
-          {/* Step 2: Location and Income */}
+          {/* Step 2: Loan Info */}
           {currentStep === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-luxury-charcoal mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   الولاية *
                 </label>
                 <select
                   value={formData.wilaya}
                   onChange={(e) => updateField('wilaya', e.target.value)}
-                  className={`w-full px-4 py-4 bg-luxury-offWhite border-2 rounded-luxury text-luxury-charcoal focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/20 transition-all
-                    ${errors.wilaya ? 'border-status-error' : 'border-luxury-mediumGray/30'}`}
+                  className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all
+                    ${errors.wilaya ? 'border-status-error' : 'border-gray-200'}`}
                 >
                   <option value="">اختر الولاية</option>
                   {WILAYAS.map(wilaya => (
@@ -616,51 +599,49 @@ const CleanForm: React.FC = () => {
                 {errors.wilaya && <p className="mt-1 text-sm text-status-error">{errors.wilaya}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-luxury-charcoal mb-2">
-                  نطاق الدخل الشهري
-                </label>
-                <select
-                  value={formData.monthlyIncomeRange}
-                  onChange={(e) => updateField('monthlyIncomeRange', e.target.value)}
-                  className="w-full px-4 py-4 bg-luxury-offWhite border-2 border-luxury-mediumGray/30 rounded-luxury text-luxury-charcoal focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/20 transition-all"
-                >
-                  <option value="">اختر النطاق</option>
-                  {INCOME_RANGES.map(range => (
-                    <option key={range} value={range}>{range}</option>
-                  ))}
-                </select>
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    نطاق الدخل الشهري
+                  </label>
+                  <select
+                    value={formData.monthlyIncomeRange}
+                    onChange={(e) => updateField('monthlyIncomeRange', e.target.value)}
+                    className="w-full px-4 py-4 bg-white border-2 border-gray-200 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all"
+                  >
+                    <option value="">اختر النطاق</option>
+                    {INCOME_RANGES.map(range => (
+                      <option key={range} value={range}>{range}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-luxury-charcoal mb-2">
-                  طبيعة العمل/المهنة *
-                </label>
-                <select
-                  value={formData.profession}
-                  onChange={(e) => {
-                    updateField('profession', e.target.value)
-                    if (e.target.value !== 'أخرى (حدد)') {
-                      updateField('customProfession', '')
-                    }
-                  }}
-                  className={`w-full px-4 py-4 bg-luxury-offWhite border-2 rounded-luxury text-luxury-charcoal focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/20 transition-all
-                    ${errors.profession ? 'border-status-error' : 'border-luxury-mediumGray/30'}`}
-                >
-                  <option value="">اختر المهنة</option>
-                  {PROFESSIONS.map(prof => (
-                    <option key={prof} value={prof}>{prof}</option>
-                  ))}
-                </select>
-                {errors.profession && <p className="mt-1 text-sm text-status-error">{errors.profession}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    طبيعة العمل/المهنة *
+                  </label>
+                  <select
+                    value={formData.profession}
+                    onChange={(e) => {
+                      updateField('profession', e.target.value)
+                      if (e.target.value !== 'أخرى (حدد)') {
+                        updateField('customProfession', '')
+                      }
+                    }}
+                    className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-lux-azure focus:ring-2 focus:ring-lux-azure/20 transition-all
+                      ${errors.profession ? 'border-status-error' : 'border-gray-200'}`}
+                  >
+                    <option value="">اختر المهنة</option>
+                    {PROFESSIONS.map(prof => (
+                      <option key={prof} value={prof}>{prof}</option>
+                    ))}
+                  </select>
+                  {errors.profession && <p className="mt-1 text-sm text-status-error">{errors.profession}</p>}
+                </div>
               </div>
 
               {formData.profession === 'أخرى (حدد)' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                   <FloatingLabelInput
                     label="حدد طبيعة عملك"
                     value={formData.customProfession || ''}
@@ -672,65 +653,32 @@ const CleanForm: React.FC = () => {
               )}
 
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-luxury-charcoal">
-                  طريقة استلام الراتب *
-                </label>
-                {(['CCP', 'بنك'] as const).map((method) => (
-                  <motion.label
-                    key={method}
-                    className={`flex items-center gap-3 p-4 rounded-luxury border-2 cursor-pointer transition-all
-                      ${formData.salaryReceiveMethod === method
-                        ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium'
-                        : 'border-luxury-mediumGray/30 hover:border-elegant-blue/50 bg-luxury-offWhite'}`}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => updateField('salaryReceiveMethod', method)}
-                  >
-                    <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center
-                      ${formData.salaryReceiveMethod === method ? 'border-elegant-blue' : 'border-luxury-darkGray'}`}>
-                      {formData.salaryReceiveMethod === method && (
-                        <motion.div className="w-2.5 h-2.5 bg-elegant-blue rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
-                      )}
-                    </div>
-                    <span className="text-luxury-charcoal font-medium">{method === 'CCP' ? 'CCP (البريد)' : method}</span>
-                  </motion.label>
-                ))}
-                {errors.salaryReceiveMethod && <p className="mt-1 text-sm text-status-error">{errors.salaryReceiveMethod}</p>}
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Financing Details */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-luxury-charcoal">
+                <label className="block text-sm font-medium text-gray-700">
                   نوع التمويل *
                 </label>
                 {FINANCING_TYPES.map((type) => (
                   <motion.label
                     key={type}
-                    className={`flex items-center gap-3 p-4 rounded-luxury border-2 cursor-pointer transition-all
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all
                       ${formData.financingType === type
-                        ? 'border-elegant-blue bg-elegant-blue/10 shadow-premium'
-                        : 'border-luxury-mediumGray/30 hover:border-elegant-blue/50 bg-luxury-offWhite'}`}
+                        ? 'border-lux-azure bg-lux-mist shadow-premium'
+                        : 'border-gray-200 hover:border-lux-azure/50 bg-white'}`}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => updateField('financingType', type)}
                   >
                     <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center
-                      ${formData.financingType === type ? 'border-elegant-blue' : 'border-luxury-darkGray'}`}>
+                      ${formData.financingType === type ? 'border-lux-azure' : 'border-gray-300'}`}>
                       {formData.financingType === type && (
-                        <motion.div className="w-2.5 h-2.5 bg-elegant-blue rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
+                        <motion.div className="w-2.5 h-2.5 bg-lux-azure rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }} />
                       )}
                     </div>
-                    <span className="text-luxury-charcoal font-medium">{type}</span>
+                    <span className="text-lux-navy font-medium">{type}</span>
                   </motion.label>
                 ))}
                 {errors.financingType && <p className="mt-1 text-sm text-status-error">{errors.financingType}</p>}
               </div>
 
-              {/* Premium Amount Slider Component */}
               <div className="mt-6">
                 <AmountSlider
                   min={MIN_LOAN_AMOUNT}
@@ -745,63 +693,450 @@ const CleanForm: React.FC = () => {
             </div>
           )}
 
+          {/* ============================================
+              STEP 3: معلومات الدفع — Payment Step
+              ============================================ */}
+          {currentStep === 3 && (
+            <div className="space-y-6 animate-fadeSlideUp" dir="rtl">
+
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+                  style={{ background: 'var(--gradient-cta)', boxShadow: 'var(--shadow-cta)' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2"/>
+                    <line x1="1" y1="10" x2="23" y2="10"/>
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-black text-lux-navy mb-2">معلومات الدفع</h2>
+                <p className="text-sm text-gray-500">اختر طريقة استلام التمويل المناسبة لك</p>
+                <div className="w-16 h-[3px] mx-auto mt-3 rounded-full" style={{ background: 'var(--gradient-cta)' }} />
+              </div>
+
+              {/* Payment Method Selector */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-4 text-right">
+                  طريقة الاستلام <span className="text-red-500">*</span>
+                </label>
+                {errors.salaryReceiveMethod && <p className="mb-2 text-sm text-status-error">{errors.salaryReceiveMethod}</p>}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* CCP Option */}
+                  <button type="button" onClick={() => setPaymentMethod('CCP')}
+                    className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 relative ${
+                      paymentMethod === 'CCP'
+                        ? 'border-orange-400 bg-gradient-to-br from-orange-50 to-amber-50 shadow-[0_0_0_1px_#FB923C,0_4px_20px_rgba(251,146,60,0.2)]'
+                        : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50'
+                    }`}>
+                    {paymentMethod === 'CCP' && (
+                      <div className="absolute top-2.5 left-2.5 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    )}
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 shadow-md"
+                      style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)' }}>
+                      <span className="text-white font-black text-base tracking-tight">CCP</span>
+                    </div>
+                    <span className="font-bold text-gray-800 text-sm">بريد الجزائر</span>
+                    <span className="text-xs text-gray-400 mt-0.5">Algérie Poste</span>
+                  </button>
+
+                  {/* Bank Option */}
+                  <button type="button" onClick={() => setPaymentMethod('بنك')}
+                    className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 relative ${
+                      paymentMethod === 'بنك'
+                        ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-[0_0_0_1px_#3B82F6,0_4px_20px_rgba(59,130,246,0.2)]'
+                        : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                    }`}>
+                    {paymentMethod === 'بنك' && (
+                      <div className="absolute top-2.5 left-2.5 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    )}
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 shadow-md"
+                      style={{ background: 'var(--gradient-cta)' }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                        <path d="M3 22V9M12 22V9M21 22V9M2 9h20M12 3L2 9h20L12 3z"/>
+                      </svg>
+                    </div>
+                    <span className="font-bold text-gray-800 text-sm">حساب بنكي</span>
+                    <span className="text-xs text-gray-400 mt-0.5">Compte Bancaire</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ===== CCP FIELDS ===== */}
+              {paymentMethod === 'CCP' && (
+                <div className="animate-fadeSlideUp p-6 rounded-2xl border-2 border-orange-200 space-y-6"
+                  style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FFF7ED 100%)' }}>
+
+                  <div className="flex items-center gap-3 pb-4 border-b border-orange-200">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+                      style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)' }}>
+                      <span className="text-white font-black text-xs">CCP</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800 text-sm">معلومات حساب بريد الجزائر (CCP)</h3>
+                      <p className="text-xs text-gray-500">Algérie Poste — Compte Chèque Postal</p>
+                    </div>
+                  </div>
+
+                  {/* CCP Number */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
+                      رقم الحساب البريدي <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={ccpNumber}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, '').slice(0, 10)
+                        setCcpNumber(raw)
+                        if (bankingErrors.ccpNumber) {
+                          setBankingErrors(prev => { const n = { ...prev }; delete n.ccpNumber; return n })
+                        }
+                      }}
+                      placeholder="0000000000"
+                      maxLength={10}
+                      inputMode="numeric"
+                      dir="ltr"
+                      className="w-full px-4 py-4 bg-white border-2 border-orange-300 rounded-xl text-center font-mono font-bold text-xl tracking-[0.3em] outline-none transition-all duration-200 focus:border-orange-500 focus:shadow-[0_0_0_3px_rgba(249,115,22,0.15),0_0_0_1px_rgba(249,115,22,0.5)]"
+                      style={{ color: '#92400E' }}
+                    />
+                    {bankingErrors.ccpNumber && <p className="mt-1 text-sm text-status-error">{bankingErrors.ccpNumber}</p>}
+
+                    {/* Digit visualizer */}
+                    <div className="flex gap-1.5 justify-center mt-3" dir="ltr">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div key={i} className={`w-8 h-9 border-2 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all duration-200 ${
+                          ccpNumber[i]
+                            ? 'border-orange-400 bg-orange-50 text-orange-800'
+                            : 'border-gray-200 bg-gray-50 text-gray-300'
+                        }`}>
+                          {ccpNumber[i] || '·'}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 text-right mt-2 flex items-center gap-1 justify-end">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                      10 أرقام بدون مسافات — كما هو مكتوب على بطاقة بريد الجزائر
+                    </p>
+                  </div>
+
+                  {/* CCP Key */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
+                      مفتاح الحساب (Clé) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex justify-end gap-3">
+                      <div className="w-40">
+                        <input
+                          type="text"
+                          value={ccpKey}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
+                            setCcpKey(raw)
+                            if (bankingErrors.ccpKey) {
+                              setBankingErrors(prev => { const n = { ...prev }; delete n.ccpKey; return n })
+                            }
+                          }}
+                          placeholder="00"
+                          maxLength={2}
+                          inputMode="numeric"
+                          dir="ltr"
+                          className="w-full px-4 py-4 bg-white border-2 border-orange-300 rounded-xl text-center font-mono font-bold text-2xl tracking-[0.5em] outline-none transition-all duration-200 focus:border-orange-500 focus:shadow-[0_0_0_3px_rgba(249,115,22,0.15),0_0_0_1px_rgba(249,115,22,0.5)]"
+                          style={{ color: '#92400E' }}
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                          <div key={i} className={`w-12 h-12 border-2 rounded-lg flex items-center justify-center text-xl font-bold font-mono transition-all duration-200 ${
+                            ccpKey[i]
+                              ? 'border-orange-400 bg-orange-50 text-orange-800'
+                              : 'border-gray-200 bg-gray-50 text-gray-300'
+                          }`}>
+                            {ccpKey[i] || '·'}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {bankingErrors.ccpKey && <p className="mt-1 text-sm text-status-error">{bankingErrors.ccpKey}</p>}
+                    <p className="text-xs text-gray-500 text-right mt-2 flex items-center gap-1 justify-end">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                      الرقمان الأخيران المطبوعان على بطاقة بريد الجزائر
+                    </p>
+                  </div>
+
+                  {/* CCP Full Number Preview */}
+                  {ccpNumber.length >= 8 && ccpKey.length === 2 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      className="p-3 rounded-xl bg-white border border-orange-200">
+                      <p className="text-sm font-medium text-gray-700">
+                        رقم CCP الكامل: <span className="font-bold text-orange-700" dir="ltr">{computeCCPFullNumber(ccpNumber, ccpKey)}</span>
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {/* Security badge */}
+                  <div className="flex items-center gap-2.5 p-3.5 bg-white rounded-xl border border-orange-200">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                    <span className="text-xs text-green-700 font-semibold">بياناتك محمية بتشفير SSL-256 — لن نشارك معلوماتك أبداً مع أي طرف ثالث. نستخدم هذه المعلومات فقط للتحقق من هويتك وتسريع دراسة ملف التمويل والحصول عليه.</span>
+                  </div>
+                </div>
+              )}
+
+              {/* ===== BANK FIELDS ===== */}
+              {paymentMethod === 'بنك' && (
+                <div className="animate-fadeSlideUp p-6 rounded-2xl border-2 border-blue-200 space-y-6"
+                  style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 100%)' }}>
+
+                  <div className="flex items-center gap-3 pb-4 border-b border-blue-200">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+                      style={{ background: 'var(--gradient-cta)' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                        <path d="M3 22V9M12 22V9M21 22V9M2 9h20M12 3L2 9h20L12 3z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800 text-sm">معلومات الحساب البنكي</h3>
+                      <p className="text-xs text-gray-500">Compte Bancaire Algérien</p>
+                    </div>
+                  </div>
+
+                  {/* Bank Name */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
+                      اسم البنك <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={bankName}
+                      onChange={(e) => {
+                        setBankName(e.target.value)
+                        if (bankingErrors.bankName) {
+                          setBankingErrors(prev => { const n = { ...prev }; delete n.bankName; return n })
+                        }
+                      }}
+                      className={`w-full px-4 py-4 bg-white border-2 rounded-xl text-lux-navy focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all
+                        ${bankingErrors.bankName ? 'border-status-error' : 'border-blue-300'}`}
+                      dir="rtl">
+                      <option value="">-- اختر البنك --</option>
+                      <optgroup label="البنوك العمومية">
+                        <option value="BNA">البنك الوطني الجزائري — BNA</option>
+                        <option value="BEA">بنك الجزائر الخارجي — BEA</option>
+                        <option value="CPA">القرض الشعبي الجزائري — CPA</option>
+                        <option value="BADR">بنك الفلاحة والتنمية الريفية — BADR</option>
+                        <option value="BDL">بنك التنمية المحلية — BDL</option>
+                        <option value="CNEP">صندوق التوفير والاحتياط — CNEP</option>
+                      </optgroup>
+                      <optgroup label="البنوك الخاصة">
+                        <option value="AGB">الخليج الجزائر — AGB</option>
+                        <option value="ABC">العربي الجزائر للتجارة — ABC</option>
+                        <option value="ALBARAKA">بنك البركة — Al Baraka</option>
+                        <option value="SGA">سوسيتيه جنرال — Société Générale</option>
+                        <option value="BNP">بي إن بي باريبا — BNP Paribas</option>
+                        <option value="HSBC">HSBC الجزائر — HSBC</option>
+                        <option value="TRUST">تراست بنك — Trust Bank</option>
+                        <option value="NATIXIS">ناتيكسيس — Natixis</option>
+                        <option value="CIB">بنك التجارة والصناعة — CIB</option>
+                        <option value="OTHER">بنك آخر</option>
+                      </optgroup>
+                    </select>
+                    {bankingErrors.bankName && <p className="mt-1 text-sm text-status-error">{bankingErrors.bankName}</p>}
+                  </div>
+
+                  {/* Bank Account Number (RIB) */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
+                      رقم الحساب البنكي (RIB) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={bankAccountNumber}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, '').slice(0, 20)
+                        setBankAccountNumber(raw)
+                        if (bankingErrors.bankAccountNumber) {
+                          setBankingErrors(prev => { const n = { ...prev }; delete n.bankAccountNumber; return n })
+                        }
+                      }}
+                      placeholder="00000000000000000000"
+                      maxLength={20}
+                      inputMode="numeric"
+                      dir="ltr"
+                      className="w-full px-4 py-4 bg-white border-2 border-blue-300 rounded-xl text-center font-mono font-bold text-base tracking-[0.15em] outline-none transition-all duration-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15),0_0_0_1px_rgba(37,99,235,0.5)]"
+                      style={{ color: '#1E3A8A' }}
+                    />
+                    {bankingErrors.bankAccountNumber && <p className="mt-1 text-sm text-status-error">{bankingErrors.bankAccountNumber}</p>}
+
+                    {/* RIB segments */}
+                    {bankAccountNumber.length > 0 && (
+                      <div className="flex gap-2 justify-center mt-3 flex-wrap" dir="ltr">
+                        {[
+                          { label: 'Banque', start: 0, len: 3, color: 'bg-blue-100 border-blue-300 text-blue-800' },
+                          { label: 'Agence', start: 3, len: 5, color: 'bg-indigo-100 border-indigo-300 text-indigo-800' },
+                          { label: 'Compte', start: 8, len: 10, color: 'bg-violet-100 border-violet-300 text-violet-800' },
+                          { label: 'Clé', start: 18, len: 2, color: 'bg-purple-100 border-purple-300 text-purple-800' },
+                        ].map((seg) => (
+                          <div key={seg.label} className="text-center">
+                            <div className={`px-2 py-2 border-2 rounded-lg font-mono font-bold text-sm ${seg.color}`}
+                              style={{ minWidth: `${Math.max(seg.len * 13, 32)}px` }}>
+                              {bankAccountNumber.slice(seg.start, seg.start + seg.len) || '·'.repeat(seg.len)}
+                            </div>
+                            <div className="text-[10px] text-gray-400 mt-1">{seg.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between mt-1.5">
+                      <span className="text-xs text-gray-400 font-mono">{bankAccountNumber.length}/20</span>
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                        رقم التعريف البنكي (RIB) — 20 رقم
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Agency Code (optional) */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
+                      كود الوكالة (اختياري)
+                    </label>
+                    <input
+                      type="text"
+                      value={bankAgencyCode}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, '').slice(0, 5)
+                        setBankAgencyCode(raw)
+                      }}
+                      placeholder="000"
+                      maxLength={5}
+                      inputMode="numeric"
+                      dir="ltr"
+                      className="w-full px-4 py-4 bg-white border-2 border-blue-200 rounded-xl text-center font-mono font-bold outline-none transition-all duration-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15)]"
+                      style={{ color: '#1E3A8A' }}
+                    />
+                    <p className="text-xs text-gray-500 text-right mt-1">اختياري — يُوجد على كشف حسابك البنكي</p>
+                  </div>
+
+                  {/* Security badge */}
+                  <div className="flex items-center gap-2.5 p-3.5 bg-white rounded-xl border border-blue-200">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                    <span className="text-xs text-green-700 font-semibold">بياناتك محمية بتشفير SSL — معلوماتك سرية ومحمية بالكامل. لن نشارك معلوماتك مع أي طرف ثالث. نستخدمها فقط للتحقق وتسريع الحصول على التمويل.</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!paymentMethod && (
+                <div className="p-5 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl text-center">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" className="mx-auto mb-2">
+                    <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                  </svg>
+                  <p className="text-sm text-gray-400">اختر طريقة الاستلام أعلاه لإدخال تفاصيل حسابك</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Step 4: Review and Submit */}
           {currentStep === 4 && (
             <div className="space-y-6">
-              <div className="bg-luxury-offWhite rounded-luxury-lg p-6 space-y-4 border border-luxury-lightGray shadow-sm">
-                <h3 className="text-2xl font-bold text-elegant-blue mb-4 flex items-center gap-2">
+              <div className="bg-lux-pearl rounded-2xl p-6 space-y-4 border border-lux-silver shadow-sm">
+                <h3 className="text-2xl font-bold text-lux-navy mb-4 flex items-center gap-2">
                   <FileText className="w-6 h-6" />
                   ملخص طلبك
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">الاسم الكامل</p>
-                    <p className="text-luxury-charcoal font-bold">{formData.fullName}</p>
+                    <p className="text-sm text-gray-500 mb-1 font-medium">الاسم الكامل</p>
+                    <p className="text-lux-navy font-bold">{formData.fullName}</p>
                   </div>
-
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">رقم الهاتف</p>
-                    <p className="text-luxury-charcoal font-bold">{formData.phone}</p>
+                    <p className="text-sm text-gray-500 mb-1 font-medium">رقم الهاتف</p>
+                    <p className="text-lux-navy font-bold">{formatPhoneDisplay(formData.phone)}</p>
                   </div>
-
                   {formData.email && (
                     <div>
-                      <p className="text-sm text-luxury-darkGray mb-1 font-medium">البريد الإلكتروني</p>
-                      <p className="text-luxury-charcoal font-bold">{formData.email}</p>
+                      <p className="text-sm text-gray-500 mb-1 font-medium">البريد الإلكتروني</p>
+                      <p className="text-lux-navy font-bold">{formData.email}</p>
                     </div>
                   )}
-
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">الولاية</p>
-                    <p className="text-luxury-charcoal font-bold">{formData.wilaya}</p>
+                    <p className="text-sm text-gray-500 mb-1 font-medium">الولاية</p>
+                    <p className="text-lux-navy font-bold">{formData.wilaya}</p>
                   </div>
-
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">طبيعة العمل/المهنة</p>
-                    <p className="text-luxury-charcoal font-bold">
+                    <p className="text-sm text-gray-500 mb-1 font-medium">طبيعة العمل/المهنة</p>
+                    <p className="text-lux-navy font-bold">
                       {formData.profession === 'أخرى (حدد)' && formData.customProfession
                         ? formData.customProfession
                         : formData.profession}
                     </p>
                   </div>
-
                   <div>
-                    <p className="text-sm text-luxury-darkGray mb-1 font-medium">نوع التمويل</p>
-                    <p className="text-luxury-charcoal font-bold">{formData.financingType}</p>
+                    <p className="text-sm text-gray-500 mb-1 font-medium">نوع التمويل</p>
+                    <p className="text-lux-navy font-bold">{formData.financingType}</p>
                   </div>
-
                   <div className="md:col-span-2">
-                    <p className="text-sm text-luxury-darkGray mb-1">المبلغ المطلوب</p>
-                    <p className="text-2xl font-bold bg-gradient-to-r from-elegant-blue to-premium-gold bg-clip-text text-transparent">
+                    <p className="text-sm text-gray-500 mb-1">المبلغ المطلوب</p>
+                    <p className="text-2xl font-bold bg-gradient-to-r from-lux-sapphire to-lux-champagne bg-clip-text text-transparent">
                       {formatCurrency(formData.requestedAmount)}
                     </p>
                   </div>
                 </div>
+
+                {/* Banking Info Summary */}
+                {formData.banking && (
+                  <div className="mt-4 pt-4 border-t border-lux-silver">
+                    <h4 className="text-lg font-bold text-lux-navy mb-3 flex items-center gap-2">
+                      {formData.banking.paymentMethod === 'CCP' ? (
+                        <CreditCard className="w-5 h-5 text-orange-500" />
+                      ) : (
+                        <Building2 className="w-5 h-5 text-lux-azure" />
+                      )}
+                      معلومات الدفع
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1 font-medium">طريقة الدفع</p>
+                        <p className="text-lux-navy font-bold">
+                          {formData.banking.paymentMethod === 'CCP' ? 'حساب بريد الجزائر (CCP)' : 'حساب بنكي'}
+                        </p>
+                      </div>
+                      {formData.banking.paymentMethod === 'CCP' && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1 font-medium">رقم CCP</p>
+                          <p className="text-lux-navy font-bold" dir="ltr">
+                            {maskCCPNumber(formData.banking.ccpNumber)} / {formData.banking.ccpKey}
+                          </p>
+                        </div>
+                      )}
+                      {formData.banking.paymentMethod === 'بنك' && (() => {
+                        const bankInfo = formData.banking as { paymentMethod: 'بنك'; bankName: string; bankAccountNumber: string; bankAgencyCode: string }
+                        const bankLabel = ALGERIAN_BANKS.find(b => b.code === bankInfo.bankName)?.label || bankInfo.bankName
+                        return (
+                          <>
+                            <div>
+                              <p className="text-sm text-gray-500 mb-1 font-medium">البنك</p>
+                              <p className="text-lux-navy font-bold">{bankLabel}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500 mb-1 font-medium">رقم الحساب (RIB)</p>
+                              <p className="text-lux-navy font-bold" dir="ltr">
+                                {maskBankAccount(bankInfo.bankAccountNumber)}
+                              </p>
+                            </div>
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-luxury-charcoal mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   ملاحظات إضافية (اختياري)
                 </label>
                 <Textarea
@@ -827,7 +1162,7 @@ const CleanForm: React.FC = () => {
           variant="outline"
           onClick={handleBack}
           disabled={currentStep === 1}
-          className="min-w-[140px] border-2 border-elegant-blue/30 text-elegant-blue hover:bg-elegant-blue/10"
+          className="min-w-[140px] border-2 border-lux-azure/30 text-lux-azure hover:bg-lux-mist"
         >
           <ArrowRight className="w-5 h-5 ml-2" />
           السابق
@@ -859,4 +1194,3 @@ const CleanForm: React.FC = () => {
 }
 
 export default CleanForm
-

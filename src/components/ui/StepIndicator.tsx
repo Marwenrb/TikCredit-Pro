@@ -29,10 +29,10 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
               <div className="flex flex-col items-center flex-1">
                 <motion.div
                   className={cn(
-                    'w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300',
+                    'relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300',
                     isCompleted && 'bg-elegant-blue text-white',
                     isCurrent && 'bg-elegant-blue text-white scale-110 shadow-lg shadow-elegant-blue/50',
-                    isUpcoming && 'bg-white border-2 border-luxury-lightGray text-luxury-mediumGray'
+                    isUpcoming && 'bg-surface-card border-2 border-gray-200 text-gray-400'
                   )}
                   initial={false}
                   animate={{
@@ -40,6 +40,15 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                   }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 >
+                  {/* Pulse ring for current step */}
+                  {isCurrent && (
+                    <motion.div
+                      className="absolute inset-0 rounded-full border-2 border-elegant-blue"
+                      initial={{ scale: 1, opacity: 0.6 }}
+                      animate={{ scale: 1.6, opacity: 0 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }}
+                    />
+                  )}
                   {isCompleted ? (
                     <motion.div
                       initial={{ scale: 0 }}
@@ -63,7 +72,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                       'text-xs font-semibold',
                       isCurrent && 'text-elegant-blue',
                       isCompleted && 'text-elegant-blue',
-                      isUpcoming && 'text-luxury-mediumGray'
+                      isUpcoming && 'text-gray-400'
                     )}
                   >
                     {step.title}
@@ -72,11 +81,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
               </div>
               {index < steps.length - 1 && (
                 <div className="flex-1 mx-2 h-0.5 relative">
-                  <div className="absolute inset-0 bg-luxury-lightGray" />
+                  <div className="absolute inset-0 bg-gray-200" />
                   <motion.div
                     className={cn(
                       'absolute inset-0 h-full',
-                      isCompleted ? 'bg-elegant-blue' : 'bg-luxury-lightGray'
+                      isCompleted ? 'bg-elegant-blue' : 'bg-gray-200'
                     )}
                     initial={{ width: 0 }}
                     animate={{ width: isCompleted ? '100%' : '0%' }}

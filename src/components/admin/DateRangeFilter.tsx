@@ -81,7 +81,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
               'px-4 py-2 rounded-luxury font-medium transition-all duration-300',
               value.type === filter.type
                 ? 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white shadow-premium'
-                : 'bg-white text-elegant-blue border-2 border-elegant-blue/20 hover:border-elegant-blue/40 shadow-luxury hover:shadow-luxury-lg'
+                : 'bg-surface-card text-elegant-blue border-2 border-elegant-blue/20 hover:border-elegant-blue/40 shadow-luxury hover:shadow-luxury-lg'
             )}
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.98 }}
@@ -98,7 +98,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             'px-4 py-2 rounded-luxury font-medium transition-all duration-300 flex items-center gap-2',
             value.type === 'custom' || showCustomPicker
               ? 'bg-gradient-to-r from-premium-gold to-premium-gold-dark text-white shadow-premium'
-              : 'bg-white text-premium-gold border-2 border-premium-gold/20 hover:border-premium-gold/40 shadow-luxury hover:shadow-luxury-lg'
+              : 'bg-surface-card text-premium-gold border-2 border-premium-gold/20 hover:border-premium-gold/40 shadow-luxury hover:shadow-luxury-lg'
           )}
           whileHover={{ scale: 1.03, y: -2 }}
           whileTap={{ scale: 0.98 }}
@@ -125,7 +125,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             </h4>
             <button
               onClick={clearCustomFilter}
-              className="text-luxury-darkGray hover:text-status-error transition-colors"
+              className="text-gray-500 hover:text-status-error transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -134,7 +134,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Start Date */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-luxury-darkGray">
+              <label className="block text-sm font-semibold text-gray-500">
                 من تاريخ
               </label>
               <input
@@ -142,13 +142,13 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-3 bg-white border-2 border-elegant-blue/20 rounded-luxury text-elegant-blue font-medium focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue shadow-luxury hover:border-elegant-blue/40 transition-all"
+                className="w-full px-4 py-3 bg-surface-card border-2 border-elegant-blue/20 rounded-luxury text-elegant-blue font-medium focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue shadow-luxury hover:border-elegant-blue/40 transition-all"
               />
             </div>
 
             {/* End Date */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-luxury-darkGray">
+              <label className="block text-sm font-semibold text-gray-500">
                 إلى تاريخ
               </label>
               <input
@@ -157,7 +157,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                 onChange={(e) => setCustomEnd(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
                 min={customStart}
-                className="w-full px-4 py-3 bg-white border-2 border-elegant-blue/20 rounded-luxury text-elegant-blue font-medium focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue shadow-luxury hover:border-elegant-blue/40 transition-all"
+                className="w-full px-4 py-3 bg-surface-card border-2 border-elegant-blue/20 rounded-luxury text-elegant-blue font-medium focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue shadow-luxury hover:border-elegant-blue/40 transition-all"
               />
             </div>
           </div>
@@ -195,13 +195,13 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             <span className="text-sm font-semibold text-elegant-blue">
               الفترة المحددة:
             </span>
-            <span className="text-sm text-luxury-darkGray font-medium">
+            <span className="text-sm text-gray-500 font-medium">
               {formatDateRangeLabel(value)}
             </span>
           </div>
           <button
             onClick={() => onChange({ type: 'all' })}
-            className="text-luxury-darkGray hover:text-status-error transition-colors"
+            className="text-gray-500 hover:text-status-error transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

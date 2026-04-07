@@ -167,6 +167,18 @@ export default function PrintableSubmissions({
                                         <span className="font-semibold text-gray-700">طريقة استلام الراتب:</span>
                                         <p className="text-gray-900">{submission.data.salaryReceiveMethod}</p>
                                     </div>
+                                    {submission.data.banking && (
+                                        <div>
+                                            <span className="font-semibold text-gray-700">
+                                                {submission.data.banking.paymentMethod === 'CCP' ? 'رقم CCP:' : 'رقم الحساب البنكي:'}
+                                            </span>
+                                            <p className="text-gray-900" dir="ltr">
+                                                {submission.data.banking.paymentMethod === 'CCP'
+                                                    ? `${submission.data.banking.ccpNumber} / ${submission.data.banking.ccpKey}`
+                                                    : `${submission.data.banking.bankName} — ${submission.data.banking.bankAccountNumber}`}
+                                            </p>
+                                        </div>
+                                    )}
                                     <div>
                                         <span className="font-semibold text-gray-700">نطاق الدخل الشهري:</span>
                                         <p className="text-gray-900">{submission.data.monthlyIncomeRange || 'غير محدد'}</p>

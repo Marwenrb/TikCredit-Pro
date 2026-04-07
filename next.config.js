@@ -66,7 +66,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebaseapp.com wss://*.firebaseio.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
@@ -111,12 +111,9 @@ const nextConfig = {
       }
     }
     
-    // Fix "Critical dependency" warning for firebase-admin dynamic require
-    // by telling webpack to ignore these dynamic imports in firebase-admin
+    // Server-side externals (if needed for native modules)
     if (isServer) {
-      config.externals = [...(config.externals || []), {
-        'firebase-admin': 'commonjs firebase-admin',
-      }]
+      config.externals = [...(config.externals || [])]
     }
     
     // Production optimizations

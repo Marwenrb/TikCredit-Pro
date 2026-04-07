@@ -81,13 +81,8 @@ export default function HomePage() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-luxury-gradient relative overflow-hidden">
-      {/* Ultra-Premium Animated Background */}
-      <UltraPremiumBackground
-        variant="aurora"
-        intensity="high"
-        interactive={true}
-      />
+    <div className="min-h-screen bg-lux-ivory relative overflow-hidden">
+      {/* Subtle background pattern */}
 
       <div className="relative z-10">
         {/* Navigation */}
@@ -153,7 +148,7 @@ export default function HomePage() {
               </motion.span>
               <br />
               <motion.span
-                className="text-luxury-charcoal text-4xl md:text-6xl inline-block font-bold"
+                className="text-lux-navy text-4xl md:text-6xl inline-block font-bold"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4, ...springConfig }}
@@ -167,7 +162,7 @@ export default function HomePage() {
               initial="hidden"
               animate="show"
               transition={{ delay: 0.3 }}
-              className="text-xl md:text-2xl text-luxury-darkGray mb-10 max-w-3xl mx-auto font-medium leading-relaxed"
+              className="text-xl md:text-2xl text-gray-500 mb-10 max-w-3xl mx-auto font-medium leading-relaxed"
             >
               حلول تمويل احترافية ومبتكرة تناسب احتياجاتك مع أفضل الشروط والأسعار التنافسية
             </motion.p>
@@ -195,6 +190,25 @@ export default function HomePage() {
                   </Button>
                 </motion.div>
               </Link>
+            </motion.div>
+
+            {/* Trust Indicators */}
+            <motion.div
+              className="flex flex-wrap items-center justify-center gap-6 mt-8"
+              variants={itemVariants}
+            >
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Shield className="w-4 h-4 text-elegant-blue" />
+                <span>آمن 100%</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Clock className="w-4 h-4 text-premium-gold" />
+                <span>رد خلال 48 ساعة</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <CheckCircle className="w-4 h-4 text-status-success" />
+                <span>+5000 عميل</span>
+              </div>
             </motion.div>
           </div>
 
@@ -288,10 +302,10 @@ export default function HomePage() {
                     />
                   </motion.div>
 
-                  <h3 className="text-2xl font-bold text-luxury-charcoal mb-3 relative z-10 group-hover:text-elegant-blue transition-colors duration-300">
+                  <h3 className="text-2xl font-bold text-lux-navy mb-3 relative z-10 group-hover:text-elegant-blue transition-colors duration-300">
                     {feature.title}
                   </h3>
-                  <p className="text-luxury-darkGray leading-relaxed relative z-10 font-medium">
+                  <p className="text-gray-500 leading-relaxed relative z-10 font-medium">
                     {feature.description}
                   </p>
                 </div>
@@ -348,7 +362,7 @@ export default function HomePage() {
                     x: 5,
                     transition: { type: 'spring', stiffness: 400, damping: 25 }
                   }}
-                  className="flex items-center gap-4 p-4 rounded-luxury bg-gradient-to-r from-luxury-offWhite to-white hover:from-elegant-blue/5 hover:to-elegant-blue-light/5 border border-luxury-lightGray hover:border-elegant-blue/30 transition-all duration-300 cursor-default group/item shadow-sm hover:shadow-md"
+                  className="flex items-center gap-4 p-4 rounded-luxury bg-white border border-lux-silver hover:from-lux-mist hover:to-lux-frost border border-lux-silver hover:border-lux-azure/30 transition-all duration-300 cursor-default group/item shadow-sm hover:shadow-md"
                 >
                   <motion.div
                     className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-elegant-blue to-premium-gold flex items-center justify-center shadow-lg"
@@ -360,7 +374,7 @@ export default function HomePage() {
                   >
                     <CheckCircle className="w-5 h-5 text-white" />
                   </motion.div>
-                  <span className="text-base font-semibold text-luxury-charcoal group-hover/item:text-elegant-blue transition-colors duration-300">
+                  <span className="text-base font-semibold text-lux-navy group-hover/item:text-elegant-blue transition-colors duration-300">
                     {benefit}
                   </span>
                 </motion.div>
@@ -502,7 +516,7 @@ export default function HomePage() {
                 href="https://marwen-rabai.netlify.app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mb-6 px-6 py-3 rounded-luxury-lg bg-gradient-to-br from-white via-luxury-lightGray to-luxury-offWhite shadow-premium border border-elegant-blue/10 hover:border-elegant-blue/30 hover:shadow-luxury-lg transition-all duration-500 group cursor-pointer"
+                className="inline-flex items-center gap-2 mb-6 px-6 py-3 rounded-luxury-lg bg-gradient-to-br from-surface-card via-gray-100 to-surface-elevated shadow-premium border border-elegant-blue/10 hover:border-elegant-blue/30 hover:shadow-luxury-lg transition-all duration-500 group cursor-pointer"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -554,7 +568,7 @@ export default function HomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 2.3 }}
-                className="flex items-center justify-center flex-wrap gap-3 text-sm text-luxury-darkGray font-medium"
+                className="flex items-center justify-center flex-wrap gap-3 text-sm text-gray-500 font-medium"
               >
                 <span className="font-medium">&copy; {new Date().getFullYear()} TikCredit Pro</span>
                 <motion.span

@@ -6,7 +6,7 @@
  * Ultra-professional security without developer intervention
  * - Automatic input sanitization
  * - XSS prevention
- * - SQL injection prevention (N/A for Firestore but good practice)
+ * - SQL injection prevention
  * - CSRF protection
  * - Rate limiting
  * - Data encryption helpers
@@ -167,7 +167,7 @@ export const SECURITY_HEADERS: Record<string, string> = {
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: https: blob:",
-        "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com",
         "frame-ancestors 'none'",
     ].join('; '),
 

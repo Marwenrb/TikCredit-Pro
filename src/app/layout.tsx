@@ -1,13 +1,29 @@
 import type { Metadata, Viewport } from 'next'
+import { Inter, Noto_Kufi_Arabic } from 'next/font/google'
 import './globals.css'
 import './print-styles.css'
 import Providers from '@/components/Providers'
 
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const notoKufiArabic = Noto_Kufi_Arabic({
+  subsets: ['arabic'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-arabic',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
-  title: 'TikCredit Pro - تمويل احترافي',
-  description: 'خدمة تمويل احترافية وسريعة - Professional financing service for Algeria',
-  keywords: ['تمويل', 'قرض', 'الجزائر', 'financement', 'crédit', 'Algérie', 'TikCredit'],
+  title: 'TikCredit Pro — منصة التمويل الرائدة في الجزائر',
+  description: 'قدّم طلب تمويلك الشخصي أو التجاري بسرعة وأمان. TikCredit Pro: الحل الأسرع للحصول على قرض في الجزائر.',
+  keywords: 'قرض الجزائر, تمويل شخصي, تمويل تجاري, tikcredit, credit algerie, قرض سريع',
   authors: [{ name: 'TikCredit Pro' }],
+  robots: { index: true, follow: true },
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
@@ -26,10 +42,15 @@ export const metadata: Metadata = {
     title: 'TikCredit Pro',
   },
   openGraph: {
-    title: 'TikCredit Pro - تمويل احترافي',
-    description: 'خدمة تمويل احترافية وسريعة',
+    title: 'TikCredit Pro — منصة التمويل الرائدة في الجزائر',
+    description: 'قدّم طلب تمويلك الشخصي أو التجاري بسرعة وأمان. TikCredit Pro: الحل الأسرع للحصول على قرض في الجزائر.',
     type: 'website',
     locale: 'ar_DZ',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TikCredit Pro',
+    description: 'قدّم طلب تمويلك في الجزائر بسرعة وأمان.',
   },
   other: {
     'mobile-web-app-capable': 'yes',
@@ -37,7 +58,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1E3A8A',
+  themeColor: '#FFFFFF',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -49,8 +70,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className="antialiased">
+    <html lang="ar" dir="rtl" className={`${inter.variable} ${notoKufiArabic.variable}`}>
+      <body className={`${notoKufiArabic.className} antialiased`}>
         <Providers>
           {children}
         </Providers>

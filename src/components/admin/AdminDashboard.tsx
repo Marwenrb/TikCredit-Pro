@@ -23,6 +23,7 @@ import {
 } from '@/lib/utils'
 import { format } from 'date-fns'
 import { useRealtimeSubmissions } from '@/hooks/useRealtimeSubmissions'
+import { useCountUp } from '@/hooks/useCountUp'
 import { useToast } from '@/components/ui/Toast'
 
 const AdminDashboard: React.FC = () => {
@@ -35,13 +36,14 @@ const AdminDashboard: React.FC = () => {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [dataSource, setDataSource] = useState<'firebase' | 'local' | 'browser'>('browser')
+  const [dataSource, setDataSource] = useState<'supabase' | 'local' | 'browser'>('browser')
   const [newSubmissionsCount, setNewSubmissionsCount] = useState(0)
 
   // New states for enhanced features
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [selectedWilaya, setSelectedWilaya] = useState<string>('all')
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all')
   const [showPrintView, setShowPrintView] = useState(false)
   const [serverSearch, setServerSearch] = useState('')
 
@@ -80,7 +82,7 @@ const AdminDashboard: React.FC = () => {
   })
 
   // Fetch submissions from server API with filters
-  const fetchServerSubmissions = useCallback(async (filters?: { wilaya?: string; search?: string; period?: string }) => {
+  const fetchServerSubmissions = useCallback(async (filters?: { wilaya?: string; search?: string; period?: string; paymentMethod?: string }) => {
     setIsLoading(true)
     setError(null)
     setNewSubmissionsCount(0)
@@ -91,6 +93,7 @@ const AdminDashboard: React.FC = () => {
       if (filters?.wilaya && filters.wilaya !== 'all') params.set('wilaya', filters.wilaya)
       if (filters?.search) params.set('search', filters.search)
       if (filters?.period && filters.period !== 'all') params.set('period', filters.period)
+      if (filters?.paymentMethod && filters.paymentMethod !== 'all') params.set('paymentMethod', filters.paymentMethod)
 
       const url = `/api/submissions/list${params.toString() ? `?${params.toString()}` : ''}`
 
@@ -106,7 +109,7 @@ const AdminDashboard: React.FC = () => {
         const data = await response.json()
         if (data.success && data.submissions) {
           setSubmissions(data.submissions)
-          setDataSource(data.source || 'firebase')
+          setDataSource(data.source || 'supabase')
           console.log(`✅ Loaded ${data.submissions.length} submissions from ${data.source}`)
           return
         }
@@ -145,13 +148,18 @@ const AdminDashboard: React.FC = () => {
 
   const stats = useMemo(() => getStatistics(submissions), [submissions])
 
+  // Animated count-up values for stat cards
+  const animatedTotal = useCountUp(stats.total)
+  const animatedToday = useCountUp(stats.today)
+  const animatedTotalAmount = useCountUp(stats.totalAmount)
+
   const debouncedSearch = useMemo(
     () => debounce((query: string) => setSearchQuery(query), 300),
     []
   )
 
   const handleRefresh = () => {
-    fetchServerSubmissions({ wilaya: selectedWilaya, search: serverSearch, period })
+    fetchServerSubmissions({ wilaya: selectedWilaya, search: serverSearch, period, paymentMethod: selectedPaymentMethod })
   }
 
   // Selection handlers
@@ -183,7 +191,7 @@ const AdminDashboard: React.FC = () => {
   const handleServerSearch = useMemo(
     () => debounce((query: string) => {
       setServerSearch(query)
-      fetchServerSubmissions({ wilaya: selectedWilaya, search: query, period })
+      fetchServerSubmissions({ wilaya: selectedWilaya, search: query, period, paymentMethod: selectedPaymentMethod })
     }, 500),
     [selectedWilaya, period, fetchServerSubmissions]
   )
@@ -191,7 +199,12 @@ const AdminDashboard: React.FC = () => {
   // Wilaya filter handler
   const handleWilayaChange = (newWilaya: string) => {
     setSelectedWilaya(newWilaya)
-    fetchServerSubmissions({ wilaya: newWilaya, search: serverSearch, period })
+    fetchServerSubmissions({ wilaya: newWilaya, search: serverSearch, period, paymentMethod: selectedPaymentMethod })
+  }
+
+  const handlePaymentMethodChange = (method: string) => {
+    setSelectedPaymentMethod(method)
+    fetchServerSubmissions({ wilaya: selectedWilaya, search: serverSearch, period, paymentMethod: method })
   }
 
   const handleDelete = async (id: string) => {
@@ -244,17 +257,17 @@ const AdminDashboard: React.FC = () => {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-luxury-gradient p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-lux-ivory p-6 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-elegant-blue animate-spin mx-auto mb-4" />
-          <p className="text-luxury-darkGray">جاري تحميل الطلبات...</p>
+          <Loader2 className="w-12 h-12 text-lux-azure animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">جاري تحميل الطلبات...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-luxury-gradient p-6">
+    <div className="min-h-screen bg-lux-ivory p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Error Banner */}
         {error && (
@@ -264,7 +277,7 @@ const AdminDashboard: React.FC = () => {
             className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3"
           >
             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <p className="text-amber-800 text-sm">{error}</p>
+            <p className="text-amber-700 text-sm">{error}</p>
             <Button variant="ghost" size="sm" onClick={() => setError(null)} className="mr-auto">
               إغلاق
             </Button>
@@ -279,30 +292,30 @@ const AdminDashboard: React.FC = () => {
         >
           <div className="flex items-center gap-3">
             <motion.div
-              className="p-3 rounded-luxury-lg bg-gradient-to-br from-elegant-blue to-elegant-blue-light shadow-premium"
+              className="p-3 rounded-luxury-lg bg-gradient-to-br from-lux-azure to-lux-sky shadow-premium"
               animate={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 3, repeat: Infinity, repeatDelay: 5 }}
             >
               <Sparkles className="w-8 h-8 text-white" />
             </motion.div>
             <div>
-              <h1 className="text-4xl font-bold text-elegant-blue">لوحة التحكم</h1>
+              <h1 className="text-4xl font-bold text-lux-azure">لوحة التحكم</h1>
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-luxury-darkGray font-medium">إدارة طلبات التمويل</p>
-                <span className={`px-2 py-0.5 text-xs rounded-full ${dataSource === 'firebase'
-                  ? 'bg-green-100 text-green-700'
+                <p className="text-gray-500 font-medium">إدارة طلبات التمويل</p>
+                <span className={`px-2 py-0.5 text-xs rounded-full ${dataSource === 'supabase'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
                   : dataSource === 'local'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'bg-gray-100 text-gray-600'
                   }`}>
-                  {dataSource === 'firebase' ? '☁️ Firebase' : dataSource === 'local' ? '📁 خادم محلي' : '💾 متصفح'}
+                  {dataSource === 'supabase' ? '☁️ Supabase' : dataSource === 'local' ? '📁 خادم محلي' : '💾 متصفح'}
                 </span>
                 {/* Real-time connection status */}
                 <button
                   onClick={isConnected ? undefined : reconnect}
                   className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded-full transition-all ${isConnected
-                    ? 'bg-green-100 text-green-700 cursor-default'
-                    : 'bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer'
+                    ? 'bg-green-50 text-green-700 cursor-default'
+                    : 'bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer'
                     }`}
                   title={isConnected ? 'متصل في الوقت الفعلي' : 'انقر لإعادة الاتصال'}
                 >
@@ -316,7 +329,7 @@ const AdminDashboard: React.FC = () => {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
-                      className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-premium-gold/20 text-premium-gold-dark font-bold"
+                      className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200"
                     >
                       <Bell className="w-3 h-3" />
                       {newSubmissionsCount} جديد
@@ -353,17 +366,17 @@ const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="إجمالي الطلبات"
-            value={stats.total}
+            value={animatedTotal}
             icon={<Users className="w-6 h-6" />}
           />
           <StatCard
             title="طلبات اليوم"
-            value={stats.today}
+            value={animatedToday}
             icon={<Calendar className="w-6 h-6" />}
           />
           <StatCard
             title="إجمالي المبالغ"
-            value={formatCurrency(stats.totalAmount)}
+            value={formatCurrency(animatedTotalAmount)}
             icon={<DollarSign className="w-6 h-6" />}
           />
           <StatCard
@@ -381,9 +394,9 @@ const AdminDashboard: React.FC = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="bg-elegant-blue/10 border border-elegant-blue/30 rounded-xl p-4 mb-4 flex flex-wrap items-center gap-4"
+                className="bg-lux-mist border border-lux-azure/30 rounded-xl p-4 mb-4 flex flex-wrap items-center gap-4"
               >
-                <span className="text-elegant-blue font-bold">
+                <span className="text-lux-azure font-bold">
                   {selectedIds.size} طلب محدد
                 </span>
                 <Button variant="outline" size="sm" onClick={selectAll}>
@@ -419,22 +432,22 @@ const AdminDashboard: React.FC = () => {
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             {/* Server-side Search */}
             <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-mediumGray" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="بحث في Supabase بالاسم أو الهاتف..."
                 onChange={(e) => handleServerSearch(e.target.value)}
-                className="w-full pr-10 pl-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl text-luxury-charcoal placeholder:text-luxury-mediumGray shadow-sm focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue"
+                className="w-full pr-10 pl-4 py-3 bg-white backdrop-blur-sm border border-lux-silver rounded-xl text-lux-navy placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-lux-azure focus:border-lux-azure"
               />
             </div>
 
             {/* Wilaya Filter */}
             <div className="relative">
-              <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-mediumGray pointer-events-none" />
+              <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
               <select
                 value={selectedWilaya}
                 onChange={(e) => handleWilayaChange(e.target.value)}
-                className="appearance-none pr-10 pl-8 py-3 bg-white border border-luxury-lightGray rounded-xl text-luxury-charcoal shadow-sm focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue min-w-[180px] cursor-pointer"
+                className="appearance-none pr-10 pl-8 py-3 bg-white border border-lux-silver rounded-xl text-lux-navy shadow-sm focus:outline-none focus:ring-2 focus:ring-lux-azure focus:border-lux-azure min-w-[180px] cursor-pointer"
               >
                 <option value="all">كل الولايات</option>
                 {WILAYAS.map((w) => (
@@ -442,6 +455,17 @@ const AdminDashboard: React.FC = () => {
                 ))}
               </select>
             </div>
+
+            {/* Payment Method Filter */}
+            <select
+              value={selectedPaymentMethod}
+              onChange={(e) => handlePaymentMethodChange(e.target.value)}
+              className="appearance-none px-4 py-3 bg-white border border-lux-silver rounded-xl text-lux-navy shadow-sm focus:outline-none focus:ring-2 focus:ring-lux-azure focus:border-lux-azure min-w-[140px] cursor-pointer"
+            >
+              <option value="all">كل طرق الدفع</option>
+              <option value="CCP">📮 CCP</option>
+              <option value="بنك">🏦 بنك</option>
+            </select>
 
             {/* Select Mode Toggle */}
             <Button
@@ -528,7 +552,7 @@ const AdminDashboard: React.FC = () => {
 
           <div className="space-y-2">
             {filteredSubmissions.length === 0 ? (
-              <div className="text-center py-12 text-luxury-darkGray">
+              <div className="text-center py-12 text-gray-500">
                 لا توجد طلبات
               </div>
             ) : (
@@ -538,8 +562,8 @@ const AdminDashboard: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`bg-white backdrop-blur-sm border rounded-xl p-4 hover:shadow-md transition-all shadow-sm ${selectedIds.has(submission.id)
-                    ? 'border-elegant-blue bg-elegant-blue/5'
-                    : 'border-luxury-lightGray hover:border-elegant-blue/40'
+                    ? 'border-lux-azure bg-lux-mist'
+                    : 'border-lux-silver hover:border-lux-azure/40'
                     }`}
                 >
                   <div className="flex justify-between items-start">
@@ -547,23 +571,32 @@ const AdminDashboard: React.FC = () => {
                     {selectMode && (
                       <button
                         onClick={() => toggleSelection(submission.id)}
-                        className="ml-3 p-1 rounded hover:bg-gray-100 transition-colors"
+                        className="ml-3 p-1 rounded hover:bg-lux-pearl transition-colors"
                       >
                         {selectedIds.has(submission.id) ? (
-                          <CheckSquare className="w-5 h-5 text-elegant-blue" />
+                          <CheckSquare className="w-5 h-5 text-lux-azure" />
                         ) : (
-                          <Square className="w-5 h-5 text-luxury-mediumGray" />
+                          <Square className="w-5 h-5 text-gray-400" />
                         )}
                       </button>
                     )}
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-elegant-blue mb-1">
+                      <h3 className="text-lg font-semibold text-lux-azure mb-1">
                         {submission.data.fullName}
                       </h3>
-                      <div className="flex flex-wrap gap-4 text-sm text-luxury-darkGray items-center">
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-500 items-center">
                         <span>{submission.data.phone}</span>
                         <span>{submission.data.wilaya}</span>
-                        <span className="text-elegant-blue font-bold flex items-center gap-1">
+                        {submission.data.banking?.paymentMethod && (
+                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                            submission.data.banking.paymentMethod === 'CCP'
+                              ? 'bg-amber-50 text-amber-700'
+                              : 'bg-lux-mist text-lux-azure'
+                          }`}>
+                            {submission.data.banking.paymentMethod === 'CCP' ? '📮 CCP' : '🏦 بنك'}
+                          </span>
+                        )}
+                        <span className="text-lux-azure font-bold flex items-center gap-1">
                           {formatCurrency(submission.data.requestedAmount)}
                           {(() => {
                             const MIN_LOAN_AMOUNT = 5_000_000
@@ -604,7 +637,7 @@ const AdminDashboard: React.FC = () => {
                         }}
                         title="طباعة هذا الطلب"
                       >
-                        <Printer className="w-4 h-4 text-elegant-blue" />
+                        <Printer className="w-4 h-4 text-lux-azure" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -629,6 +662,10 @@ const AdminDashboard: React.FC = () => {
 💳 نوع التمويل:      ${submission.data.financingType || 'غير محدد'}
 💵 المبلغ المطلوب:   ${formatCurrency(submission.data.requestedAmount)}
 🏦 طريقة الراتب:     ${submission.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : submission.data.salaryReceiveMethod || 'غير محدد'}
+${submission.data.banking ? (submission.data.banking.paymentMethod === 'CCP'
+  ? `📮 رقم CCP:         ${submission.data.banking.ccpNumber} / ${submission.data.banking.ccpKey}`
+  : `🏦 البنك:            ${submission.data.banking.bankName}
+📋 رقم الحساب (RIB): ${submission.data.banking.bankAccountNumber}`) : ''}
 💰 نطاق الدخل:       ${submission.data.monthlyIncomeRange || 'غير محدد'}
 🕐 وقت التواصل:      ${submission.data.preferredContactTime || 'غير محدد'}
 👥 عميل موجود:       ${submission.data.isExistingCustomer || 'لا'}
@@ -651,7 +688,7 @@ ${submission.data.notes ? `📝 الملاحظات:        ${submission.data.not
                         }}
                         title="تحميل هذا الطلب"
                       >
-                        <Download className="w-4 h-4 text-premium-gold" />
+                        <Download className="w-4 h-4 text-amber-600" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -681,37 +718,37 @@ ${submission.data.notes ? `📝 الملاحظات:        ${submission.data.not
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-luxury-darkGray font-medium">الاسم الكامل:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.fullName}</p>
+                <span className="text-gray-500 font-medium">الاسم الكامل:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.fullName}</p>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">رقم الهاتف:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.phone}</p>
+                <span className="text-gray-500 font-medium">رقم الهاتف:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.phone}</p>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">البريد الإلكتروني:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.email || 'غير محدد'}</p>
+                <span className="text-gray-500 font-medium">البريد الإلكتروني:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.email || 'غير محدد'}</p>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">الولاية:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.wilaya}</p>
+                <span className="text-gray-500 font-medium">الولاية:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.wilaya}</p>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">المهنة:</span>
-                <p className="text-luxury-charcoal font-bold">
+                <span className="text-gray-500 font-medium">المهنة:</span>
+                <p className="text-lux-navy font-bold">
                   {selectedSubmission.data.profession === 'أخرى (حدد)' && selectedSubmission.data.customProfession
                     ? selectedSubmission.data.customProfession
                     : selectedSubmission.data.profession || 'غير محدد'}
                 </p>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">نوع التمويل:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.financingType}</p>
+                <span className="text-gray-500 font-medium">نوع التمويل:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.financingType}</p>
               </div>
               <div className="col-span-2">
-                <span className="text-luxury-darkGray font-medium">المبلغ المطلوب:</span>
+                <span className="text-gray-500 font-medium">المبلغ المطلوب:</span>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-elegant-blue font-bold text-xl">
+                  <p className="text-lux-azure font-bold text-xl">
                     {formatCurrency(selectedSubmission.data.requestedAmount)}
                   </p>
                   {(() => {
@@ -741,28 +778,69 @@ ${submission.data.notes ? `📝 الملاحظات:        ${submission.data.not
                 </div>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">طريقة استلام الراتب:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.salaryReceiveMethod}</p>
+                <span className="text-gray-500 font-medium">طريقة استلام الراتب:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.salaryReceiveMethod}</p>
+              </div>
+              {selectedSubmission.data.banking && (
+                <div className="col-span-2 p-3 rounded-luxury bg-lux-mist border border-lux-azure/20">
+                  <span className="text-gray-500 font-medium block mb-2">
+                    {selectedSubmission.data.banking.paymentMethod === 'CCP' ? '📮 معلومات CCP:' : '🏦 معلومات الحساب البنكي:'}
+                  </span>
+                  {selectedSubmission.data.banking.paymentMethod === 'CCP' && (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">رقم CCP:</span>
+                        <p className="text-lux-navy font-bold" dir="ltr">{selectedSubmission.data.banking.ccpNumber}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">المفتاح:</span>
+                        <p className="text-lux-navy font-bold" dir="ltr">{selectedSubmission.data.banking.ccpKey}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-gray-500">الرقم الكامل:</span>
+                        <p className="text-lux-navy font-bold" dir="ltr">{selectedSubmission.data.banking.ccpFullNumber}</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedSubmission.data.banking.paymentMethod === 'بنك' && (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">البنك:</span>
+                        <p className="text-lux-navy font-bold">{selectedSubmission.data.banking.bankName}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">رقم الحساب (RIB):</span>
+                        <p className="text-lux-navy font-bold" dir="ltr">{selectedSubmission.data.banking.bankAccountNumber}</p>
+                      </div>
+                      {selectedSubmission.data.banking.bankAgencyCode && (
+                        <div>
+                          <span className="text-gray-500">كود الوكالة:</span>
+                          <p className="text-lux-navy font-bold">{selectedSubmission.data.banking.bankAgencyCode}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div>
+                <span className="text-gray-500 font-medium">نطاق الدخل:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.monthlyIncomeRange || 'غير محدد'}</p>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">نطاق الدخل:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.monthlyIncomeRange || 'غير محدد'}</p>
+                <span className="text-gray-500 font-medium">وقت التواصل المفضل:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.preferredContactTime || 'غير محدد'}</p>
               </div>
               <div>
-                <span className="text-luxury-darkGray font-medium">وقت التواصل المفضل:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.preferredContactTime || 'غير محدد'}</p>
-              </div>
-              <div>
-                <span className="text-luxury-darkGray font-medium">عميل موجود:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.isExistingCustomer}</p>
+                <span className="text-gray-500 font-medium">عميل موجود:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.isExistingCustomer}</p>
               </div>
               <div className="col-span-2">
-                <span className="text-luxury-darkGray font-medium">الملاحظات:</span>
-                <p className="text-luxury-charcoal font-bold">{selectedSubmission.data.notes || 'لا توجد ملاحظات'}</p>
+                <span className="text-gray-500 font-medium">الملاحظات:</span>
+                <p className="text-lux-navy font-bold">{selectedSubmission.data.notes || 'لا توجد ملاحظات'}</p>
               </div>
               <div className="col-span-2">
-                <span className="text-luxury-darkGray font-medium">تاريخ الإرسال:</span>
-                <p className="text-luxury-charcoal font-bold">
+                <span className="text-gray-500 font-medium">تاريخ الإرسال:</span>
+                <p className="text-lux-navy font-bold">
                   {format(new Date(selectedSubmission.timestamp), 'dd MMMM yyyy HH:mm')}
                 </p>
               </div>

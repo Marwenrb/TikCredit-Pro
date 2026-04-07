@@ -131,7 +131,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="" size="xl">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-luxury-lightGray">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <motion.div
               className="p-3 rounded-luxury-lg bg-gradient-to-br from-elegant-blue to-elegant-blue-light shadow-premium"
@@ -150,12 +150,12 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
                   </span>
                 )}
               </h2>
-              <p className="text-sm text-luxury-darkGray">اختر الفترة الزمنية والصيغة المطلوبة</p>
+              <p className="text-sm text-gray-500">اختر الفترة الزمنية والصيغة المطلوبة</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-luxury-darkGray hover:text-status-error transition-colors p-2 rounded-luxury hover:bg-luxury-offWhite"
+            className="text-gray-500 hover:text-status-error transition-colors p-2 rounded-luxury hover:bg-surface-elevated"
           >
             <X className="w-6 h-6" />
           </button>
@@ -176,7 +176,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
           className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 rounded-luxury-lg bg-gradient-to-br from-elegant-blue-50 to-premium-gold-50 border border-elegant-blue/10"
         >
           <div className="text-center">
-            <p className="text-sm font-medium text-luxury-darkGray mb-1">عدد الطلبات</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">عدد الطلبات</p>
             <motion.p
               key={stats.total}
               initial={{ scale: 1.2, color: '#3B82F6' }}
@@ -187,7 +187,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
             </motion.p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-luxury-darkGray mb-1">إجمالي المبالغ</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">إجمالي المبالغ</p>
             <motion.p
               key={stats.totalAmount}
               initial={{ scale: 1.2, color: '#3B82F6' }}
@@ -198,7 +198,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
             </motion.p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-luxury-darkGray mb-1">متوسط المبلغ</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">متوسط المبلغ</p>
             <motion.p
               key={stats.avgAmount}
               initial={{ scale: 1.2, color: '#3B82F6' }}
@@ -216,7 +216,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
             <FileText className="w-5 h-5" />
             صيغة التصدير
           </h3>
-          <p className="text-sm text-luxury-darkGray mb-3">
+          <p className="text-sm text-gray-500 mb-3">
             ⭐ للحصول على النص العربي، استخدم TXT أو CSV
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -228,7 +228,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
                   'p-4 rounded-luxury-lg border-2 transition-all duration-300 flex flex-col items-center gap-2 text-center relative',
                   selectedFormat === format.type
                     ? 'border-elegant-blue/40 bg-gradient-to-br from-white to-elegant-blue-50 shadow-premium'
-                    : 'border-luxury-lightGray bg-white hover:border-elegant-blue/20 hover:shadow-luxury-lg'
+                    : 'border-gray-200 bg-surface-card hover:border-elegant-blue/20 hover:shadow-luxury-lg'
                 )}
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
@@ -251,7 +251,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
                 </motion.div>
                 <div>
                   <p className="text-sm font-bold text-elegant-blue">{format.label}</p>
-                  <p className="text-xs text-luxury-darkGray">{format.description}</p>
+                  <p className="text-xs text-gray-500">{format.description}</p>
                 </div>
                 {selectedFormat === format.type && (
                   <motion.div
@@ -282,7 +282,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
         {/* Options */}
         <div className="space-y-3">
           <h3 className="text-lg font-bold text-elegant-blue">خيارات إضافية</h3>
-          <label className="flex items-center gap-3 p-4 rounded-luxury bg-white border-2 border-luxury-lightGray hover:border-elegant-blue/20 cursor-pointer transition-all">
+          <label className="flex items-center gap-3 p-4 rounded-luxury bg-surface-card border-2 border-gray-200 hover:border-elegant-blue/20 cursor-pointer transition-all">
             <input
               type="checkbox"
               checked={includeNotes}
@@ -291,7 +291,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
             />
             <div className="flex-1">
               <p className="font-semibold text-elegant-blue">تضمين الملاحظات</p>
-              <p className="text-sm text-luxury-darkGray">إضافة عمود الملاحظات في الملف المُصدّر</p>
+              <p className="text-sm text-gray-500">إضافة عمود الملاحظات في الملف المُصدّر</p>
             </div>
           </label>
         </div>
@@ -307,12 +307,12 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="p-4 rounded-luxury bg-white border border-luxury-lightGray hover:border-elegant-blue/20 transition-all"
+                  className="p-4 rounded-luxury bg-surface-card border border-gray-200 hover:border-elegant-blue/20 transition-all"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-bold text-elegant-blue">{submission.data.fullName}</p>
-                      <p className="text-sm text-luxury-darkGray">
+                      <p className="text-sm text-gray-500">
                         {submission.data.phone} • {submission.data.wilaya}
                       </p>
                     </div>
@@ -323,7 +323,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
                 </motion.div>
               ))}
               {filteredSubmissions.length > 3 && (
-                <p className="text-center text-sm text-luxury-darkGray font-medium pt-2">
+                <p className="text-center text-sm text-gray-500 font-medium pt-2">
                   + {filteredSubmissions.length - 3} طلبات أخرى
                 </p>
               )}
@@ -336,16 +336,16 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-8 text-center rounded-luxury-lg bg-luxury-offWhite border-2 border-dashed border-luxury-gray"
+            className="p-8 text-center rounded-luxury-lg bg-surface-elevated border-2 border-dashed border-luxury-gray"
           >
-            <Calendar className="w-12 h-12 text-luxury-mediumGray mx-auto mb-3" />
-            <p className="text-lg font-bold text-luxury-darkGray mb-1">لا توجد طلبات</p>
-            <p className="text-sm text-luxury-mediumGray">لا توجد طلبات في الفترة الزمنية المحددة</p>
+            <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-lg font-bold text-gray-500 mb-1">لا توجد طلبات</p>
+            <p className="text-sm text-gray-400">لا توجد طلبات في الفترة الزمنية المحددة</p>
           </motion.div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-luxury-lightGray">
+        <div className="flex gap-3 pt-4 border-t border-gray-200">
           <Button
             variant="outline"
             size="lg"

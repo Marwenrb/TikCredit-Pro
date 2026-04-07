@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validatePhone, validateEmail } from '@/lib/utils'
 import { FormData } from '@/types'
+import { bankingInfoSchema, computeCCPFullNumber, maskCCPNumber, maskBankAccount } from '@/lib/validators'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PRODUCTION-READY SUBMISSION API - TikCredit Pro v4.0 (Supabase Edition)
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    log(`Client: ${data.fullName} | Phone: ${data.phone} | Amount: ${data.requestedAmount?.toLocaleString()} DZD`)
+    log(`Client: ${data.fullName} | Phone: ${data.phone} | Amount: ${data.requestedAmount?.toLocaleString()} DZD | Payment: ${data.banking?.paymentMethod || data.salaryReceiveMethod || 'N/A'}`)
 
     // ═══════════════════════════════════════════════════════════════════════════
     // VALIDATION
@@ -205,6 +206,26 @@ export async function POST(request: NextRequest) {
         errors: validationErrors,
         message: 'يرجى تصحيح الأخطاء'
       }, { status: 400 })
+    }
+
+    // Validate banking info if provided
+    if (data.banking) {
+      const bankingResult = bankingInfoSchema.safeParse(data.banking)
+      if (!bankingResult.success) {
+        const bankingErrors = bankingResult.error.errors.map(e => e.message)
+        log(`Banking validation FAILED: ${bankingErrors.join(', ')}`)
+        return NextResponse.json({
+          success: false,
+          error: 'Banking validation failed',
+          errors: bankingErrors,
+          message: 'يرجى تصحيح معلومات الدفع'
+        }, { status: 400 })
+      }
+
+      // Compute ccpFullNumber server-side (don't trust client)
+      if (data.banking.paymentMethod === 'CCP') {
+        data.banking.ccpFullNumber = computeCCPFullNumber(data.banking.ccpNumber, data.banking.ccpKey)
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

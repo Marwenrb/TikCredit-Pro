@@ -23,11 +23,11 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
     <div className={cn('w-full', className)}>
       {showLabel && (
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-luxury-darkGray font-medium">الخطوة {progress} من {total}</span>
+          <span className="text-sm text-gray-500 font-medium">الخطوة {progress} من {total}</span>
           <span className="text-sm font-bold text-elegant-blue">{Math.round(percentage)}%</span>
         </div>
       )}
-      <div className="w-full h-3 bg-luxury-lightGray rounded-full overflow-hidden backdrop-blur-sm">
+      <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden backdrop-blur-sm">
         <motion.div
           className="h-full bg-gradient-to-r from-elegant-blue to-elegant-blue-light rounded-full relative overflow-hidden"
           initial={{ width: 0 }}
@@ -35,7 +35,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
             animate={{
               x: ['-100%', '100%'],
             }}

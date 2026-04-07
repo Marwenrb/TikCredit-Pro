@@ -14,7 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-luxury-charcoal mb-2">
+          <label className="block text-sm font-medium text-lux-navy mb-2">
             {label}
           </label>
         )}
@@ -22,8 +22,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           type={type}
           className={cn(
-            'w-full px-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl shadow-sm',
-            'text-luxury-charcoal placeholder:text-luxury-mediumGray',
+            'w-full px-4 py-3 bg-surface-card backdrop-blur-sm border border-gray-200 rounded-xl shadow-sm',
+            'text-lux-navy placeholder:text-gray-400',
             'focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue',
             'transition-all duration-300',
             error && 'border-status-error focus:ring-status-error',
@@ -56,7 +56,7 @@ export const Textarea = React.forwardRef<
     <div className="w-full">
       {label && (
         <motion.label
-          className="block text-sm font-medium text-luxury-charcoal mb-2"
+          className="block text-sm font-medium text-lux-navy mb-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
@@ -66,11 +66,11 @@ export const Textarea = React.forwardRef<
       <motion.textarea
         ref={ref}
         className={cn(
-          'w-full px-4 py-4 bg-white backdrop-blur-sm border-2 rounded-xl shadow-sm',
-          'text-luxury-charcoal placeholder:text-luxury-mediumGray resize-none',
+          'w-full px-4 py-4 bg-surface-card backdrop-blur-sm border-2 rounded-xl shadow-sm',
+          'text-lux-navy placeholder:text-gray-400 resize-none',
           'focus:outline-none focus:ring-2 focus:ring-elegant-blue/20 focus:border-elegant-blue',
           'transition-all duration-300',
-          error ? 'border-status-error focus:ring-status-error/20 focus:border-status-error' : 'border-luxury-lightGray',
+          error ? 'border-status-error focus:ring-status-error/20 focus:border-status-error' : 'border-gray-200',
           className
         )}
         whileFocus={{ scale: 1.01 }}
@@ -100,15 +100,15 @@ export const Select = React.forwardRef<
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-luxury-charcoal mb-2">
+        <label className="block text-sm font-medium text-lux-navy mb-2">
           {label}
         </label>
       )}
       <motion.select
         ref={ref}
         className={cn(
-          'w-full px-4 py-3 bg-white backdrop-blur-sm border border-luxury-lightGray rounded-xl shadow-sm',
-          'text-luxury-charcoal',
+          'w-full px-4 py-3 bg-white backdrop-blur-sm border border-gray-200 rounded-xl shadow-sm',
+          'text-lux-navy',
           'focus:outline-none focus:ring-2 focus:ring-elegant-blue focus:border-elegant-blue',
           'transition-all duration-300',
           error && 'border-status-error focus:ring-status-error',

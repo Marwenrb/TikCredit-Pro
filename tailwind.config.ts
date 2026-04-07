@@ -9,14 +9,48 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Primary ultra-premium white theme colors
         white: '#FFFFFF',
-        
+
+        // White Luxury Core
+        'lux-white':    '#FFFFFF',
+        'lux-pearl':    '#F8F9FC',
+        'lux-ivory':    '#F0F2F8',
+        'lux-silver':   '#E8EAF2',
+        'lux-slate':    '#CBD5E1',
+
+        // Deep Navy + Royal Blue
+        'lux-navy':     '#0A1628',
+        'lux-royal':    '#1A2F5E',
+        'lux-sapphire': '#1E3A8A',
+        'lux-azure':    '#2563EB',
+        'lux-sky':      '#3B82F6',
+        'lux-mist':     '#EFF6FF',
+        'lux-frost':    '#DBEAFE',
+
+        // Gold Accents
+        'lux-gold':       '#B8960C',
+        'lux-champagne':  '#D4AF37',
+        'lux-bronze':     '#8B6914',
+        'lux-gold-light': '#FEF3C7',
+
+        // UIverse Neon Accents (use sparingly — focus/hover only)
+        'neon-blue':   '#00D4FF',
+        'neon-purple': '#7C3AED',
+        'neon-cyan':   '#06B6D4',
+        'neon-indigo': '#4F46E5',
+
+        // White luxury surface system (light backgrounds)
+        surface: {
+          base: '#F0F2F8',
+          card: '#FFFFFF',
+          elevated: '#F8F9FC',
+        },
+
         // Deep elegant blue spectrum (primary brand)
         elegant: {
-          blue: '#1E3A8A',
+          blue: '#2563EB',
           'blue-light': '#3B82F6',
-          'blue-dark': '#1E40AF',
+          'blue-dark': '#1D4ED8',
           'blue-50': '#EFF6FF',
           'blue-100': '#DBEAFE',
           'blue-200': '#BFDBFE',
@@ -27,62 +61,69 @@ const config: Config = {
           'blue-700': '#1D4ED8',
           'blue-800': '#1E40AF',
           'blue-900': '#1E3A8A',
-          silver: '#94A3B8',
-          'silver-light': '#E2E8F0',
+          silver: '#64748B',
+          'silver-light': '#94A3B8',
         },
-        
+
         // Premium gold accents
         premium: {
-          gold: '#F59E0B',
-          'gold-light': '#FCD34D',
-          'gold-dark': '#D97706',
-          'gold-50': '#FFFBEB',
-          'gold-100': '#FEF3C7',
-          'gold-200': '#FDE68A',
-          'gold-300': '#FCD34D',
-          'gold-400': '#FBBF24',
-          'gold-500': '#F59E0B',
-          'gold-600': '#D97706',
-          'gold-700': '#B45309',
-          'gold-800': '#92400E',
-          'gold-900': '#78350F',
+          gold: '#D4AF37',
+          'gold-light': '#E5C76B',
+          'gold-dark': '#B8941F',
+          'gold-50': '#FEF3C7',
+          'gold-100': '#FDE68A',
+          'gold-200': '#FCD34D',
+          'gold-300': '#FBBF24',
+          'gold-400': '#D4AF37',
+          'gold-500': '#D4AF37',
+          'gold-600': '#B8941F',
+          'gold-700': '#8B7018',
+          'gold-800': '#5E4C10',
+          'gold-900': '#312808',
         },
-        
-        // Soft premium grays for depth
+
+        // White luxury grays (for white theme)
         luxury: {
           white: '#FFFFFF',
-          offWhite: '#F9FAFB',
-          lightGray: '#F3F4F6',
-          gray: '#E5E7EB',
-          mediumGray: '#9CA3AF',
-          darkGray: '#6B7280',
+          offWhite: '#F8F9FC',
+          lightGray: '#E8EAF2',
+          gray: '#CBD5E1',
+          mediumGray: '#94A3B8',
+          darkGray: '#64748B',
           charcoal: '#374151',
-          dark: '#1F2937',
+          dark: '#0A1628',
         },
-        
+
         // Status colors
         status: {
-          success: '#10B981',
-          'success-light': '#34D399',
-          'success-dark': '#059669',
-          error: '#EF4444',
-          'error-light': '#F87171',
-          'error-dark': '#DC2626',
-          warning: '#F59E0B',
-          'warning-light': '#FBBF24',
-          'warning-dark': '#D97706',
-          info: '#3B82F6',
-          'info-light': '#60A5FA',
-          'info-dark': '#2563EB',
+          success: '#059669',
+          'success-light': '#10B981',
+          'success-dark': '#047857',
+          error: '#DC2626',
+          'error-light': '#EF4444',
+          'error-dark': '#B91C1C',
+          warning: '#D97706',
+          'warning-light': '#F59E0B',
+          'warning-dark': '#B45309',
+          info: '#2563EB',
+          'info-light': '#3B82F6',
+          'info-dark': '#1D4ED8',
         },
-        
-        // Legacy gold support (keeping for backwards compatibility)
+
+        // Border colors for white theme
+        border: {
+          DEFAULT: '#E8EAF2',
+          active: 'rgba(37, 99, 235, 0.5)',
+          hover: '#CBD5E1',
+        },
+
+        // Gold accent
         gold: {
           DEFAULT: '#D4AF37',
-          50: '#F9F6F0',
-          100: '#F4EED9',
-          200: '#E8D9B3',
-          300: '#DCC48D',
+          50: '#FEF3C7',
+          100: '#FDE68A',
+          200: '#FCD34D',
+          300: '#FBBF24',
           400: '#D0AF67',
           500: '#D4AF37',
           600: '#B8941F',
@@ -232,52 +273,48 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        // Radial & Conic gradients
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        
-        // Ultra-premium white theme gradients
-        'luxury-gradient': 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 50%, #FFFFFF 100%)',
-        'luxury-gradient-blue': 'linear-gradient(135deg, #FFFFFF 0%, #EFF6FF 50%, #FFFFFF 100%)',
-        'luxury-gradient-gold': 'linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 50%, #FFFFFF 100%)',
-        
+
+        // White luxury gradients
+        'luxury-gradient': 'linear-gradient(135deg, #F0F2F8 0%, #FFFFFF 50%, #F8F9FC 100%)',
+        'luxury-gradient-blue': 'linear-gradient(135deg, #F0F2F8 0%, #EFF6FF 50%, #F8F9FC 100%)',
+        'luxury-gradient-gold': 'linear-gradient(135deg, #F8F9FC 0%, #FEF3C7 50%, #FFFFFF 100%)',
+
         // Premium brand gradients
-        'premium-blue': 'linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%)',
-        'premium-gold': 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-        'premium-white': 'linear-gradient(135deg, #FFFFFF 0%, #F3F4F6 100%)',
-        
-        // Glassmorphism backgrounds
-        'glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%)',
-        'glass-blue': 'linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)',
-        'glass-gold': 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%)',
-        
-        // Multi-color gradients
-        'rainbow': 'linear-gradient(90deg, #1E3A8A 0%, #3B82F6 25%, #10B981 50%, #F59E0B 75%, #EF4444 100%)',
-        
-        // Legacy support
-        'gradient-gold': 'linear-gradient(135deg, #D4AF37 0%, #B8941F 100%)',
+        'premium-blue': 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%)',
+        'premium-gold': 'linear-gradient(135deg, #D4AF37 0%, #B8941F 100%)',
+        'premium-dark': 'linear-gradient(135deg, #0A1628 0%, #1E3A8A 100%)',
+
+        // White glassmorphism backgrounds
+        'glass': 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,252,0.7) 100%)',
+        'glass-blue': 'linear-gradient(135deg, rgba(37,99,235,0.05) 0%, rgba(59,130,246,0.03) 100%)',
+        'glass-gold': 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(184,148,31,0.04) 100%)',
+
+        'rainbow': 'linear-gradient(90deg, #2563EB 0%, #3B82F6 25%, #059669 50%, #D4AF37 75%, #DC2626 100%)',
+        'gradient-gold': 'linear-gradient(135deg, #B8960C 0%, #D4AF37 100%)',
       },
       boxShadow: {
-        // Premium soft shadows
-        'luxury': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-        'luxury-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        'luxury-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        'luxury-2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.12)',
-        
-        // Premium brand shadows
-        'premium': '0 4px 14px 0 rgba(30, 58, 138, 0.15)',
-        'premium-lg': '0 10px 25px 0 rgba(30, 58, 138, 0.2)',
-        'premium-xl': '0 20px 40px 0 rgba(30, 58, 138, 0.25)',
-        
-        // Glow shadows
-        'glow-blue': '0 0 20px rgba(30, 58, 138, 0.3)',
-        'glow-blue-lg': '0 0 40px rgba(30, 58, 138, 0.4)',
-        'glow-gold': '0 0 20px rgba(245, 158, 11, 0.3)',
-        'glow-gold-lg': '0 0 40px rgba(245, 158, 11, 0.4)',
-        
-        // Inner shadows (neumorphism)
-        'inner-luxury': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
-        'inner-luxury-lg': 'inset 0 4px 8px 0 rgba(0, 0, 0, 0.08)',
+        // Subtle white luxury shadows
+        'luxury': '0 1px 4px rgba(10,22,40,0.06)',
+        'luxury-lg': '0 4px 24px rgba(10,22,40,0.08), 0 1px 4px rgba(10,22,40,0.04)',
+        'luxury-xl': '0 12px 48px rgba(10,22,40,0.14), 0 4px 12px rgba(10,22,40,0.06)',
+        'luxury-2xl': '0 25px 50px -12px rgba(10,22,40,0.18)',
+
+        // Premium CTA shadows
+        'premium': '0 4px 14px 0 rgba(30,58,138,0.15)',
+        'premium-lg': '0 10px 25px 0 rgba(30,58,138,0.20)',
+        'premium-xl': '0 20px 40px 0 rgba(30,58,138,0.25)',
+
+        // Subtle glow for white theme
+        'glow-blue': '0 0 20px rgba(37,99,235,0.15)',
+        'glow-blue-lg': '0 0 40px rgba(37,99,235,0.20)',
+        'glow-gold': '0 0 20px rgba(212,175,55,0.20)',
+        'glow-gold-lg': '0 0 40px rgba(212,175,55,0.25)',
+
+        // Inner shadows
+        'inner-luxury': 'inset 0 2px 4px 0 rgba(10,22,40,0.05)',
+        'inner-luxury-lg': 'inset 0 4px 8px 0 rgba(10,22,40,0.08)',
       },
       borderRadius: {
         'luxury': '12px',

@@ -22,11 +22,11 @@ const buttonVariants = cva(
         'ghost-gold': 'text-premium-gold hover:bg-premium-gold/10 hover:shadow-lg',
         
         // White & Premium variants
-        white: 'bg-white text-elegant-blue hover:bg-luxury-offWhite shadow-luxury-xl hover:shadow-2xl border-2 border-elegant-blue/10 hover:border-elegant-blue/30',
-        premium: 'bg-gradient-to-br from-white via-luxury-lightGray to-luxury-offWhite text-elegant-blue shadow-premium hover:shadow-luxury-xl border border-elegant-blue/20 hover:border-elegant-blue/40 backdrop-blur-sm',
+        white: 'bg-surface-card text-elegant-blue-light hover:bg-surface-elevated shadow-luxury-xl hover:shadow-2xl border-2 border-elegant-blue/15 hover:border-elegant-blue/30',
+        premium: 'bg-gradient-to-br from-surface-card via-surface-elevated to-surface-card text-elegant-blue-light shadow-premium hover:shadow-luxury-xl border border-elegant-blue/20 hover:border-elegant-blue/40 backdrop-blur-sm',
         
         // Glass variants (glassmorphism)
-        glass: 'bg-white/70 backdrop-blur-lg text-elegant-blue border border-white/30 shadow-luxury-lg hover:bg-white/90 hover:shadow-luxury-xl',
+        glass: 'bg-surface-card/70 backdrop-blur-lg text-elegant-blue-light border border-lux-silver shadow-luxury-lg hover:bg-surface-card/90 hover:shadow-luxury-xl',
         'glass-blue': 'bg-elegant-blue/10 backdrop-blur-lg text-elegant-blue border border-elegant-blue/20 shadow-luxury-lg hover:bg-elegant-blue/20 hover:shadow-luxury-xl',
         'glass-gold': 'bg-premium-gold/10 backdrop-blur-lg text-premium-gold border border-premium-gold/20 shadow-luxury-lg hover:bg-premium-gold/20 hover:shadow-luxury-xl',
         
@@ -47,7 +47,7 @@ const buttonVariants = cva(
         gold: 'bg-gradient-to-r from-premium-gold to-premium-gold-dark text-white hover:from-premium-gold-dark hover:to-premium-gold shadow-lg hover:shadow-xl',
         
         // Magnetic variant (special hover effect)
-        magnetic: 'bg-white text-elegant-blue border-2 border-elegant-blue/20 shadow-premium hover:shadow-premium-xl hover:border-elegant-blue/50 hover:translate-x-1 transition-all',
+        magnetic: 'bg-surface-card text-elegant-blue-light border-2 border-elegant-blue/20 shadow-premium hover:shadow-premium-xl hover:border-elegant-blue/50 hover:translate-x-1 transition-all',
       },
       size: {
         default: 'px-6 py-3 text-base',
@@ -110,18 +110,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         <span 
           className={cn(
             "absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out",
-            isWhiteVariant 
-              ? "bg-gradient-to-r from-transparent via-elegant-blue/10 to-transparent" 
-              : "bg-gradient-to-r from-transparent via-white/25 to-transparent"
+            isWhiteVariant
+              ? "bg-gradient-to-r from-transparent via-elegant-blue/10 to-transparent"
+              : "bg-gradient-to-r from-transparent via-white/15 to-transparent"
           )} 
         />
         {/* Subtle glow effect on hover */}
         <motion.span
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{
-            background: isWhiteVariant 
-              ? 'radial-gradient(circle at center, rgba(30, 58, 138, 0.1) 0%, transparent 70%)'
-              : 'radial-gradient(circle at center, rgba(255, 255, 255, 0.15) 0%, transparent 70%)'
+            background: isWhiteVariant
+              ? 'radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, transparent 70%)'
+              : 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)'
           }}
         />
       </motion.button>

@@ -1,3 +1,20 @@
+export type PaymentMethod = 'CCP' | 'بنك'
+
+export type CCPBankingInfo = {
+  paymentMethod: 'CCP'
+  ccpNumber: string
+  ccpKey: string
+  ccpFullNumber: string
+}
+
+export type BankBankingInfo = {
+  paymentMethod: 'بنك'
+  bankName: string
+  bankAccountNumber: string
+  bankAgencyCode: string
+}
+
+export type BankingInfo = CCPBankingInfo | BankBankingInfo
 
 export interface FormData {
   isExistingCustomer: 'نعم' | 'لا' | ''
@@ -13,6 +30,7 @@ export interface FormData {
   financingType: string
   requestedAmount: number
   notes: string
+  banking?: BankingInfo | null
 }
 
 export interface Submission {
@@ -91,21 +109,41 @@ export const PROFESSIONS = [
   'أخرى (حدد)'
 ]
 
+export const ALGERIAN_BANKS = [
+  { code: 'BNA',      label: 'Banque Nationale d\'Algérie (BNA)' },
+  { code: 'BEA',      label: 'Banque Extérieure d\'Algérie (BEA)' },
+  { code: 'CPA',      label: 'Crédit Populaire d\'Algérie (CPA)' },
+  { code: 'BADR',     label: 'Banque de l\'Agriculture et du Développement Rural (BADR)' },
+  { code: 'BDL',      label: 'Banque de Développement Local (BDL)' },
+  { code: 'CNEP',     label: 'Caisse Nationale d\'Epargne et de Prévoyance (CNEP)' },
+  { code: 'CIB',      label: 'Commerce & Industry Bank (CIB)' },
+  { code: 'ABC',      label: 'Arab Banking Corporation Algeria (ABC)' },
+  { code: 'ALBARAKA', label: 'Banque Al Baraka d\'Algérie' },
+  { code: 'AGB',      label: 'Algeria Gulf Bank (AGB)' },
+  { code: 'HSBC',     label: 'HSBC Algérie' },
+  { code: 'SGA',      label: 'Société Générale Algérie (SGA)' },
+  { code: 'BNP',      label: 'BNP Paribas El Djazaïr' },
+  { code: 'TRUST',    label: 'Trust Bank Algeria' },
+  { code: 'NATIXIS',  label: 'Natixis Algérie' },
+] as const
+
+export type BankCode = typeof ALGERIAN_BANKS[number]['code']
+
 export const FORM_STEPS: FormStep[] = [
   {
     id: 1,
-    title: 'معلومات أساسية',
+    title: 'المعلومات الشخصية',
     description: 'البيانات الشخصية وطرق التواصل'
   },
   {
     id: 2,
-    title: 'الموقع والراتب',
-    description: 'الولاية ومعلومات الدخل'
+    title: 'معلومات القرض',
+    description: 'الولاية والدخل ونوع التمويل'
   },
   {
     id: 3,
-    title: 'نوع التمويل',
-    description: 'اختر نوع التمويل المطلوب'
+    title: 'معلومات الدفع',
+    description: 'معلومات الحساب البنكي أو البريدي'
   },
   {
     id: 4,
@@ -126,7 +164,8 @@ export const INITIAL_FORM_DATA: FormData = {
   profession: '',
   customProfession: '',
   financingType: '',
-  requestedAmount: 5_000_000, // Minimum 5M DZD
-  notes: ''
+  requestedAmount: 5_000_000,
+  notes: '',
+  banking: null
 }
 

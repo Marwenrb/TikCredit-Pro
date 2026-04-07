@@ -157,7 +157,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     <div className={`w-full ${className}`}>
       {/* Label */}
       <div className="flex items-center justify-between mb-4">
-        <label className="flex items-center gap-2 text-lg font-bold text-luxury-charcoal">
+        <label className="flex items-center gap-2 text-lg font-bold text-lux-navy">
           <Sparkles className="w-5 h-5 text-premium-gold" />
           {label}
           <span className="text-status-error">*</span>
@@ -178,7 +178,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
               px-3 py-3 text-sm font-bold rounded-xl transition-all duration-200
               ${value === qa.value
                 ? 'bg-gradient-to-r from-elegant-blue to-elegant-blue-light text-white shadow-lg shadow-elegant-blue/30'
-                : 'bg-luxury-offWhite text-luxury-charcoal hover:bg-elegant-blue/10 hover:text-elegant-blue border-2 border-luxury-gray/50 hover:border-elegant-blue/50'
+                : 'bg-gray-50 text-lux-navy hover:bg-elegant-blue/10 hover:text-elegant-blue border-2 border-luxury-gray/50 hover:border-elegant-blue/50'
               }
               focus:outline-none focus:ring-2 focus:ring-elegant-blue/50
               disabled:opacity-50 disabled:cursor-not-allowed
@@ -199,10 +199,10 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
           className={`
             relative p-6 rounded-2xl border-2 transition-all duration-300 cursor-pointer
             ${isDragging || isEditing
-              ? 'border-elegant-blue bg-gradient-to-br from-elegant-blue/5 via-white to-premium-gold/5 shadow-lg shadow-elegant-blue/20'
+              ? 'border-elegant-blue bg-gradient-to-br from-elegant-blue/10 via-surface-card to-premium-gold/10 shadow-lg shadow-elegant-blue/20'
               : error || !isValid
                 ? 'border-status-error bg-status-error/5'
-                : 'border-luxury-gray bg-gradient-to-br from-luxury-offWhite via-white to-luxury-lightGray hover:border-elegant-blue/50'
+                : 'border-luxury-gray bg-gradient-to-br from-surface-elevated via-surface-card to-gray-100 hover:border-elegant-blue/50'
             }
           `}
           onClick={!isEditing ? startEditing : undefined}
@@ -233,7 +233,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
                   className="w-full text-center text-4xl md:text-5xl font-bold bg-transparent border-none outline-none text-elegant-blue placeholder:text-luxury-gray"
                   autoFocus
                 />
-                <p className="text-sm text-luxury-darkGray mt-2">
+                <p className="text-sm text-gray-500 mt-2">
                   اكتب المبلغ ثم اضغط Enter
                 </p>
               </div>
@@ -247,8 +247,8 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
                 >
                   {formattedValue}
                 </motion.p>
-                <p className="text-lg font-medium text-luxury-darkGray mt-2">دينار جزائري</p>
-                <p className="text-xs text-luxury-mediumGray mt-1">
+                <p className="text-lg font-medium text-gray-500 mt-2">دينار جزائري</p>
+                <p className="text-xs text-gray-400 mt-1">
                   اضغط للكتابة يدوياً
                 </p>
               </>
@@ -286,11 +286,11 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
       <div className="mb-8">
         {/* Min/Max Labels */}
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm font-semibold text-luxury-darkGray px-3 py-1.5 bg-luxury-offWhite rounded-xl border border-luxury-gray/30">
+          <span className="text-sm font-semibold text-gray-500 px-3 py-1.5 bg-gray-50 rounded-xl border border-luxury-gray/30">
             {formatCurrency(min)}
           </span>
-          <span className="text-xs text-luxury-mediumGray">اسحب المؤشر لتحديد المبلغ</span>
-          <span className="text-sm font-semibold text-luxury-darkGray px-3 py-1.5 bg-luxury-offWhite rounded-xl border border-luxury-gray/30">
+          <span className="text-xs text-gray-400">اسحب المؤشر لتحديد المبلغ</span>
+          <span className="text-sm font-semibold text-gray-500 px-3 py-1.5 bg-gray-50 rounded-xl border border-luxury-gray/30">
             {formatCurrency(max)}
           </span>
         </div>
@@ -298,7 +298,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
         {/* Slider Track Container */}
         <div className="relative h-6 flex items-center">
           {/* Background Track */}
-          <div className="absolute inset-0 h-3 top-1.5 bg-gradient-to-r from-luxury-lightGray via-luxury-gray to-luxury-lightGray rounded-full shadow-inner" />
+          <div className="absolute inset-0 h-3 top-1.5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full shadow-inner" />
 
           {/* Active Fill */}
           <motion.div
@@ -314,7 +314,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
             style={{ width: `${percentage}%` }}
           >
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
               animate={{ x: ['-100%', '200%'] }}
               transition={{
                 duration: 2,
@@ -366,7 +366,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
           >
             <div
               className={`
-                w-7 h-7 rounded-full bg-white shadow-xl border-[3px] border-elegant-blue 
+                w-7 h-7 rounded-full bg-surface-card shadow-xl border-[3px] border-elegant-blue 
                 flex items-center justify-center
                 ${isDragging ? 'ring-4 ring-elegant-blue/30' : 'ring-2 ring-elegant-blue/10'}
               `}
@@ -392,7 +392,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
         </div>
 
         {/* Step Indicator */}
-        <p className="text-center text-xs text-luxury-mediumGray mt-3">
+        <p className="text-center text-xs text-gray-400 mt-3">
           الخطوة: {formatCurrency(step)}
         </p>
       </div>

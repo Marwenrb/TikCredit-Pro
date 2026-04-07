@@ -74,13 +74,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-luxury-gradient">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-lux-ivory">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white backdrop-blur-xl rounded-2xl border border-luxury-lightGray shadow-luxury-xl p-8">
+        <div className="bg-white backdrop-blur-xl rounded-2xl border border-lux-silver shadow-luxury-xl p-8">
           <div className="text-center mb-8">
             <motion.div
               className="w-16 h-16 mx-auto mb-4 bg-elegant-blue/10 rounded-full flex items-center justify-center"
@@ -90,7 +90,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
               <Lock className="w-8 h-8 text-elegant-blue" />
             </motion.div>
             <h1 className="text-3xl font-bold text-elegant-blue mb-2">لوحة التحكم</h1>
-            <p className="text-luxury-darkGray">يرجى إدخال كلمة المرور للوصول</p>
+            <p className="text-gray-500">يرجى إدخال كلمة المرور للوصول</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -106,7 +106,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-luxury-mediumGray hover:text-elegant-blue transition-colors"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-elegant-blue transition-colors"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -122,7 +122,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-luxury-mediumGray">
+            <p className="text-xs text-gray-400">
               هذه الصفحة محمية بكلمة مرور. الوصول مخصص للمسؤولين فقط.
             </p>
           </div>

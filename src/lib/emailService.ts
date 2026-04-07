@@ -4,6 +4,7 @@
  */
 
 import { FormData } from '@/types'
+import { maskCCPNumber, maskBankAccount } from '@/lib/validators'
 
 export interface EmailPayload {
   to: string
@@ -77,6 +78,15 @@ export function formatSubmissionEmail(data: SubmissionEmailData): EmailPayload {
 • طبيعة العمل: ${formData.profession}${formData.customProfession ? ` (${formData.customProfession})` : ''}
 • نطاق الدخل الشهري: ${formData.monthlyIncomeRange || 'غير محدد'}
 • طريقة استلام الراتب: ${formData.salaryReceiveMethod}
+${formData.banking ? `
+🏦 معلومات الحساب:
+━━━━━━━━━━━━━━━━━━━━━
+${formData.banking.paymentMethod === 'CCP'
+    ? `• نوع الحساب: CCP (البريد)
+• رقم CCP: ${maskCCPNumber(formData.banking.ccpNumber)} / ${formData.banking.ccpKey}`
+    : `• نوع الحساب: حساب بنكي
+• البنك: ${formData.banking.bankName}
+• رقم الحساب (RIB): ${maskBankAccount(formData.banking.bankAccountNumber)}`}` : ''}
 
 💰 تفاصيل التمويل:
 ━━━━━━━━━━━━━━━━━━━━━
@@ -273,6 +283,27 @@ ${formData.notes || 'لا توجد ملاحظات'}
           <span class="info-value">${formData.salaryReceiveMethod}</span>
         </div>
       </div>
+      ${formData.banking ? `
+      <div class="section">
+        <div class="section-title">🏦 معلومات الحساب</div>
+        <div class="info-row">
+          <span class="info-label">نوع الحساب</span>
+          <span class="info-value">${formData.banking.paymentMethod === 'CCP' ? 'CCP (البريد)' : 'حساب بنكي'}</span>
+        </div>
+        ${formData.banking.paymentMethod === 'CCP' ? `
+        <div class="info-row">
+          <span class="info-label">رقم CCP</span>
+          <span class="info-value" dir="ltr">${maskCCPNumber(formData.banking.ccpNumber)} / ${formData.banking.ccpKey}</span>
+        </div>` : `
+        <div class="info-row">
+          <span class="info-label">البنك</span>
+          <span class="info-value">${formData.banking.bankName}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">رقم الحساب (RIB)</span>
+          <span class="info-value" dir="ltr">${maskBankAccount(formData.banking.bankAccountNumber)}</span>
+        </div>`}
+      </div>` : ''}
       
       <div class="section">
         <div class="section-title">💰 تفاصيل التمويل</div>

@@ -40,11 +40,11 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, FloatingLabelInput
               (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = node
             }}
             className={cn(
-              'w-full px-4 pt-6 pb-2 bg-white backdrop-blur-sm border-2 rounded-xl shadow-sm',
-              'text-luxury-charcoal placeholder:text-transparent',
+              'w-full px-4 pt-6 pb-2 bg-surface-card backdrop-blur-sm border-2 rounded-xl shadow-sm',
+              'text-lux-navy placeholder:text-transparent',
               'focus:outline-none focus:border-elegant-blue focus:ring-2 focus:ring-elegant-blue/20',
               'transition-all duration-300',
-              error ? 'border-status-error focus:border-status-error focus:ring-status-error/20' : 'border-luxury-lightGray',
+              error ? 'border-status-error focus:border-status-error focus:ring-status-error/20' : 'border-gray-200',
               icon && 'pr-12',
               className
             )}
@@ -62,7 +62,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, FloatingLabelInput
               'absolute right-4 pointer-events-none transition-all duration-300',
               isActive
                 ? 'top-2 text-xs text-elegant-blue font-semibold'
-                : 'top-1/2 -translate-y-1/2 text-base text-luxury-mediumGray'
+                : 'top-1/2 -translate-y-1/2 text-base text-gray-400'
             )}
             animate={{
               y: isActive ? 0 : 0,

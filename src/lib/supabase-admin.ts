@@ -140,6 +140,13 @@ export interface SubmissionRecord {
     source: string
     ip_address: string | null
     user_agent: string | null
+    payment_method: string | null
+    ccp_number: string | null
+    ccp_key: string | null
+    ccp_full_number: string | null
+    bank_name: string | null
+    bank_account_number: string | null
+    bank_agency_code: string | null
 }
 
 /**
@@ -191,6 +198,13 @@ export async function adminSaveSubmission(
                 source: process.env.VERCEL ? 'vercel' : 'local',
                 ip_address: metadata.ip || null,
                 user_agent: metadata.userAgent || null,
+                payment_method: data.banking?.paymentMethod || data.salaryReceiveMethod || null,
+                ccp_number: data.banking?.paymentMethod === 'CCP' ? data.banking.ccpNumber : null,
+                ccp_key: data.banking?.paymentMethod === 'CCP' ? data.banking.ccpKey : null,
+                ccp_full_number: data.banking?.paymentMethod === 'CCP' ? data.banking.ccpFullNumber : null,
+                bank_name: data.banking?.paymentMethod === 'بنك' ? data.banking.bankName : null,
+                bank_account_number: data.banking?.paymentMethod === 'بنك' ? data.banking.bankAccountNumber : null,
+                bank_agency_code: data.banking?.paymentMethod === 'بنك' ? data.banking.bankAgencyCode : null,
             })
 
         if (error) {

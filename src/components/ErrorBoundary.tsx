@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-luxury-gradient">
+        <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-lux-ivory">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -86,7 +86,7 @@ export class ErrorBoundary extends Component<Props, State> {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-lg text-luxury-darkGray mb-8 max-w-md mx-auto leading-relaxed"
+              className="text-lg text-gray-500 mb-8 max-w-md mx-auto leading-relaxed"
             >
               عذراً، حدث خطأ أثناء تحميل الصفحة. يُرجى إعادة تحميل الصفحة أو الاتصال بالدعم الفني إذا استمرت المشكلة.
             </motion.p>
@@ -97,20 +97,20 @@ export class ErrorBoundary extends Component<Props, State> {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="mb-8 p-6 bg-luxury-offWhite rounded-luxury-lg border border-luxury-lightGray text-left"
+                className="mb-8 p-6 bg-gray-50 rounded-luxury-lg border border-gray-200 text-left"
               >
                 <p className="text-sm font-bold text-status-error mb-2">
                   Error Details (Development):
                 </p>
-                <p className="text-xs font-mono text-luxury-charcoal break-all">
+                <p className="text-xs font-mono text-lux-navy break-all">
                   {this.state.error.toString()}
                 </p>
                 {this.state.errorInfo && (
                   <details className="mt-3">
-                    <summary className="text-xs font-semibold text-luxury-darkGray cursor-pointer hover:text-elegant-blue">
+                    <summary className="text-xs font-semibold text-gray-500 cursor-pointer hover:text-elegant-blue">
                       Component Stack
                     </summary>
-                    <pre className="text-xs mt-2 p-3 bg-white rounded overflow-auto max-h-40 text-luxury-charcoal">
+                    <pre className="text-xs mt-2 p-3 bg-surface-card rounded overflow-auto max-h-40 text-lux-navy">
                       {this.state.errorInfo.componentStack}
                     </pre>
                   </details>
@@ -148,7 +148,7 @@ export class ErrorBoundary extends Component<Props, State> {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="mt-8 text-sm text-luxury-mediumGray"
+              className="mt-8 text-sm text-gray-400"
             >
               إذا استمرت المشكلة، يُرجى الاتصال بالدعم الفني
             </motion.p>
