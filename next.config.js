@@ -1,25 +1,33 @@
+// Last modified: 2026-04-08 — TikCredit Pro transformation
 /** @type {import('next').NextConfig} */
 const path = require('path')
 
 const nextConfig = {
   reactStrictMode: true,
-  
+
   // Experimental optimizations for better bundle size
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns', 'chart.js'],
   },
-  
+
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn']
     } : false,
   },
-  
+
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 31536000, // 1 year
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+    ],
   },
   
   // Note: 'standalone' output is for Docker only, not Netlify

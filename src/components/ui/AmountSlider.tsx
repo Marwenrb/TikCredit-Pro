@@ -79,11 +79,17 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     onChange(newValue)
   }, [onChange])
 
-  // Handle manual input
+  // Handle manual input — commits value to parent in real-time to avoid
+  // React 18 batching race condition when user types then immediately clicks Next
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^\d]/g, '')
     setInputValue(raw)
-  }, [])
+    // Commit to parent immediately so formData is up-to-date before blur/submit
+    const numValue = parseInt(raw, 10)
+    if (!isNaN(numValue) && numValue > 0) {
+      onChange(numValue)
+    }
+  }, [onChange])
 
   // Handle input blur - apply the value
   const handleInputBlur = useCallback(() => {

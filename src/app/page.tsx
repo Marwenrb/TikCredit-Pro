@@ -1,11 +1,17 @@
+// Last modified: 2026-04-08 — TikCredit Pro transformation
 'use client'
 
 import React, { useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { motion, useScroll, useTransform, type Variants } from 'framer-motion'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
+import Logo from '@/components/ui/Logo'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+
+// Dynamically import heavy section to avoid hydration issues
+const PhoneSection = dynamic(() => import('@/components/home/PhoneSection'), { ssr: false })
 
 // ============================================
 // ANIMATION SYSTEM
@@ -66,51 +72,21 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3.5"
             >
-              {/* ═══ ENGINEERED LOGO MARK ═══ */}
-              <div className="relative w-12 h-12 group">
-                {/* Outer glow ring */}
-                <div className="absolute -inset-0.5 rounded-[14px] bg-gradient-to-br from-lux-sapphire via-elegant-blue to-elegant-blue-light opacity-20 blur-sm group-hover:opacity-30 transition-opacity" />
-                {/* Main shape */}
-                <div className="relative w-12 h-12 rounded-[14px] bg-gradient-to-br from-lux-sapphire via-elegant-blue to-elegant-blue-light shadow-xl overflow-hidden">
-                  {/* Inner light refraction */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/5" />
-                  {/* Monogram */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
-                      {/* T letterform — geometric */}
-                      <rect x="3" y="2" width="12" height="2.5" rx="1" fill="white" opacity="0.95"/>
-                      <rect x="8" y="2" width="2.5" height="13" rx="1" fill="white" opacity="0.95"/>
-                      {/* C letterform — arc */}
-                      <path d="M22 6.5C22 4.567 20.433 3 18.5 3H17.5C17.5 3 15 3 15 6.5V15.5C15 19 17.5 19 17.5 19H18.5C20.433 19 22 17.433 22 15.5" stroke="white" strokeWidth="2.3" strokeLinecap="round" fill="none" opacity="0.9"/>
-                    </svg>
-                  </div>
-                </div>
-                {/* Gold accent dot */}
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3">
-                  <div className="w-full h-full rounded-[4px] bg-gradient-to-br from-premium-gold to-premium-gold-light border-[1.5px] border-white shadow-sm" />
-                </div>
-              </div>
-              {/* ═══ BRAND TYPE ═══ */}
-              <div className="flex flex-col">
-                <span className="text-[22px] font-black tracking-tight leading-none" style={{ fontFamily: 'var(--font-sans)', color: '#0A1628' }}>
-                  Tik<span className="bg-gradient-to-r from-lux-sapphire to-elegant-blue bg-clip-text text-transparent">Credit</span>
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="h-[1.5px] w-4 bg-gradient-to-r from-premium-gold to-premium-gold-light rounded-full" />
-                  <span className="text-[9px] font-extrabold tracking-[0.4em] uppercase leading-none" style={{ fontFamily: 'var(--font-sans)', color: '#B8941F' }}>
-                    PRO
-                  </span>
-                  <div className="h-[1.5px] w-4 bg-gradient-to-r from-premium-gold-light to-premium-gold rounded-full" />
-                </div>
-              </div>
+              <Logo size="md" />
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.1 }}
+              className="flex items-center gap-4"
             >
+              <Link
+                href="#telephone-facilite"
+                className="hidden md:block text-sm font-semibold text-lux-slate hover:text-lux-sapphire transition-colors duration-200"
+              >
+                تليفونات بالتقسيط
+              </Link>
               <Link href="/form">
                 <Button variant="default" size="default">
                   ابدأ الآن
@@ -504,6 +480,9 @@ export default function HomePage() {
             </motion.div>
           </motion.div>
         </main>
+
+        {/* ── Téléphones en Facilité Section ── */}
+        <PhoneSection />
 
         {/* Footer */}
         <footer className="relative mt-20">

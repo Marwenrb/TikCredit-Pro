@@ -176,6 +176,19 @@ export async function POST(request: NextRequest) {
     }
 
     log(`Client: ${data.fullName} | Phone: ${data.phone} | Amount: ${data.requestedAmount?.toLocaleString()} DZD | Payment: ${data.banking?.paymentMethod || data.salaryReceiveMethod || 'N/A'}`)
+    log(`requestedAmount received: ${data.requestedAmount}`)
+
+    // Early check: requestedAmount must be a positive number
+    if (data.requestedAmount === null || data.requestedAmount === undefined || isNaN(Number(data.requestedAmount)) || Number(data.requestedAmount) === 0) {
+      log(`REJECTED: requestedAmount invalid — received: ${data.requestedAmount}`)
+      return NextResponse.json({
+        success: false,
+        error: 'Montant requis',
+        message: 'Montant requis — المبلغ المطلوب غير صحيح'
+      }, { status: 400 })
+    }
+    // Ensure requestedAmount is a number (coerce from string if needed)
+    data.requestedAmount = Number(data.requestedAmount)
 
     // ═══════════════════════════════════════════════════════════════════════════
     // VALIDATION
