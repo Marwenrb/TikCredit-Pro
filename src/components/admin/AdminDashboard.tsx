@@ -246,7 +246,8 @@ const AdminDashboard: React.FC = () => {
       if (response.ok) {
         const data = await response.json()
         toast.success(`تم حذف ${data.deletedCount ?? ids.length} طلب بنجاح`)
-        handleRefresh()
+        // Do NOT call handleRefresh() here — it races with Supabase finishing the delete
+        // and restores the just-deleted items. Optimistic update above is already correct.
       } else {
         handleRefresh()
         toast.error('فشل الحذف الجماعي')
@@ -257,10 +258,24 @@ const AdminDashboard: React.FC = () => {
     }
   }
 
-  const handleClearAll = () => {
-    if (confirm('هل أنت متأكد من حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه.')) {
-      clearAllSubmissions()
-      setSubmissions([])
+  const handleClearAll = async () => {
+    if (!confirm('هل أنت متأكد من حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه.')) return
+
+    try {
+      const response = await fetch('/api/submissions/list', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'criteria', criteria: {} }),
+      })
+      if (response.ok) {
+        clearAllSubmissions()  // also wipe localStorage
+        setSubmissions([])
+        toast.success('تم حذف جميع الطلبات بنجاح')
+      } else {
+        toast.error('فشل حذف الطلبات من الخادم')
+      }
+    } catch {
+      toast.error('خطأ في الاتصال — لم يتم الحذف')
     }
   }
 

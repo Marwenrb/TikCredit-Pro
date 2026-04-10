@@ -177,11 +177,12 @@ export async function DELETE(request: NextRequest) {
       try {
         const { supabaseAdmin } = await import('@/lib/supabase-admin')
         if (supabaseAdmin) {
-          const { error } = await supabaseAdmin
+          const { data: deletedRows, error } = await supabaseAdmin
             .from('submissions')
             .delete()
             .eq('id', singleId)
-          if (!error) deleted = true  // ← FIX: Supabase success counts
+            .select('id')  // verify actual row deletion — without this, Supabase v2 returns {error:null} even when 0 rows matched
+          if (!error && deletedRows && deletedRows.length > 0) deleted = true
         }
       } catch {
         // Supabase error — rely on local result only
