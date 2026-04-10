@@ -130,7 +130,7 @@ export default function HomePage() {
                 }}
                 style={{ backgroundSize: '200% auto' }}
               >
-                TikCredit Pro
+                Tik Credit Pro
               </motion.span>
               <br />
               <motion.span
@@ -506,7 +506,7 @@ export default function HomePage() {
                 transition={{ delay: 2.3 }}
                 className="flex items-center justify-center flex-wrap gap-3 text-sm text-lux-slate font-medium"
               >
-                <span>&copy; {new Date().getFullYear()} TikCredit Pro</span>
+                <span>&copy; {new Date().getFullYear()} Tik Credit Pro</span>
                 <span className="w-1 h-1 rounded-full bg-lux-sapphire/30" />
                 <span>جميع الحقوق محفوظة</span>
               </motion.div>
