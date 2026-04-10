@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle, RefreshCw, Loader2, AlertCircle, Wifi, WifiOff, Bell, Printer, MapPin, CheckSquare, Square } from 'lucide-react'
+import { Search, Download, Trash2, Eye, LogOut, TrendingUp, Users, DollarSign, Calendar, FileText, Sparkles, CheckCircle2, XCircle, RefreshCw, Loader2, AlertCircle, Wifi, WifiOff, Bell, Printer, MapPin, CheckSquare, Square, SlidersHorizontal } from 'lucide-react'
 import { Button, GlassCard, StatCard, Modal } from '@/components/ui'
 import DownloadModal from './DownloadModal'
 import PrintableSubmissions from './PrintableSubmissions'
+import AdvancedDeleteModal from './AdvancedDeleteModal'
 import { Submission, WILAYAS } from '@/types'
 import {
   getSubmissions,
-  deleteSubmission as deleteLocalSubmission,
   clearAllSubmissions,
   getStatistics,
   filterSubmissions,
@@ -45,6 +45,7 @@ const AdminDashboard: React.FC = () => {
   const [selectedWilaya, setSelectedWilaya] = useState<string>('all')
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all')
   const [showPrintView, setShowPrintView] = useState(false)
+  const [showAdvancedDelete, setShowAdvancedDelete] = useState(false)
   const [serverSearch, setServerSearch] = useState('')
 
   const toast = useToast()
@@ -208,25 +209,51 @@ const AdminDashboard: React.FC = () => {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا الطلب؟')) {
-      try {
-        // Try server delete first
-        const response = await fetch(`/api/submissions/list?id=${id}`, {
-          method: 'DELETE',
-        })
+    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return
 
-        if (response.ok) {
-          // Refresh from server
-          fetchServerSubmissions()
-          return
-        }
-      } catch (err) {
-        console.error('Server delete failed:', err)
+    // Optimistic remove
+    setSubmissions(prev => prev.filter(s => s.id !== id))
+
+    try {
+      const response = await fetch(`/api/submissions/list?id=${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        toast.success('تم حذف الطلب بنجاح')
+      } else {
+        // Revert on failure
+        handleRefresh()
+        toast.error('فشل حذف الطلب — تم استعادة البيانات')
       }
+    } catch {
+      handleRefresh()
+      toast.error('خطأ في الاتصال — تم استعادة البيانات')
+    }
+  }
 
-      // Fallback to local delete
-      deleteLocalSubmission(id)
-      setSubmissions(prev => prev.filter(s => s.id !== id))
+  const handleBulkDelete = async (ids: string[]) => {
+    if (ids.length === 0) return
+
+    // Optimistic remove
+    const idSet = new Set(ids)
+    setSubmissions(prev => prev.filter(s => !idSet.has(s.id)))
+    setSelectedIds(new Set())
+
+    try {
+      const response = await fetch('/api/submissions/list', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'ids', ids }),
+      })
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(`تم حذف ${data.deletedCount ?? ids.length} طلب بنجاح`)
+        handleRefresh()
+      } else {
+        handleRefresh()
+        toast.error('فشل الحذف الجماعي')
+      }
+    } catch {
+      handleRefresh()
+      toast.error('خطأ في الاتصال')
     }
   }
 
@@ -425,6 +452,14 @@ const AdminDashboard: React.FC = () => {
                   <Download className="w-4 h-4 ml-1" />
                   تصدير المحدد
                 </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleBulkDelete([...selectedIds])}
+                >
+                  <Trash2 className="w-4 h-4 ml-1" />
+                  حذف المحدد ({selectedIds.size})
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -542,6 +577,15 @@ const AdminDashboard: React.FC = () => {
               </Button>
               <Button variant="outline" size="sm" onClick={() => generateDemoData(10)}>
                 بيانات تجريبية
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvancedDelete(true)}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+              >
+                <SlidersHorizontal className="w-4 h-4 ml-2" />
+                حذف متقدم
               </Button>
               <Button variant="danger" size="sm" onClick={handleClearAll}>
                 <Trash2 className="w-4 h-4 ml-2" />
@@ -878,6 +922,18 @@ ${submission.data.notes ? `📝 الملاحظات:        ${submission.data.not
           />
         </div>
       )}
+
+      {/* Advanced Delete Modal */}
+      <AdvancedDeleteModal
+        isOpen={showAdvancedDelete}
+        onClose={() => setShowAdvancedDelete(false)}
+        submissions={submissions}
+        selectedIds={selectedIds}
+        onDeleteComplete={() => {
+          setSelectedIds(new Set())
+          handleRefresh()
+        }}
+      />
     </div>
   )
 }
