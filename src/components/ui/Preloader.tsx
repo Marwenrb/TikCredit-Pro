@@ -8,16 +8,22 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 const expo = [0.16, 1, 0.3, 1] as const
 
 // ── Word definitions with per-char styling ─────────────────────────────────
-const WORD_TIK    = ['T', 'i', 'k']
-const WORD_CREDIT = ['C', 'r', 'e', 'd', 'i', 't']
-const ALL_CHARS   = [...WORD_TIK, ...WORD_CREDIT]
+type CharEntry = { char: string; color: string; glow: string }
 
-// Per-char color roles: first 3 = "Tik" (white), last 6 = "Credit" (cyan)
-function charColor(i: number): string {
-  return i < 3
-    ? 'rgba(255,255,255,0.92)'
-    : `hsl(${188 + i * 4}deg, 100%, 62%)` // range #00D4FF → #4D99FF
-}
+const CHAR_ENTRIES: CharEntry[] = [
+  ...['T', 'i', 'k'].map(c => ({
+    char:  c,
+    color: 'rgba(255,255,255,0.92)',
+    glow:  '0 0 18px rgba(255,255,255,0.22)',
+  })),
+  // word-space between "Tik" and "Credit"
+  { char: '\u00A0', color: 'transparent', glow: 'none' },
+  ...['C', 'r', 'e', 'd', 'i', 't'].map((c, i) => ({
+    char:  c,
+    color: `hsl(${188 + i * 4}deg, 100%, 62%)`,
+    glow:  '0 0 20px rgba(0,212,255,0.40)',
+  })),
+]
 
 // ── Inline Logo SVG (preloader-sized, no deps) ─────────────────────────────
 function PreloaderIcon({ size = 72 }: { size?: number }) {
@@ -29,7 +35,7 @@ function PreloaderIcon({ size = 72 }: { size?: number }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="TikCredit Pro"
+      aria-label="Tik Credit Pro"
     >
       <defs>
         <linearGradient id="pl-bg" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
@@ -208,6 +214,7 @@ const Preloader: React.FC = () => {
       </div>
 
       {/* ── TikCredit letters ─────────────────────────────────────────────── */}
+      {/* ── "Tik Credit" letters ───────────────────────────────────────────── */}
       <motion.div
         className="flex items-center select-none"
         style={{ gap: '0.06em', fontFamily: 'var(--font-sans)' }}
@@ -217,9 +224,9 @@ const Preloader: React.FC = () => {
           hidden: {},
           show:   { transition: { staggerChildren: 0.065, delayChildren: 0.55 } },
         }}
-        aria-label="TikCredit"
+        aria-label="Tik Credit"
       >
-        {ALL_CHARS.map((char, i) => (
+        {CHAR_ENTRIES.map((entry, i) => (
           <motion.span
             key={i}
             aria-hidden="true"
@@ -231,18 +238,17 @@ const Preloader: React.FC = () => {
               },
             }}
             style={{
-              display:     'inline-block',
-              fontSize:    'clamp(2rem, 6vw, 3rem)',
-              fontWeight:  900,
+              display:       'inline-block',
+              fontSize:      'clamp(2rem, 6vw, 3rem)',
+              fontWeight:    900,
               letterSpacing: '-0.02em',
-              color:       charColor(i),
-              /* subtle text-glow */
-              textShadow:  i < 3
-                ? '0 0 18px rgba(255,255,255,0.22)'
-                : `0 0 20px rgba(0,212,255,0.40)`,
+              color:         entry.color,
+              textShadow:    entry.glow,
+              /* word-space has explicit width so both words reads "Tik Credit" */
+              width:         entry.char === '\u00A0' ? '0.35em' : undefined,
             }}
           >
-            {char}
+            {entry.char}
           </motion.span>
         ))}
       </motion.div>
