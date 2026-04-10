@@ -2,8 +2,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
-import { motion, AnimatePresence, useScroll, useTransform, type Variants } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
 import Logo from '@/components/ui/Logo'
@@ -11,10 +10,6 @@ import Preloader from '@/components/ui/Preloader'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-// Dynamically import heavy section to avoid hydration issues
-const PhoneSection = dynamic(() => import('@/components/home/PhoneSection'), { ssr: false })
-
-// ============================================
 // ANIMATION SYSTEM
 // ============================================
 
@@ -94,12 +89,6 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="flex items-center gap-4"
             >
-              <Link
-                href="#telephone-facilite"
-                className="hidden md:block text-sm font-semibold text-lux-slate hover:text-lux-sapphire transition-colors duration-200"
-              >
-                تليفونات بالتقسيط
-              </Link>
               <Link href="/form">
                 <Button variant="default" size="default">
                   ابدأ الآن
@@ -493,9 +482,6 @@ export default function HomePage() {
             </motion.div>
           </motion.div>
         </main>
-
-        {/* ── Téléphones en Facilité Section ── */}
-        <PhoneSection />
 
         {/* Footer */}
         <footer className="relative mt-20">

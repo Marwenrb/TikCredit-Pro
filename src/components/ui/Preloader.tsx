@@ -1,32 +1,30 @@
-// TikCredit Pro — Cinematic UIverse-inspired preloader · 2026
+// TikCredit Pro — Orbital rings preloader · 2026
 'use client'
 
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 
-// ── Easing ─────────────────────────────────────────────────────────────────
 const expo = [0.16, 1, 0.3, 1] as const
 
-// ── Word definitions with per-char styling ─────────────────────────────────
+// ── Brand characters with word-space ────────────────────────────────────────
 type CharEntry = { char: string; color: string; glow: string }
 
 const CHAR_ENTRIES: CharEntry[] = [
   ...['T', 'i', 'k'].map(c => ({
     char:  c,
     color: 'rgba(255,255,255,0.92)',
-    glow:  '0 0 18px rgba(255,255,255,0.22)',
+    glow:  '0 0 16px rgba(255,255,255,0.2)',
   })),
-  // word-space between "Tik" and "Credit"
   { char: '\u00A0', color: 'transparent', glow: 'none' },
   ...['C', 'r', 'e', 'd', 'i', 't'].map((c, i) => ({
     char:  c,
     color: `hsl(${188 + i * 4}deg, 100%, 62%)`,
-    glow:  '0 0 20px rgba(0,212,255,0.40)',
+    glow:  '0 0 18px rgba(0,212,255,0.38)',
   })),
 ]
 
-// ── Inline Logo SVG (preloader-sized, no deps) ─────────────────────────────
-function PreloaderIcon({ size = 72 }: { size?: number }) {
+// ── Center icon (self-contained, no external deps) ───────────────────────────
+function CenterIcon({ size = 58 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -38,71 +36,99 @@ function PreloaderIcon({ size = 72 }: { size?: number }) {
       aria-label="Tik Credit Pro"
     >
       <defs>
-        <linearGradient id="pl-bg" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+        <linearGradient id="ol-bg" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#010915" />
           <stop offset="42%"  stopColor="#0B2160" />
           <stop offset="100%" stopColor="#1255D4" />
         </linearGradient>
-        <radialGradient id="pl-depth" cx="50%" cy="72%" r="58%">
-          <stop offset="0%"   stopColor="#000" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#000" stopOpacity="0"  />
-        </radialGradient>
-        <radialGradient id="pl-sheen" cx="28%" cy="22%" r="44%">
+        <radialGradient id="ol-sheen" cx="28%" cy="22%" r="44%">
           <stop offset="0%"   stopColor="#fff" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#fff" stopOpacity="0"   />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="pl-check" x1="9" y1="20" x2="28" y2="10" gradientUnits="userSpaceOnUse">
+        <linearGradient id="ol-check" x1="9" y1="20" x2="28" y2="10" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#FFFFFF" stopOpacity="0.95" />
           <stop offset="50%"  stopColor="#00D4FF" stopOpacity="0.90" />
           <stop offset="100%" stopColor="#E5C76B" stopOpacity="0.97" />
         </linearGradient>
-        <radialGradient id="pl-dot" cx="50%" cy="35%" r="50%">
+        <radialGradient id="ol-dot" cx="50%" cy="35%" r="50%">
           <stop offset="0%"   stopColor="#FEFCBF" />
           <stop offset="38%"  stopColor="#F59E0B" />
           <stop offset="100%" stopColor="#A16207" />
         </radialGradient>
-        <filter id="pl-shadow">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" floodColor="#000" floodOpacity="0.5" />
+        <filter id="ol-shadow">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodColor="#000" floodOpacity="0.5" />
         </filter>
       </defs>
-
-      <circle cx="18" cy="18" r="16.5" fill="url(#pl-bg)" />
-      <circle cx="18" cy="18" r="16.5" fill="url(#pl-depth)" />
-      <circle cx="18" cy="18" r="16.5" fill="url(#pl-sheen)" />
-      <circle cx="18" cy="18" r="16"   stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" fill="none" />
-
+      <circle cx="18" cy="18" r="16.5" fill="url(#ol-bg)" />
+      <circle cx="18" cy="18" r="16.5" fill="url(#ol-sheen)" />
+      <circle cx="18" cy="18" r="16"   stroke="rgba(255,255,255,0.11)" strokeWidth="0.5" fill="none" />
       <path
         d="M 8.5 20 C 10 22 13 25.5 15.5 27.2 C 18 29 20.5 23 28 10.2"
-        stroke="url(#pl-check)"
+        stroke="url(#ol-check)"
         strokeWidth="3.8"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
-        filter="url(#pl-shadow)"
+        filter="url(#ol-shadow)"
       />
-      <circle cx="28"  cy="10.2" r="3"   fill="url(#pl-dot)" opacity="0.98" />
-      <circle cx="27.2" cy="9.5" r="1.1" fill="white" opacity="0.58" />
+      <circle cx="28"   cy="10.2" r="3"   fill="url(#ol-dot)" opacity="0.98" />
+      <circle cx="27.2" cy="9.5"  r="1.1" fill="white" opacity="0.58" />
     </svg>
   )
 }
 
-// ── Main Preloader ─────────────────────────────────────────────────────────
-const Preloader: React.FC = () => {
-  const reduced = useReducedMotion()
+// ── Orbital ring — GPU-composited rotate + single neon dot ───────────────────
+function OrbitalRing({
+  size, duration, color, rgb, dotSize = 8, reverse = false, opacity = 0.12,
+}: {
+  size: number; duration: number; color: string; rgb: string
+  dotSize?: number; reverse?: boolean; opacity?: number
+}) {
+  return (
+    <motion.div
+      className="absolute left-1/2 top-1/2 rounded-full"
+      style={{
+        width:      size,
+        height:     size,
+        marginLeft: -size / 2,
+        marginTop:  -size / 2,
+        border:     `1px solid rgba(${rgb},${opacity})`,
+      }}
+      animate={{ rotate: reverse ? -360 : 360 }}
+      transition={{ duration, ease: 'linear', repeat: Infinity }}
+      aria-hidden="true"
+    >
+      {/* Neon dot at 12 o'clock */}
+      <div
+        className="absolute left-1/2 top-0 rounded-full"
+        style={{
+          width:      dotSize,
+          height:     dotSize,
+          marginLeft: -dotSize / 2,
+          marginTop:  -dotSize / 2,
+          background: color,
+          boxShadow:  `0 0 ${dotSize * 1.4}px ${color}, 0 0 ${dotSize * 3}px rgba(${rgb},0.45)`,
+        }}
+      />
+    </motion.div>
+  )
+}
 
-  // Stagger phase trackers (not used to block render — just label transitions)
+// ── Main Preloader ───────────────────────────────────────────────────────────
+const Preloader: React.FC = () => {
+  const reduced  = useReducedMotion()
   const [showPro, setShowPro] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setShowPro(true), 1050)
+    const t = setTimeout(() => setShowPro(true), 900)
     return () => clearTimeout(t)
   }, [])
 
-  // ── Reduced motion version ───────────────────────────────────────────
+  // Reduced-motion fallback — instant, no animation
   if (reduced) {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020508]">
-        <p className="text-lg font-bold text-white">TikCredit PRO</p>
+        <p className="text-lg font-bold text-white">Tik Credit PRO</p>
       </div>
     )
   }
@@ -115,114 +141,104 @@ const Preloader: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{
-        opacity:  0,
-        scale:    0.97,
-        filter:   'blur(8px)',
-        transition: { duration: 0.55, ease: 'easeIn' },
+        opacity:    0,
+        scale:      0.96,
+        filter:     'blur(12px)',
+        transition: { duration: 0.58, ease: 'easeIn' },
       }}
-      transition={{ duration: 0.3 }}
-      aria-label="Chargement…"
+      transition={{ duration: 0.28 }}
       role="status"
       aria-live="polite"
+      aria-label="Chargement…"
     >
-      {/* ── Aurora blobs ─────────────────────────────────────────────────── */}
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-32 right-0 h-[520px] w-[520px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.09) 0%, transparent 65%)' }}
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: expo }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-32 left-0 h-[440px] w-[440px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 62%)' }}
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.5, delay: 0.15, ease: expo }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.05) 0%, transparent 60%)' }}
-        animate={{ scale: [1, 1.12, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-      />
+      {/* ── Ambient background blobs ────────────────────────────────────── */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute -right-32 -top-10 h-[440px] w-[440px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.07) 0%, transparent 65%)' }}
+        />
+        <div
+          className="absolute -left-24 -bottom-10 h-[380px] w-[380px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 62%)' }}
+        />
+      </div>
 
-      {/* ── Dot grid texture ─────────────────────────────────────────────── */}
+      {/* ── Dot grid texture ────────────────────────────────────────────── */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.022]"
+        className="pointer-events-none absolute inset-0 opacity-[0.02]"
         style={{
-          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.7) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.65) 1px, transparent 1px)',
           backgroundSize:  '28px 28px',
         }}
       />
 
-      {/* ── Central logo + neon ring ──────────────────────────────────────── */}
-      <div className="relative mb-10 flex items-center justify-center">
+      {/* ── Orbital system ──────────────────────────────────────────────── */}
+      <div className="relative flex items-center justify-center" style={{ width: 210, height: 210 }}>
 
-        {/* Outer pulsing ambient glow */}
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute rounded-full"
-          style={{
-            width:  '160px',
-            height: '160px',
-            background: 'radial-gradient(circle, rgba(0,212,255,0.18) 0%, transparent 65%)',
-          }}
-          animate={{ scale: [1, 1.18, 1], opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        {/* Ring 1 — outer, slow, cyan */}
+        <OrbitalRing
+          size={200} duration={9}
+          color="#00D4FF" rgb="0,212,255"
+          dotSize={9} opacity={0.1}
         />
 
-        {/* Spinning neon ring — same conic technique as PhoneSection cards */}
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute rounded-full"
-          style={{
-            width:  '108px',
-            height: '108px',
-            background: 'conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 80deg, #00D4FF 160deg, #D4AF37 210deg, transparent 290deg, transparent 360deg)',
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3, ease: 'linear', repeat: Infinity }}
+        {/* Ring 2 — middle, medium, gold, counter-clockwise */}
+        <OrbitalRing
+          size={154} duration={6}
+          color="#D4AF37" rgb="212,175,55"
+          dotSize={7} opacity={0.15} reverse
         />
 
-        {/* Secondary counter ring */}
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute rounded-full"
-          style={{
-            width:  '92px',
-            height: '92px',
-            background: 'conic-gradient(from 180deg at 50% 50%, transparent 0deg, rgba(77,127,255,0.55) 90deg, transparent 200deg)',
-          }}
-          animate={{ rotate: -360 }}
-          transition={{ duration: 4.5, ease: 'linear', repeat: Infinity }}
+        {/* Ring 3 — inner, fast, electric blue */}
+        <OrbitalRing
+          size={112} duration={3.4}
+          color="#4D7FFF" rgb="77,127,255"
+          dotSize={5.5} opacity={0.2}
         />
 
-        {/* Logo icon — springs in */}
+        {/* Center ambient bloom */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            width:      88,
+            height:     88,
+            background: 'radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 68%)',
+            filter:     'blur(10px)',
+          }}
+        />
+
+        {/* Gold bloom */}
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ width: 64, height: 64, background: 'radial-gradient(circle, rgba(212,175,55,0.12) 0%, transparent 70%)' }}
+          animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        {/* Logo — springs in */}
         <motion.div
           className="relative z-10"
-          initial={{ scale: 0.4, opacity: 0, filter: 'blur(16px)' }}
-          animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-          transition={{ duration: 0.9, delay: 0.25, ease: expo }}
+          initial={{ scale: 0.25, opacity: 0, filter: 'blur(20px)' }}
+          animate={{ scale: 1,    opacity: 1, filter: 'blur(0px)'  }}
+          transition={{ duration: 0.85, delay: 0.28, ease: expo }}
         >
-          <PreloaderIcon size={72} />
+          <CenterIcon size={58} />
         </motion.div>
+
       </div>
 
-      {/* ── TikCredit letters ─────────────────────────────────────────────── */}
-      {/* ── "Tik Credit" letters ───────────────────────────────────────────── */}
+      {/* ── "Tik Credit" stagger letters ────────────────────────────────── */}
       <motion.div
-        className="flex items-center select-none"
-        style={{ gap: '0.06em', fontFamily: 'var(--font-sans)' }}
+        className="mt-8 flex select-none items-center"
+        style={{ gap: '0.045em', fontFamily: 'var(--font-sans)' }}
         initial="hidden"
         animate="show"
         variants={{
           hidden: {},
-          show:   { transition: { staggerChildren: 0.065, delayChildren: 0.55 } },
+          show:   { transition: { staggerChildren: 0.058, delayChildren: 0.62 } },
         }}
         aria-label="Tik Credit"
       >
@@ -231,21 +247,20 @@ const Preloader: React.FC = () => {
             key={i}
             aria-hidden="true"
             variants={{
-              hidden: { opacity: 0, y: 18, filter: 'blur(8px)' },
+              hidden: { opacity: 0, y: 14, filter: 'blur(8px)' },
               show:   {
                 opacity: 1, y: 0, filter: 'blur(0px)',
-                transition: { duration: 0.55, ease: expo },
+                transition: { duration: 0.48, ease: expo },
               },
             }}
             style={{
               display:       'inline-block',
-              fontSize:      'clamp(2rem, 6vw, 3rem)',
+              fontSize:      'clamp(1.8rem, 5.5vw, 2.5rem)',
               fontWeight:    900,
               letterSpacing: '-0.02em',
               color:         entry.color,
               textShadow:    entry.glow,
-              /* word-space has explicit width so both words reads "Tik Credit" */
-              width:         entry.char === '\u00A0' ? '0.35em' : undefined,
+              width:         entry.char === '\u00A0' ? '0.3em' : undefined,
             }}
           >
             {entry.char}
@@ -253,30 +268,30 @@ const Preloader: React.FC = () => {
         ))}
       </motion.div>
 
-      {/* ── PRO badge ─────────────────────────────────────────────────────── */}
+      {/* ── PRO badge ───────────────────────────────────────────────────── */}
       <AnimatePresence>
         {showPro && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.6, y: 8 }}
+            initial={{ opacity: 0, scale: 0.55, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: expo }}
-            className="mt-3 inline-flex rounded-full"
+            transition={{ duration: 0.42, ease: expo }}
+            className="mt-2.5 inline-flex rounded-full"
             style={{
               padding:    '1.5px',
               background: 'linear-gradient(108deg, #92400E, #D97706, #FBBF24, #FDE68A, #F59E0B, #92400E)',
-              boxShadow:  '0 0 14px rgba(212,175,55,0.4)',
+              boxShadow:  '0 0 12px rgba(212,175,55,0.32)',
             }}
           >
             <div
-              className="flex items-center justify-center rounded-full px-4 py-1"
+              className="flex items-center justify-center rounded-full px-4 py-0.5"
               style={{ background: '#010915' }}
             >
               <span
                 style={{
                   fontFamily:           'var(--font-sans)',
-                  fontSize:             '0.65rem',
+                  fontSize:             '0.58rem',
                   fontWeight:           800,
-                  letterSpacing:        '0.38em',
+                  letterSpacing:        '0.36em',
                   background:           'linear-gradient(90deg, #D97706, #FBBF24, #FDE68A, #F59E0B)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor:  'transparent',
@@ -290,71 +305,48 @@ const Preloader: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Arabic subtitle ───────────────────────────────────────────────── */}
+      {/* ── Arabic subtitle ──────────────────────────────────────────────── */}
       <motion.p
         dir="rtl"
-        className="mt-5 font-arabic text-xs tracking-wide"
-        style={{ color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em' }}
+        className="mt-5 font-arabic text-xs"
+        style={{ color: 'rgba(255,255,255,0.22)', letterSpacing: '0.1em' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.3, duration: 0.7 }}
+        transition={{ delay: 1.25, duration: 0.6 }}
       >
         جاري التحميل…
       </motion.p>
 
-      {/* ── Progress bar ──────────────────────────────────────────────────── */}
+      {/* ── Progress bar ─────────────────────────────────────────────────── */}
       <motion.div
-        className="absolute bottom-10 left-1/2 -translate-x-1/2"
-        style={{ width: '160px' }}
+        className="absolute bottom-12 left-1/2 -translate-x-1/2"
+        style={{ width: 136 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
+        transition={{ delay: 0.5, duration: 0.4 }}
         aria-hidden="true"
       >
         {/* Track */}
-        <div className="h-[2px] w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+        <div
+          className="h-px w-full overflow-hidden rounded-full"
+          style={{ background: 'rgba(255,255,255,0.06)' }}
+        >
           {/* Fill */}
           <motion.div
             className="h-full rounded-full"
-            style={{
-              background: 'linear-gradient(90deg, #1E3A8A, #2563EB 40%, #00D4FF 70%, #D4AF37)',
-            }}
+            style={{ background: 'linear-gradient(90deg, #1E3A8A, #2563EB 38%, #00D4FF 68%, #D4AF37)' }}
             initial={{ scaleX: 0, originX: 0 }}
             animate={{ scaleX: 1 }}
-            transition={{ delay: 0.6, duration: 1.8, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ delay: 0.5, duration: 1.9, ease: [0.4, 0, 0.2, 1] }}
           />
         </div>
-        {/* Percentage dots */}
-        <motion.div
-          className="mt-2 flex justify-between"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-        >
-          {['0%', '50%', '100%'].map((p) => (
-            <span
-              key={p}
-              style={{
-                fontFamily: 'var(--font-sans)',
-                fontSize:   '9px',
-                fontWeight: 600,
-                color:      'rgba(255,255,255,0.22)',
-                letterSpacing: '0.08em',
-              }}
-            >
-              {p}
-            </span>
-          ))}
-        </motion.div>
       </motion.div>
 
-      {/* ── Top shimmer line ──────────────────────────────────────────────── */}
+      {/* ── Top shimmer line ─────────────────────────────────────────────── */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.5) 35%, rgba(212,175,55,0.45) 65%, transparent)',
-        }}
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.42) 35%, rgba(212,175,55,0.38) 65%, transparent)' }}
       />
     </motion.div>
   )
