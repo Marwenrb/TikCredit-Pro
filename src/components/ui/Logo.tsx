@@ -1,219 +1,236 @@
-// Last modified: 2026-04-10 — Next-level premium fintech icon mark
+// TikCredit Pro — Next-gen cinematic logo · 2026
 'use client'
 
 import React from 'react'
 
 export interface LogoProps {
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
+  size?:         'sm' | 'md' | 'lg'
+  className?:    string
   showWordmark?: boolean
+  /** 'light' = on ivory/white bg (navbar) · 'dark' = on near-black bg (preloader, dark sections) */
+  variant?:      'light' | 'dark'
 }
 
 const sizeMap = {
-  sm: { markSize: 28, textSize: 17, subSize: 7.5 },
-  md: { markSize: 36, textSize: 22, subSize: 9.5 },
-  lg: { markSize: 52, textSize: 32, subSize: 12 },
+  sm: { icon: 28, tik: 10,  credit: 14, gap: 8  },
+  md: { icon: 38, tik: 12,  credit: 19, gap: 10 },
+  lg: { icon: 56, tik: 16,  credit: 26, gap: 14 },
 }
 
 /**
- * TikCredit Pro — Premium SVG Icon Mark + Wordmark
+ * TikCredit Pro — Premium circular icon mark + cinematic wordmark
  *
- * Icon concept: Bold checkmark (✓) — "Tik" = Tick = Loan Approved.
- * The heroic mark is a stroke checkmark with a white→gold gradient,
- * capped with a glowing gold dot at the tip. Deep navy-to-electric-blue
- * background with glass sheen, ambient glow ring, and fine border highlight.
+ * Icon: Deep navy-to-electric-blue circle, curved bezier checkmark
+ * (white → #00D4FF → #D4AF37), glowing gold tip dot, outer neon ring.
  *
- * Wordmark: "Tik" in midnight navy · "Credit" in electric-blue gradient
- * PRO badge: gradient pill border (gold) with dark fill + gold gradient text
+ * Wordmark: stacked — "Tik" superscript + "Credit" bold-gradient + "PRO" chip
  *
- * @param size - 'sm' | 'md' | 'lg' (default: 'md')
- * @param showWordmark - show text beside the mark (default: true)
+ * @param variant - 'light' for light backgrounds (default) · 'dark' for dark surfaces
  */
-const Logo: React.FC<LogoProps> = ({ size = 'md', className = '', showWordmark = true }) => {
-  const { markSize, textSize, subSize } = sizeMap[size]
-  // Unique IDs prevent gradient collisions when multiple logos render on screen
-  const uid = size
+const Logo: React.FC<LogoProps> = ({
+  size = 'md',
+  className = '',
+  showWordmark = true,
+  variant = 'light',
+}) => {
+  const { icon, tik, credit, gap } = sizeMap[size]
+  // uid prevents SVG gradient ID collisions when multiple logo sizes appear on screen
+  const uid = `${size}-${variant}`
 
   return (
-    <div className={`inline-flex items-center gap-3 ${className}`}>
+    <div className={`inline-flex items-center ${className}`} style={{ gap }}>
 
-      {/* ── Icon Mark ── */}
-      <div className="relative flex-shrink-0" style={{ width: markSize, height: markSize }}>
+      {/* ── Icon Mark ─────────────────────────────────────────────────── */}
+      <div className="relative flex-shrink-0" style={{ width: icon, height: icon }}>
 
-        {/* Ambient glow — radiates outward from the mark */}
+        {/* Outer ambient glow — radiates from the icon */}
         <div
-          className="absolute -inset-1.5 rounded-[14px]"
-          style={{
-            background: 'radial-gradient(ellipse at 55% 45%, rgba(37,99,235,0.38) 0%, rgba(10,22,40,0) 68%)',
-            filter: 'blur(6px)',
-          }}
           aria-hidden="true"
+          className="pointer-events-none absolute rounded-full"
+          style={{
+            inset:      '-6px',
+            background: 'radial-gradient(circle, rgba(0,212,255,0.22) 0%, rgba(30,58,138,0.14) 45%, transparent 70%)',
+            filter:     'blur(8px)',
+          }}
         />
 
-        {/* Glass glint ring — subtle gradient frame */}
+        {/* Fine neon ring — visible on dark surfaces */}
         <div
-          className="absolute -inset-px rounded-[10px]"
-          style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, transparent 45%, rgba(212,175,55,0.22) 100%)',
-            opacity: 0.7,
-          }}
           aria-hidden="true"
+          className="pointer-events-none absolute rounded-full"
+          style={{
+            inset:     '-2px',
+            background: 'conic-gradient(from 135deg at 50% 50%, transparent 0deg, rgba(0,212,255,0.55) 90deg, rgba(212,175,55,0.45) 180deg, transparent 260deg)',
+            borderRadius: '50%',
+            opacity:   variant === 'dark' ? 1 : 0.55,
+          }}
         />
 
         <svg
-          width={markSize}
-          height={markSize}
+          width={icon}
+          height={icon}
           viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="relative z-10"
           role="img"
-          aria-label="TikCredit Pro logo mark"
+          aria-label="TikCredit Pro logo"
         >
           <defs>
-            {/* Deep navy → vibrant electric blue — premium fintech depth */}
-            <linearGradient id={`bg-${uid}`} x1="2" y1="1" x2="34" y2="35" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#040C1C" />
-              <stop offset="38%" stopColor="#0E2259" />
-              <stop offset="100%" stopColor="#1A48C8" />
+            {/* Background: deep navy → midnight indigo → electric blue */}
+            <linearGradient id={`bg-${uid}`} x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stopColor="#010915" />
+              <stop offset="42%"  stopColor="#0B2160" />
+              <stop offset="100%" stopColor="#1255D4" />
             </linearGradient>
 
-            {/* Inner shadow — adds bottom-right depth */}
-            <linearGradient id={`depth-${uid}`} x1="0" y1="0" x2="0" y2="36" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="white" stopOpacity="0" />
-              <stop offset="100%" stopColor="black" stopOpacity="0.18" />
-            </linearGradient>
-
-            {/* Glass sheen — top-left radial white highlight */}
-            <radialGradient id={`sheen-${uid}`} cx="28%" cy="22%" r="48%" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="white" stopOpacity="0.2" />
-              <stop offset="55%" stopColor="white" stopOpacity="0.05" />
-              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            {/* Depth vignette — bottom darkening for 3D feel */}
+            <radialGradient id={`depth-${uid}`} cx="50%" cy="72%" r="58%" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stopColor="#000" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#000" stopOpacity="0"  />
             </radialGradient>
 
-            {/* Checkmark stroke: white at heel → warm gold at tip */}
-            <linearGradient id={`check-${uid}`} x1="7.5" y1="19" x2="28.5" y2="10.5" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="white" stopOpacity="0.93" />
-              <stop offset="62%" stopColor="white" stopOpacity="0.88" />
-              <stop offset="100%" stopColor="#FDE68A" stopOpacity="0.97" />
-            </linearGradient>
-
-            {/* Gold dot gradient at checkmark tip */}
-            <radialGradient id={`gold-${uid}`} cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
-              <stop offset="0%" stopColor="#FEF3C7" />
-              <stop offset="40%" stopColor="#F59E0B" />
-              <stop offset="100%" stopColor="#B45309" />
+            {/* Glass sheen — upper-left white brilliance */}
+            <radialGradient id={`sheen-${uid}`} cx="28%" cy="22%" r="44%" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stopColor="#fff" stopOpacity="0.24" />
+              <stop offset="55%"  stopColor="#fff" stopOpacity="0.05" />
+              <stop offset="100%" stopColor="#fff" stopOpacity="0"   />
             </radialGradient>
 
-            {/* Subtle gold shimmer on bottom card-chip accent */}
-            <linearGradient id={`chip-${uid}`} x1="7" y1="29.5" x2="29" y2="29.5" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="#FDE68A" stopOpacity="0.4" />
+            {/* Checkmark stroke: white → electric cyan → warm gold */}
+            <linearGradient id={`check-${uid}`} x1="9" y1="20" x2="28" y2="10" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stopColor="#FFFFFF"  stopOpacity="0.95" />
+              <stop offset="50%"  stopColor="#00D4FF"  stopOpacity="0.90" />
+              <stop offset="100%" stopColor="#E5C76B"  stopOpacity="0.97" />
             </linearGradient>
 
-            {/* Soft drop shadow on the checkmark for perceived depth */}
-            <filter id={`cs-${uid}`} x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodColor="#000512" floodOpacity="0.55" />
+            {/* Gold tip dot radial */}
+            <radialGradient id={`dot-${uid}`} cx="50%" cy="35%" r="50%" gradientUnits="objectBoundingBox">
+              <stop offset="0%"   stopColor="#FEFCBF" />
+              <stop offset="38%"  stopColor="#F59E0B" />
+              <stop offset="100%" stopColor="#A16207" />
+            </radialGradient>
+
+            {/* Outer ring gradient — neon cyan to gold arc */}
+            <linearGradient id={`ring-${uid}`} x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stopColor="#00D4FF" stopOpacity="0.7" />
+              <stop offset="50%"  stopColor="#4D7FFF" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#E5C76B" stopOpacity="0.65" />
+            </linearGradient>
+
+            {/* Subtle inner shadow filter */}
+            <filter id={`shadow-${uid}`} x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodColor="#000" floodOpacity="0.50" />
             </filter>
           </defs>
 
-          {/* ── Background: deep navy rounded rect ── */}
-          <rect x="0.5" y="0.5" width="35" height="35" rx="9.5" fill={`url(#bg-${uid})`} />
+          {/* ── Outer glow ring (decorative, behind everything) ── */}
+          <circle cx="18" cy="18" r="17.5" stroke={`url(#ring-${uid})`} strokeWidth="1.5" fill="none" opacity="0.6" />
 
-          {/* Inner depth vignette */}
-          <rect x="0.5" y="0.5" width="35" height="35" rx="9.5" fill={`url(#depth-${uid})`} />
+          {/* ── Circle base ── */}
+          <circle cx="18" cy="18" r="16.5" fill={`url(#bg-${uid})`} />
 
-          {/* Glass sheen overlay */}
-          <rect x="0.5" y="0.5" width="35" height="35" rx="9.5" fill={`url(#sheen-${uid})`} />
+          {/* Depth vignette for 3-D solidity */}
+          <circle cx="18" cy="18" r="16.5" fill={`url(#depth-${uid})`} />
 
-          {/* Fine border highlight */}
-          <rect
-            x="0.75" y="0.75" width="34.5" height="34.5" rx="9.25"
-            stroke="rgba(255,255,255,0.14)" strokeWidth="0.5" fill="none"
-          />
+          {/* Glass sheen highlight */}
+          <circle cx="18" cy="18" r="16.5" fill={`url(#sheen-${uid})`} />
+
+          {/* Inner fine border */}
+          <circle cx="18" cy="18" r="16" stroke="rgba(255,255,255,0.13)" strokeWidth="0.5" fill="none" />
 
           {/*
             ── Hero Checkmark ──
-            The "Tik" mark: V-shape checkmark, bottom-left start, peak right
-            Stroke fades white → gold, symbolizing approval & financial trust
+            Curved bezier path for an organic, non-generic feel.
+            Bottom-left ignition → kink → soaring top-right tip.
+            stroke: white (trust) → cyan (tech) → gold (approval).
           */}
           <path
-            d="M 7.5 18.8 L 14.2 25.5 L 28.8 10.5"
+            d="M 8.5 20 C 10 22 13 25.5 15.5 27.2 C 18 29 20.5 23 28 10.2"
             stroke={`url(#check-${uid})`}
-            strokeWidth="3.2"
+            strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
-            filter={`url(#cs-${uid})`}
+            filter={`url(#shadow-${uid})`}
           />
 
-          {/* Gold glow dot at checkmark tip — the premium accent */}
-          <circle cx="28.8" cy="10.5" r="2.5" fill={`url(#gold-${uid})`} opacity="0.95" />
-          {/* Inner bright core of the dot */}
-          <circle cx="28.2" cy="9.9" r="0.9" fill="white" opacity="0.55" />
+          {/* Gold glow dot — premium accent at the check tip */}
+          <circle cx="28" cy="10.2" r="3"   fill={`url(#dot-${uid})`} opacity="0.98" />
+          {/* Specular inner core of dot */}
+          <circle cx="27.2" cy="9.5" r="1.1" fill="white" opacity="0.60" />
 
-          {/* Credit card bottom accent — subtle horizontal chip motif */}
-          <rect x="7" y="29.5" width="22" height="1.8" rx="0.9" fill="white" opacity="0.08" />
-          <rect x="7" y="29.5" width="9" height="1.8" rx="0.9" fill={`url(#chip-${uid})`} />
+          {/* Subtle bottom credit-chip motif */}
+          <rect x="8" y="29.5" width="20" height="1.6" rx="0.8" fill="white" opacity="0.07" />
+          <rect x="8" y="29.5" width="8"  height="1.6" rx="0.8" fill={`url(#ring-${uid})`} opacity="0.55" />
         </svg>
       </div>
 
-      {/* ── Wordmark ── */}
+      {/* ── Wordmark ───────────────────────────────────────────────────── */}
       {showWordmark && (
-        <div className="flex flex-col leading-none">
+        <div className="flex flex-col" style={{ lineHeight: 1, gap: Math.round(icon * 0.1) }}>
 
-          {/* Main wordmark: Tik · Credit */}
-          <div
-            className="flex items-baseline"
-            style={{ fontFamily: 'var(--font-sans)', lineHeight: 1 }}
+          {/* "Tik" — brand prefix, smaller weight */}
+          <span
+            style={{
+              fontFamily:    'var(--font-sans)',
+              fontSize:      tik,
+              fontWeight:    700,
+              letterSpacing: '0.04em',
+              color:         variant === 'dark' ? 'rgba(255,255,255,0.52)' : '#3D4F6B',
+              lineHeight:    1,
+            }}
           >
+            Tik
+          </span>
+
+          {/* "Credit" + PRO chip — same row */}
+          <div className="flex items-center" style={{ gap: Math.round(icon * 0.16) }}>
             <span
-              className="font-black"
               style={{
-                fontSize: textSize,
-                color: '#040C1C',
-                letterSpacing: '-0.025em',
-              }}
-            >
-              Tik
-            </span>
-            <span
-              className="font-black"
-              style={{
-                fontSize: textSize,
-                letterSpacing: '-0.015em',
-                background: 'linear-gradient(118deg, #1E3A8A 0%, #1D4ED8 45%, #3B82F6 100%)',
+                fontFamily:           'var(--font-sans)',
+                fontSize:             credit,
+                fontWeight:           900,
+                letterSpacing:        '-0.02em',
+                lineHeight:           1,
+                background:           variant === 'dark'
+                  ? 'linear-gradient(118deg, #00D4FF 0%, #4D7FFF 55%, #A78BFA 100%)'
+                  : 'linear-gradient(118deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%)',
                 WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                WebkitTextFillColor:  'transparent',
+                backgroundClip:       'text',
               }}
             >
               Credit
             </span>
-          </div>
 
-          {/* PRO badge — gold gradient pill border with dark background */}
-          <div className="mt-[5px]">
+            {/* PRO chip — gold gradient pill */}
             <div
-              className="inline-flex rounded-full p-[1px]"
+              className="inline-flex shrink-0 rounded-full"
               style={{
-                background: 'linear-gradient(105deg, #92400E, #D97706, #F59E0B, #FDE68A, #F59E0B, #B45309)',
+                padding:    '1.5px',
+                background: 'linear-gradient(108deg, #92400E, #D97706, #FBBF24, #FDE68A, #F59E0B, #92400E)',
+                boxShadow:  '0 0 8px rgba(212,175,55,0.35)',
               }}
             >
               <div
-                className="flex items-center justify-center rounded-full px-2 py-[1.5px]"
-                style={{ background: '#040C1C' }}
+                className="flex items-center justify-center rounded-full"
+                style={{
+                  background: variant === 'dark' ? '#010915' : '#040C1C',
+                  paddingInline: Math.round(tik * 0.6),
+                  paddingBlock:  1,
+                }}
               >
                 <span
-                  className="font-extrabold uppercase"
                   style={{
-                    fontSize: subSize,
-                    letterSpacing: '0.35em',
-                    fontFamily: 'var(--font-sans)',
-                    background: 'linear-gradient(90deg, #D97706, #F59E0B, #FDE68A, #F59E0B)',
+                    fontFamily:           'var(--font-sans)',
+                    fontSize:             tik * 0.82,
+                    fontWeight:           800,
+                    letterSpacing:        '0.32em',
+                    background:           'linear-gradient(90deg, #D97706, #FBBF24, #FDE68A, #F59E0B)',
                     WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                    WebkitTextFillColor:  'transparent',
+                    backgroundClip:       'text',
                   }}
                 >
                   PRO

@@ -1,12 +1,13 @@
 // Last modified: 2026-04-08 — TikCredit Pro transformation
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { motion, useScroll, useTransform, type Variants } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform, type Variants } from 'framer-motion'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
 import Logo from '@/components/ui/Logo'
+import Preloader from '@/components/ui/Preloader'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -58,13 +59,25 @@ const heroTextVariants: Variants = {
 
 export default function HomePage() {
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     router.prefetch('/form')
   }, [router])
 
+  // Dismiss preloader after 2.4 s (covers font load + initial paint)
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 2400)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-lux-ivory relative overflow-hidden">
+    <>
+      <AnimatePresence mode="wait">
+        {loading && <Preloader key="preloader" />}
+      </AnimatePresence>
+
+      <div className="min-h-screen bg-lux-ivory relative overflow-hidden">
       <div className="relative z-10">
         {/* Navigation */}
         <nav className="container mx-auto px-6 py-8">
@@ -516,5 +529,6 @@ export default function HomePage() {
         </footer>
       </div>
     </div>
+    </>
   )
 }
