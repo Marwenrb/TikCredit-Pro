@@ -32,6 +32,8 @@ export async function generateToken(): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRES_IN)
+    .setNotBefore('0s')
+    .setJti(crypto.randomUUID()) // unique token ID — prevents replay attacks
     .sign(secret)
 
   return token
@@ -44,7 +46,10 @@ export async function generateToken(): Promise<string> {
 export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
     const secret = getJwtSecret()
-    const { payload } = await jwtVerify(token, secret)
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ['HS256'],
+      clockTolerance: 15, // 15 second tolerance only
+    })
     return payload as unknown as TokenPayload
   } catch {
     return null

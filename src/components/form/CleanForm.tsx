@@ -34,14 +34,15 @@ const LOAN_STEP = 500_000
 const INDEXEDDB_DEBOUNCE_MS = 750
 const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com']
 
-const validateLoanAmount = (amount: number): { valid: boolean; error?: string } => {
+const validateLoanAmount = (amount: number, isCustom = false): { valid: boolean; error?: string } => {
   if (!amount || isNaN(amount)) {
     return { valid: false, error: 'المبلغ المطلوب مطلوب' }
   }
   if (amount < MIN_LOAN_AMOUNT) {
     return { valid: false, error: `المبلغ الأدنى المسموح به هو ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
   }
-  if (amount > MAX_LOAN_AMOUNT) {
+  // No upper limit when user has explicitly typed a custom amount
+  if (!isCustom && amount > MAX_LOAN_AMOUNT) {
     return { valid: false, error: `المبلغ الأقصى المسموح به هو ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
   }
   return { valid: true }
@@ -62,6 +63,7 @@ const CleanForm: React.FC = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isCustomAmount, setIsCustomAmount] = useState(false)
   const [amountValidation, setAmountValidation] = useState<{ valid: boolean; error?: string }>({ valid: true })
   const [isOnline, setIsOnline] = useState(true)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'offline'>('idle')
@@ -171,7 +173,7 @@ const CleanForm: React.FC = () => {
       if (!formData.financingType) {
         newErrors.financingType = 'نوع التمويل مطلوب'
       }
-      const amountCheck = validateLoanAmount(formData.requestedAmount)
+      const amountCheck = validateLoanAmount(formData.requestedAmount, isCustomAmount)
       if (!amountCheck.valid) {
         newErrors.requestedAmount = amountCheck.error
       }
@@ -274,7 +276,7 @@ const CleanForm: React.FC = () => {
       return
     }
 
-    const finalAmountValidation = validateLoanAmount(formData.requestedAmount)
+    const finalAmountValidation = validateLoanAmount(formData.requestedAmount, isCustomAmount)
     if (!finalAmountValidation.valid) {
       setErrors(prev => ({ ...prev, requestedAmount: finalAmountValidation.error }))
       setCurrentStep(2)
@@ -355,7 +357,7 @@ const CleanForm: React.FC = () => {
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (field === 'requestedAmount') {
-      const validation = validateLoanAmount(value as number)
+      const validation = validateLoanAmount(value as number, isCustomAmount)
       setAmountValidation(validation)
       if (validation.valid) {
         setErrors(prev => { const n = { ...prev }; delete n.requestedAmount; return n })
@@ -686,6 +688,7 @@ const CleanForm: React.FC = () => {
                   step={LOAN_STEP}
                   value={formData.requestedAmount}
                   onChange={(value) => updateField('requestedAmount', value)}
+                  onCustomModeChange={(isCustom) => setIsCustomAmount(isCustom)}
                   error={errors.requestedAmount}
                   showTooltip={true}
                 />

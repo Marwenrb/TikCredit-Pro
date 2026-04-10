@@ -11,6 +11,7 @@ export interface AmountSliderProps {
   step?: number
   value: number
   onChange: (value: number) => void
+  onCustomModeChange?: (isCustom: boolean) => void
   label?: string
   className?: string
   showTooltip?: boolean
@@ -35,6 +36,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
   step = 500_000,
   value,
   onChange,
+  onCustomModeChange,
   label = 'المبلغ المطلوب',
   className = '',
   showTooltip = true,
@@ -69,15 +71,16 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     return new Intl.NumberFormat('fr-DZ', { style: 'decimal', maximumFractionDigits: 0 }).format(num)
   }, [inputValue])
 
-  // Validation state
-  const isValid = value >= min && value <= max
+  // Validation state — custom mode only requires value > 0, no upper bound
+  const isValid = isCustomMode ? value > 0 : (value >= min && value <= max)
 
   // Handle slider change
   const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value)
     setIsCustomMode(false)
+    onCustomModeChange?.(false)
     onChange(newValue)
-  }, [onChange])
+  }, [onChange, onCustomModeChange])
 
   // Handle manual input — commits value to parent in real-time to avoid
   // React 18 batching race condition when user types then immediately clicks Next
@@ -96,11 +99,12 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     setIsEditing(false)
     const numValue = parseInt(inputValue, 10)
     if (!isNaN(numValue) && numValue >= min) {
-      const clampedValue = Math.min(max, numValue)
-      onChange(clampedValue)
+      // In custom mode: no upper bound. In preset mode: clamp to slider max.
+      const finalValue = isCustomMode ? numValue : Math.min(max, numValue)
+      onChange(finalValue)
     }
     setInputValue('')
-  }, [inputValue, min, max, onChange])
+  }, [inputValue, min, max, isCustomMode, onChange])
 
   // Handle input key press
   const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -125,8 +129,9 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
     setIsCustomMode(true)
     setIsEditing(true)
     setInputValue('')
+    onCustomModeChange?.(true)
     setTimeout(() => inputRef.current?.focus(), 50)
-  }, [])
+  }, [onCustomModeChange])
 
   // Handle keyboard navigation on slider
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -195,7 +200,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
           <motion.button
             key={qa.value}
             type="button"
-            onClick={() => { setIsCustomMode(false); onChange(qa.value) }}
+            onClick={() => { setIsCustomMode(false); onCustomModeChange?.(false); onChange(qa.value) }}
             disabled={disabled}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -291,7 +296,9 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
                   اكتب المبلغ المطلوب ثم اضغط Enter
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  الحد الأدنى {formatCurrency(min)} — الحد الأقصى {formatCurrency(max)}
+                  {isCustomMode
+                    ? `Montant libre — minimum ${formatCurrency(min)}`
+                    : `الحد الأدنى ${formatCurrency(min)} — الحد الأقصى ${formatCurrency(max)}`}
                 </p>
               </div>
             ) : (
@@ -331,7 +338,11 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
               >
                 <AlertCircle className="w-4 h-4" />
                 <span className="text-sm font-medium">
-                  {value < min ? `الحد الأدنى ${formatCurrency(min)}` : `الحد الأقصى ${formatCurrency(max)}`}
+                  {value < min
+                    ? `الحد الأدنى ${formatCurrency(min)}`
+                    : isCustomMode
+                      ? 'يرجى إدخال مبلغ صحيح'
+                      : `الحد الأقصى ${formatCurrency(max)}`}
                 </span>
               </motion.div>
             )}

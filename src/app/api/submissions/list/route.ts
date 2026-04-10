@@ -197,6 +197,11 @@ export async function GET(request: NextRequest) {
         local: localCount,
         total: submissions.length,
       }
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=30', // 30s browser cache for admin dashboard
+        'X-Content-Type-Options': 'nosniff',
+      }
     })
 
   } catch (error) {

@@ -29,7 +29,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
               <div className="flex flex-col items-center flex-1">
                 <motion.div
                   className={cn(
-                    'relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300',
+                    'relative w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300',
                     isCompleted && 'bg-elegant-blue text-white',
                     isCurrent && 'bg-elegant-blue text-white scale-110 shadow-lg shadow-elegant-blue/50',
                     isUpcoming && 'bg-surface-card border-2 border-gray-200 text-gray-400'
@@ -62,14 +62,14 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                   )}
                 </motion.div>
                 <motion.div
-                  className="mt-2 text-center"
+                  className="mt-2 text-center min-h-[2.6em]"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
                   <p
                     className={cn(
-                      'text-xs font-semibold',
+                      'text-xs font-semibold leading-tight',
                       isCurrent && 'text-elegant-blue',
                       isCompleted && 'text-elegant-blue',
                       isUpcoming && 'text-gray-400'

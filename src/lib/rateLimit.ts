@@ -1,120 +1,105 @@
 import { NextRequest } from 'next/server'
 
-interface RateLimitConfig {
-  interval: number // Time window in milliseconds
-  uniqueTokenPerInterval: number // Max requests per interval
-}
+// ── Sliding Window Rate Limiter ──────────────────────────────────────────────
+// Uses per-key timestamp arrays to count requests within the last N ms.
+// More accurate than fixed-window: no burst allowed at window boundary.
 
-interface RateLimitStore {
-  [key: string]: {
-    count: number
-    resetTime: number
-  }
-}
-
-// In-memory store for rate limiting (use Redis in production)
-const rateLimitStore: RateLimitStore = {}
+const STORE_MAX_KEYS = 500
+const store = new Map<string, number[]>()
 
 /**
- * Rate limiter for API endpoints
+ * Sliding window check — returns true if request is allowed.
+ * @param identifier - Per-client key (e.g. hashed IP)
+ * @param limit - Max requests allowed in the window
+ * @param windowMs - Time window in milliseconds
  */
+export function rateLimit(identifier: string, limit: number, windowMs: number): boolean {
+  const now = Date.now()
+  const cutoff = now - windowMs
+
+  // Evict oldest key when store is full (simple LRU-like pruning)
+  if (store.size >= STORE_MAX_KEYS && !store.has(identifier)) {
+    const firstKey = store.keys().next().value
+    if (firstKey !== undefined) store.delete(firstKey)
+  }
+
+  const timestamps = store.get(identifier) ?? []
+
+  // Slide the window: drop timestamps older than cutoff
+  const recent = timestamps.filter(t => t > cutoff)
+
+  if (recent.length >= limit) {
+    store.set(identifier, recent)
+    return false // rate-limited
+  }
+
+  recent.push(now)
+  store.set(identifier, recent)
+  return true // allowed
+}
+
+// ── Request Identifier ────────────────────────────────────────────────────────
+function simpleHash(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash
+  }
+  return Math.abs(hash).toString(36)
+}
+
+export function getRequestIdentifier(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  const realIp = request.headers.get('x-real-ip')
+  const ip = forwarded?.split(',')[0].trim() || realIp || 'anonymous'
+  return simpleHash(ip)
+}
+
+// ── Legacy Class API (kept for backwards compatibility) ───────────────────────
+
+interface RateLimitConfig {
+  interval: number
+  uniqueTokenPerInterval: number
+}
+
 export class RateLimiter {
   private config: RateLimitConfig
 
   constructor(config: RateLimitConfig = {
-    interval: 60 * 1000, // 1 minute
-    uniqueTokenPerInterval: 10, // 10 requests per minute
+    interval: 60 * 1000,
+    uniqueTokenPerInterval: 10,
   }) {
     this.config = config
   }
 
-  /**
-   * Check if request should be rate limited
-   */
   check(request: NextRequest): { success: boolean; limit: number; remaining: number; reset: number } {
-    const identifier = this.getIdentifier(request)
-    const now = Date.now()
-    
-    // Clean up expired entries
-    this.cleanup(now)
-    
-    // Get or create rate limit entry
-    if (!rateLimitStore[identifier] || rateLimitStore[identifier].resetTime < now) {
-      rateLimitStore[identifier] = {
-        count: 0,
-        resetTime: now + this.config.interval,
-      }
-    }
-    
-    const entry = rateLimitStore[identifier]
-    entry.count++
-    
-    const remaining = Math.max(0, this.config.uniqueTokenPerInterval - entry.count)
-    const success = entry.count <= this.config.uniqueTokenPerInterval
-    
+    const identifier = getRequestIdentifier(request)
+    const allowed = rateLimit(identifier, this.config.uniqueTokenPerInterval, this.config.interval)
+    const timestamps = store.get(identifier) ?? []
+    const remaining = Math.max(0, this.config.uniqueTokenPerInterval - timestamps.length)
+
     return {
-      success,
+      success: allowed,
       limit: this.config.uniqueTokenPerInterval,
       remaining,
-      reset: entry.resetTime,
-    }
-  }
-  
-  /**
-   * Get unique identifier for request
-   */
-  private getIdentifier(request: NextRequest): string {
-    // Try to get IP from various headers
-    const forwarded = request.headers.get('x-forwarded-for')
-    const realIp = request.headers.get('x-real-ip')
-    const ip = forwarded?.split(',')[0] || realIp || 'anonymous'
-    
-    // Combine IP with user agent for better uniqueness
-    const userAgent = request.headers.get('user-agent') || 'unknown'
-    const hash = this.simpleHash(`${ip}-${userAgent}`)
-    
-    return hash
-  }
-  
-  /**
-   * Simple hash function for creating unique identifiers
-   */
-  private simpleHash(str: string): string {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
-    }
-    return Math.abs(hash).toString(36)
-  }
-  
-  /**
-   * Clean up expired entries
-   */
-  private cleanup(now: number): void {
-    for (const key in rateLimitStore) {
-      if (rateLimitStore[key].resetTime < now) {
-        delete rateLimitStore[key]
-      }
+      reset: Date.now() + this.config.interval,
     }
   }
 }
 
-// Export singleton instances for different rate limit tiers
+// Singleton instances for different tiers
 export const strictRateLimiter = new RateLimiter({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 5, // 5 requests per minute
+  interval: 60 * 1000,
+  uniqueTokenPerInterval: 5,
 })
 
 export const normalRateLimiter = new RateLimiter({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 30, // 30 requests per minute
+  interval: 60 * 1000,
+  uniqueTokenPerInterval: 30,
 })
 
 export const relaxedRateLimiter = new RateLimiter({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 100, // 100 requests per minute
+  interval: 60 * 1000,
+  uniqueTokenPerInterval: 100,
 })
-
-

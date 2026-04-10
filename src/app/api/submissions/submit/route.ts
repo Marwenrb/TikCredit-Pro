@@ -19,11 +19,39 @@ const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefi
 
 // Loan amount validation constants
 const MIN_LOAN_AMOUNT = 5_000_000
-const MAX_LOAN_AMOUNT = 20_000_000
+// No upper bound — custom amounts above 20M are supported
 
 // In-memory duplicate prevention (works per-instance)
 const recentSubmissions = new Map<string, number>()
 const DUPLICATE_WINDOW_MS = 60_000
+
+// ── Input Sanitization ───────────────────────────────────────────────────────
+// Strip HTML tags and control characters from all user-supplied strings.
+function sanitizeString(input: unknown): string {
+  if (typeof input !== 'string') return ''
+  return input
+    .replace(/<[^>]*>/g, '')   // strip HTML tags
+    .replace(/[\u0000-\u001F\u007F]/g, '') // strip control chars
+    .trim()
+    .slice(0, 500) // hard length cap
+}
+
+function sanitizeFormData(raw: unknown): unknown {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return raw
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value === 'string') {
+      sanitized[key] = sanitizeString(value)
+    } else if (typeof value === 'number' || typeof value === 'boolean') {
+      sanitized[key] = value
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeFormData(value) // recurse for banking obj
+    } else {
+      sanitized[key] = value
+    }
+  }
+  return sanitized
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOGGING
@@ -55,7 +83,7 @@ function fingerprint(data: FormData, ip: string): string {
 function validateAmount(amount: number): { ok: boolean; msg?: string } {
   if (!amount || isNaN(amount)) return { ok: false, msg: 'المبلغ المطلوب مطلوب' }
   if (amount < MIN_LOAN_AMOUNT) return { ok: false, msg: `الحد الأدنى: ${MIN_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
-  if (amount > MAX_LOAN_AMOUNT) return { ok: false, msg: `الحد الأقصى: ${MAX_LOAN_AMOUNT.toLocaleString('ar-DZ')} د.ج` }
+  // No upper bound — custom amounts above 20M are allowed when user explicitly enters them
   return { ok: true }
 }
 
@@ -167,7 +195,9 @@ export async function POST(request: NextRequest) {
     // Parse request body
     let data: FormData
     try {
-      data = await request.json()
+      const raw = await request.json()
+      // Sanitize all string fields — strip HTML tags and control characters
+      data = sanitizeFormData(raw) as FormData
     } catch (parseError) {
       logError('Failed to parse JSON body:', parseError)
       return NextResponse.json({

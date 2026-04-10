@@ -19,8 +19,9 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 31536000, // 1 year
+    formats: ['image/avif', 'image/webp'], // AVIF first — better compression
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     remotePatterns: [
       {
         protocol: 'https',
@@ -39,6 +40,11 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
+          // DNS prefetch control for performance
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
           // Prevent clickjacking attacks
           {
             key: 'X-Frame-Options',
