@@ -39,7 +39,9 @@ export interface LocalSubmission {
         ip?: string
         userAgent?: string
         savedAt: string
-        syncedToFirebase: boolean
+        syncedToSupabase: boolean
+        /** @deprecated Use syncedToSupabase instead */
+        syncedToFirebase?: boolean
     }
 }
 
@@ -211,7 +213,7 @@ ${divider}
 ${divider}
 
 ✅ Statut           : En attente de traitement / قيد المعالجة
-🔄 Sync Firebase   : ${submission.metadata.syncedToFirebase ? 'Synchronisé / متزامن ✓' : 'En attente / قيد الانتظار'}
+🔄 Sync Supabase   : ${submission.metadata.syncedToSupabase ? 'Synchronisé / متزامن ✓' : 'En attente / قيد الانتظار'}
 🌐 IP Client       : ${submission.metadata.ip || 'Non disponible'}
 
 ${divider}
@@ -240,7 +242,7 @@ ${divider}
 export async function saveToLocalDisk(
     submissionId: string,
     data: FormData,
-    metadata: { ip?: string; userAgent?: string; syncedToFirebase?: boolean }
+    metadata: { ip?: string; userAgent?: string; syncedToSupabase?: boolean; /** @deprecated */ syncedToFirebase?: boolean }
 ): Promise<{ success: boolean; error?: string; filePath?: string; reportPath?: string }> {
     try {
         await ensureDatDirectory()
@@ -255,7 +257,7 @@ export async function saveToLocalDisk(
                 ip: metadata.ip,
                 userAgent: metadata.userAgent,
                 savedAt: now,
-                syncedToFirebase: metadata.syncedToFirebase ?? false
+                syncedToSupabase: metadata.syncedToSupabase ?? metadata.syncedToFirebase ?? false
             }
         }
 
@@ -318,7 +320,8 @@ export async function markAsSynced(submissionId: string): Promise<boolean> {
         try {
             const content = await fs.readFile(individualPath, 'utf-8')
             submission = JSON.parse(content) as LocalSubmission
-            submission.metadata.syncedToFirebase = true
+            submission.metadata.syncedToSupabase = true
+            submission.metadata.syncedToFirebase = true // deprecated alias
             await atomicWriteFile(individualPath, JSON.stringify(submission, null, 2))
         } catch {
             // Individual file might not exist - continue to master file
@@ -328,7 +331,8 @@ export async function markAsSynced(submissionId: string): Promise<boolean> {
         const masterData = await readMasterFile()
         const masterSubmission = masterData.submissions.find(s => s.id === submissionId)
         if (masterSubmission) {
-            masterSubmission.metadata.syncedToFirebase = true
+            masterSubmission.metadata.syncedToSupabase = true
+            masterSubmission.metadata.syncedToFirebase = true // deprecated alias
             masterData.lastUpdated = new Date().toISOString()
             await atomicWriteFile(MASTER_FILE, JSON.stringify(masterData, null, 2))
         }
@@ -366,7 +370,7 @@ export async function getAllLocalSubmissions(): Promise<LocalSubmission[]> {
  */
 export async function getPendingSubmissions(): Promise<LocalSubmission[]> {
     const all = await getAllLocalSubmissions()
-    return all.filter(s => !s.metadata.syncedToFirebase)
+    return all.filter(s => !s.metadata.syncedToSupabase)
 }
 
 /**
@@ -380,7 +384,7 @@ export async function getStorageStats(): Promise<{
 }> {
     try {
         const masterData = await readMasterFile()
-        const synced = masterData.submissions.filter(s => s.metadata.syncedToFirebase).length
+        const synced = masterData.submissions.filter(s => s.metadata.syncedToSupabase).length
 
         return {
             total: masterData.totalCount,

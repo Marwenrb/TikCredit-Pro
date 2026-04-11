@@ -26,6 +26,7 @@
  * 
  * ═══════════════════════════════════════════════════════════════════════════════
  */
+'use server'
 
 import { FormData } from '@/types'
 import { supabaseAdmin, adminSaveSubmission } from './supabase-admin'

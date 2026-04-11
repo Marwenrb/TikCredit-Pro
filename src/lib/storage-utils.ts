@@ -28,6 +28,9 @@ export const REPORTS_DIR = path.join(DATA_DIR, 'reports')
 /** Check if we're in development mode */
 export const isDev = process.env.NODE_ENV === 'development'
 
+/** Check if we're running on Vercel (read-only filesystem) */
+export const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL_ENV
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -86,11 +89,13 @@ export async function ensureDataDir(): Promise<void> {
     }
 }
 
-// Ensure directory exists on module load
-try {
-    ensureDataDirSync()
-} catch {
-    // Silent fail on module load - will retry on first operation
+// Ensure directory exists on module load (skip on Vercel — read-only filesystem)
+if (!isVercel) {
+    try {
+        ensureDataDirSync()
+    } catch {
+        // Silent fail on module load - will retry on first operation
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

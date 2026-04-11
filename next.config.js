@@ -102,9 +102,6 @@ const nextConfig = {
   // Compress responses
   compress: true,
   
-  // Production optimizations
-  productionBrowserSourceMaps: false,
-  
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
     // Add explicit path alias for Netlify compatibility
@@ -136,7 +133,7 @@ const nextConfig = {
       config.optimization = {
         ...config.optimization,
         usedExports: true,
-        sideEffects: true,
+        sideEffects: false,
         moduleIds: 'deterministic',
       }
       

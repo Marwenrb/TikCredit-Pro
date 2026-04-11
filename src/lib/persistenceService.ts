@@ -9,11 +9,17 @@
  * - Real-time sync status tracking
  * - Duplicate prevention
  */
+'use server'
 
 import { FormData, Submission } from '@/types'
 import { supabaseAdmin, adminSaveSubmission, adminGetAllSubmissions } from './supabase-admin'
 import { promises as fs } from 'fs'
 import path from 'path'
+
+// Server-only guard — prevents accidental client-side imports
+if (typeof window !== 'undefined') {
+  throw new Error('persistenceService is a server-only module and cannot be imported on the client')
+}
 
 // Constants
 const DATA_DIR = path.join(process.cwd(), 'data')
