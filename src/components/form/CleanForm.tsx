@@ -21,7 +21,6 @@ import {
   initAutoSync,
   syncPendingSubmissions
 } from '@/lib/indexedDBService'
-import confetti from 'canvas-confetti'
 import { useToast } from '@/components/ui/Toast'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -320,6 +319,7 @@ const CleanForm: React.FC = () => {
 
         const duration = 3000
         const animationEnd = Date.now() + duration
+        const confetti = (await import('canvas-confetti')).default
         const interval = setInterval(() => {
           const timeLeft = animationEnd - Date.now()
           if (timeLeft <= 0) return clearInterval(interval)

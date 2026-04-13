@@ -6,14 +6,14 @@ import Providers from '@/components/Providers'
 
 const inter = Inter({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   variable: '--font-inter',
   display: 'swap',
 })
 
 const notoKufiArabic = Noto_Kufi_Arabic({
   subsets: ['arabic'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   variable: '--font-arabic',
   display: 'swap',
 })

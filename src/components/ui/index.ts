@@ -14,6 +14,5 @@ export { default as BlueParticles } from './BlueParticles'
 export { default as UltraPremiumBackground } from './UltraPremiumBackground'
 export { default as Checkbox } from './Checkbox'
 export { default as Toggle } from './Toggle'
-export { default as Loader } from './Loader'
 export { ToastProvider, useToast } from './Toast'
 

@@ -1,4 +1,4 @@
-// Last modified: 2026-04-08 — TikCredit Pro transformation
+// TikCredit Pro — Premium Homepage · 2026
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -7,8 +7,10 @@ import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
 import Logo from '@/components/ui/Logo'
 import Preloader from '@/components/ui/Preloader'
+import BlueParticles from '@/components/ui/BlueParticles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
 
 // ANIMATION SYSTEM
 // ============================================
@@ -55,15 +57,23 @@ const heroTextVariants: Variants = {
 export default function HomePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
     router.prefetch('/form')
   }, [router])
 
-  // Dismiss preloader after 2.4 s (covers font load + initial paint)
+  // Dismiss preloader after 2.4 s
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 2400)
     return () => clearTimeout(t)
+  }, [])
+
+  // Sticky glass nav on scroll
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   return (
@@ -73,43 +83,84 @@ export default function HomePage() {
       </AnimatePresence>
 
       <div className="min-h-screen bg-lux-ivory relative overflow-hidden">
+
+      {/* ── Ambient background layers ──────────────────────────────────── */}
+      <BlueParticles className="fixed inset-0 z-0" density={20} />
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+          }}
+        />
+        <div
+          className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(212,175,55,0.04) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+          }}
+        />
+      </div>
+
       <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="container mx-auto px-6 py-8">
-          <div className="flex justify-between items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <Logo size="md" />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="flex items-center gap-4"
-            >
-              <Link href="/form">
-                <Button variant="default" size="default">
-                  ابدأ الآن
-                  <ArrowLeft className="w-5 h-5 mr-2" />
-                </Button>
-              </Link>
-            </motion.div>
+        {/* ── Navigation — sticky glass on scroll ──────────────────────── */}
+        <nav className={cn(
+          "sticky top-0 z-50 transition-all duration-300",
+          scrolled
+            ? "py-4 bg-white/80 backdrop-blur-xl border-b border-lux-silver/50 shadow-luxury"
+            : "py-8"
+        )}>
+          <div className="container mx-auto px-6">
+            <div className="flex justify-between items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <Logo size="md" />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center gap-4"
+              >
+                <Link href="/form">
+                  <Button variant="default" size="default">
+                    ابدأ الآن
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                  </Button>
+                </Link>
+              </motion.div>
+            </div>
           </div>
         </nav>
 
-        {/* Hero Section */}
+        {/* ── Hero Section ─────────────────────────────────────────────── */}
         <main className="container mx-auto px-6 py-16 md:py-24">
           <div className="text-center mb-20">
+
+            {/* Trust badge — glassmorphism + shimmer sweep */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-lux-sapphire/[0.07] backdrop-blur-sm rounded-full border border-lux-sapphire/15 mb-8"
+              className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-lux-sapphire/15 mb-8 relative overflow-hidden"
+              style={{
+                background: 'rgba(30,58,138,0.05)',
+                backdropFilter: 'blur(8px)',
+              }}
             >
-              <div className="w-2 h-2 rounded-full bg-elegant-blue animate-pulse-soft" />
-              <span className="text-sm font-semibold text-lux-sapphire tracking-wide">منصة التمويل الأكثر ثقة في الجزائر</span>
+              {/* Shimmer sweep */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-elegant-blue/[0.08] to-transparent"
+                animate={{ x: ['-100%', '200%'] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear', repeatDelay: 2 }}
+              />
+              <div className="w-2.5 h-2.5 rounded-full bg-elegant-blue animate-pulse-soft relative">
+                <div className="absolute inset-0 rounded-full bg-elegant-blue animate-ping opacity-30" />
+              </div>
+              <span className="text-sm font-semibold text-lux-sapphire tracking-wide relative z-10">منصة التمويل الأكثر ثقة في الجزائر</span>
             </motion.div>
 
             <motion.h1
@@ -178,7 +229,7 @@ export default function HomePage() {
               </Link>
             </motion.div>
 
-            {/* Trust Indicators — Premium Stat Cards */}
+            {/* ── Trust Stats — glass cards ──────────────────────────────── */}
             <motion.div
               className="grid grid-cols-3 gap-3 sm:gap-5 mt-12 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
@@ -212,10 +263,16 @@ export default function HomePage() {
                   key={i}
                   whileHover={{ y: -4, scale: 1.03 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="relative bg-white rounded-2xl border border-lux-silver/80 p-4 sm:p-5 text-center shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden group"
+                  className="relative glass-stat-card rounded-2xl p-4 sm:p-5 text-center overflow-hidden group"
                 >
                   {/* Top accent line */}
                   <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${stat.gradient}`} />
+
+                  {/* Hover glow */}
+                  <div
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{ boxShadow: `inset 0 0 20px ${stat.glow}, 0 0 30px ${stat.glow}` }}
+                  />
 
                   {/* Icon */}
                   <div
@@ -227,12 +284,9 @@ export default function HomePage() {
                     </svg>
                   </div>
 
-                  {/* Value */}
                   <p className={`text-2xl sm:text-3xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent leading-none mb-1`}>
                     {stat.value}
                   </p>
-
-                  {/* Label */}
                   <p className="text-xs sm:text-sm font-semibold text-lux-slate leading-tight">
                     {stat.label}
                   </p>
@@ -241,7 +295,7 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Feature Cards */}
+          {/* ── Feature Cards — neon border on hover ───────────────────── */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -283,6 +337,7 @@ export default function HomePage() {
                 whileHover={{
                   y: -12,
                   scale: 1.02,
+                  boxShadow: '0 20px 60px rgba(0,212,255,0.10), 0 8px 24px rgba(37,99,235,0.08)',
                   transition: {
                     type: 'spring',
                     stiffness: 300,
@@ -292,7 +347,7 @@ export default function HomePage() {
                 whileTap={{ scale: 0.98 }}
                 className="group cursor-pointer"
               >
-                <div className="luxury-card p-8 h-full relative overflow-hidden">
+                <div className="neon-border-card luxury-card p-8 h-full relative overflow-hidden">
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-br from-elegant-blue/[0.03] via-elegant-blue-light/[0.02] to-transparent"
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -309,7 +364,7 @@ export default function HomePage() {
                     <span className="text-[10px] font-bold text-white tracking-wider">{feature.badge}</span>
                   </div>
 
-                  {/* Custom SVG Icon */}
+                  {/* Icon */}
                   <motion.div
                     className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-5 shadow-lg relative z-10`}
                     style={{ boxShadow: `0 8px 24px ${feature.accentColor}30` }}
@@ -343,7 +398,7 @@ export default function HomePage() {
             ))}
           </motion.div>
 
-          {/* Why Choose Us */}
+          {/* ── Why Choose Us — glass items ─────────────────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 40, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -391,7 +446,7 @@ export default function HomePage() {
                     x: 5,
                     transition: { type: 'spring', stiffness: 400, damping: 25 }
                   }}
-                  className="flex items-center gap-4 p-4 rounded-luxury bg-white border border-lux-silver hover:border-elegant-blue/20 transition-all duration-300 cursor-default group/item shadow-sm hover:shadow-md"
+                  className="flex items-center gap-4 p-4 rounded-luxury bg-white/70 backdrop-blur-sm border border-lux-silver hover:border-elegant-blue/30 transition-all duration-300 cursor-default group/item shadow-sm hover:shadow-lg"
                 >
                   <motion.div
                     className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-lux-sapphire to-elegant-blue flex items-center justify-center shadow-md"
@@ -411,7 +466,7 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* CTA Section */}
+          {/* ── CTA Section — neon accent line + floating dots ──────────── */}
           <motion.div
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -446,6 +501,29 @@ export default function HomePage() {
               <div className="absolute top-6 right-8 w-20 h-20 border border-white/[0.06] rounded-2xl rotate-12" />
               <div className="absolute bottom-8 left-10 w-16 h-16 border border-white/[0.06] rounded-full" />
               <div className="absolute top-1/2 right-1/4 w-2 h-2 rounded-full bg-premium-gold/30" />
+
+              {/* Floating dot accents */}
+              <motion.div
+                className="absolute top-1/3 left-[20%] w-1.5 h-1.5 rounded-full bg-neon-blue/40"
+                animate={{ y: [0, -10, 0], opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <motion.div
+                className="absolute bottom-1/3 right-[20%] w-1 h-1 rounded-full bg-premium-gold/50"
+                animate={{ y: [0, 8, 0], opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              />
+
+              {/* Bottom neon accent line */}
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 h-[2px]"
+                style={{
+                  background: 'linear-gradient(90deg, transparent, #00D4FF, #7C3AED, #3B82F6, transparent)',
+                  backgroundSize: '200% 100%',
+                }}
+                animate={{ backgroundPosition: ['0% 50%', '200% 50%'] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+              />
 
               <div className="relative z-10">
                 <motion.h2
@@ -483,8 +561,10 @@ export default function HomePage() {
           </motion.div>
         </main>
 
-        {/* Footer */}
+        {/* ── Footer ───────────────────────────────────────────────────── */}
         <footer className="relative mt-20">
+          {/* Gradient separator */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-lux-sapphire/20 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-lux-sapphire/[0.02] to-lux-sapphire/[0.04]" />
           <div className="relative container mx-auto px-6 py-8">
             <motion.div

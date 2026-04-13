@@ -1,114 +1,80 @@
-// TikCredit Pro — Cinematic word-wipe preloader · 2026
+// Tik Credit Pro — Preloader · clean rewrite · 2026
+// CRT aperture iris open/close — uses actual theme tokens
+// lux-navy #0A1628 · lux-sapphire #1E3A8A · elegant-blue #2563EB
+// premium-gold #D4AF37 · neon-blue #00D4FF
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import React from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 
-const expo   = [0.16, 1, 0.3, 1] as const
-const linear = 'linear' as const
+const expo = [0.16, 1, 0.3, 1] as const
 
-// ── Inline Logo SVG ──────────────────────────────────────────────────────────
-function CenterIcon({ size = 62 }: { size?: number }) {
+// ── Inline squircle icon (unique IDs: pl- prefix) ─────────────────────────────
+function SplashIcon({ size = 72 }: { size?: number }) {
   return (
     <svg
-      width={size} height={size} viewBox="0 0 36 36" fill="none"
+      width={size} height={size} viewBox="0 0 44 44" fill="none"
       xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tik Credit Pro"
     >
       <defs>
-        <linearGradient id="pi-bg" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#010915" />
-          <stop offset="42%"  stopColor="#0B2160" />
-          <stop offset="100%" stopColor="#1255D4" />
+        <linearGradient id="pl-fill" x1="7" y1="7" x2="37" y2="37" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#0A1628" />
+          <stop offset="55%"  stopColor="#1E3A8A" />
+          <stop offset="100%" stopColor="#2563EB" />
         </linearGradient>
-        <radialGradient id="pi-sheen" cx="28%" cy="22%" r="44%">
-          <stop offset="0%"   stopColor="#fff" stopOpacity="0.22" />
+        <radialGradient id="pl-sheen" cx="28%" cy="18%" r="48%">
+          <stop offset="0%"   stopColor="#fff" stopOpacity="0.26" />
           <stop offset="100%" stopColor="#fff" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="pi-check" x1="9" y1="20" x2="28" y2="10" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#FFFFFF" stopOpacity="0.95" />
-          <stop offset="50%"  stopColor="#00D4FF" stopOpacity="0.90" />
-          <stop offset="100%" stopColor="#E5C76B" stopOpacity="0.97" />
+        <linearGradient id="pl-ck" x1="13" y1="26" x2="33" y2="13" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#FFFFFF" stopOpacity="0.97" />
+          <stop offset="45%"  stopColor="#00D4FF" stopOpacity="0.93" />
+          <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.95" />
         </linearGradient>
-        <radialGradient id="pi-dot" cx="50%" cy="35%" r="50%">
-          <stop offset="0%"   stopColor="#FEFCBF" />
-          <stop offset="38%"  stopColor="#F59E0B" />
-          <stop offset="100%" stopColor="#A16207" />
+        <radialGradient id="pl-dot" cx="36%" cy="30%" r="52%">
+          <stop offset="0%"   stopColor="#FEF3C7" />
+          <stop offset="40%"  stopColor="#D4AF37" />
+          <stop offset="100%" stopColor="#8B6914" />
         </radialGradient>
-        <filter id="pi-shadow">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodColor="#000" floodOpacity="0.45" />
+        <filter id="pl-glow" x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000"    floodOpacity="0.50" />
+          <feDropShadow dx="0" dy="0" stdDeviation="7" floodColor="#00D4FF" floodOpacity="0.32" />
         </filter>
       </defs>
-      <circle cx="18" cy="18" r="16.5" fill="url(#pi-bg)" />
-      <circle cx="18" cy="18" r="16.5" fill="url(#pi-sheen)" />
-      <circle cx="18" cy="18" r="16"   stroke="rgba(255,255,255,0.11)" strokeWidth="0.5" fill="none" />
-      <path
-        d="M 8.5 20 C 10 22 13 25.5 15.5 27.2 C 18 29 20.5 23 28 10.2"
-        stroke="url(#pi-check)" strokeWidth="3.8"
-        strokeLinecap="round" strokeLinejoin="round"
-        fill="none" filter="url(#pi-shadow)"
+
+      <rect x="7" y="7" width="30" height="30" rx="9" ry="9" fill="url(#pl-fill)" />
+      <rect x="7" y="7" width="30" height="30" rx="9" ry="9" fill="url(#pl-sheen)" />
+      <rect
+        x="7.6" y="7.6" width="28.8" height="28.8" rx="8.5" ry="8.5"
+        stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" fill="none"
       />
-      <circle cx="28"   cy="10.2" r="3"   fill="url(#pi-dot)" opacity="0.98" />
-      <circle cx="27.2" cy="9.5"  r="1.1" fill="white"         opacity="0.58" />
+      <path
+        d="M 13 23 L 19.5 30.5 L 33 13.5"
+        stroke="url(#pl-ck)" strokeWidth="4.8"
+        strokeLinecap="round" strokeLinejoin="round"
+        fill="none" filter="url(#pl-glow)"
+      />
+      <circle cx="33"   cy="13.5" r="3"   fill="url(#pl-dot)" />
+      <circle cx="32.3" cy="12.8" r="1"   fill="white" opacity="0.65" />
     </svg>
   )
 }
 
-// ── WipeWord — horizontal clip-path reveal + laser-edge streak ───────────────
-function WipeWord({
-  text, delay, duration, style, streakColor,
-}: {
-  text: string
-  delay: number
-  duration: number
-  style: React.CSSProperties
-  streakColor: string
-}) {
-  return (
-    <div className="relative overflow-hidden" style={{ display: 'inline-block' }}>
-      {/* Text — revealed by clip-path growing from left */}
-      <motion.span
-        style={{ display: 'inline-block', ...style }}
-        initial={{ clipPath: 'inset(0 102% 0 0)' }}
-        animate={{ clipPath: 'inset(0 0% 0 0)'   }}
-        transition={{ duration, delay, ease: expo }}
-      >
-        {text}
-      </motion.span>
-
-      {/* Laser-scan leading edge — travels left → right at same speed */}
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-[-8px]"
-        style={{
-          width:      '2px',
-          background: `linear-gradient(180deg, transparent 0%, ${streakColor} 30%, white 50%, ${streakColor} 70%, transparent 100%)`,
-          boxShadow:  `0 0 16px 3px ${streakColor}`,
-          left:       0,
-        }}
-        initial={{ left: '0%', opacity: 0 }}
-        animate={{ left: '100%', opacity: [0, 1, 1, 0] }}
-        transition={{ duration, delay, ease: linear }}
-      />
-    </div>
-  )
-}
-
-// ── Main Preloader ───────────────────────────────────────────────────────────
+// ── Preloader ─────────────────────────────────────────────────────────────────
 const Preloader: React.FC = () => {
-  const reduced           = useReducedMotion()
-  const [showPro, setShowPro]   = useState(false)
-  const [showSub, setShowSub]   = useState(false)
+  const reduced = useReducedMotion()
 
-  useEffect(() => {
-    const t1 = setTimeout(() => setShowPro(true),  1400)
-    const t2 = setTimeout(() => setShowSub(true),  1650)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [])
-
+  /* Reduced motion — instant static splash */
   if (reduced) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020508]">
-        <p className="text-lg font-bold text-white tracking-widest">TIK CREDIT PRO</p>
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-lux-navy"
+        role="status" aria-label="جاري التحميل"
+      >
+        <div className="flex flex-col items-center gap-3">
+          <SplashIcon size={56} />
+          <p className="text-base font-bold text-white tracking-widest">TIK CREDIT PRO</p>
+        </div>
       </div>
     )
   }
@@ -116,144 +82,137 @@ const Preloader: React.FC = () => {
   return (
     <motion.div
       key="preloader"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: '#020508' }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{
-        opacity:    0,
-        scale:      0.97,
-        filter:     'blur(14px)',
-        transition: { duration: 0.55, ease: 'easeIn' },
-      }}
-      transition={{ duration: 0.25 }}
+      className="fixed inset-0 z-[9999] overflow-hidden"
       role="status"
       aria-live="polite"
-      aria-label="Chargement…"
+      aria-label="جاري التحميل"
+      /* ── CRT iris: 2px slit → full screen ───────────────────── */
+      initial={{ clipPath: 'inset(49.5% 0 49.5% 0)' }}
+      animate={{ clipPath: 'inset(0% 0 0% 0)' }}
+      exit={{
+        clipPath:   'inset(49.5% 0 49.5% 0)',
+        transition: { duration: 0.34, ease: 'easeIn' },
+      }}
+      transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
     >
-      {/* ── Deep radial background glow ─────────────────────────────────── */}
+      {/* Bg: hero gradient from theme */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A8A 60%, #2563EB 100%)' }}
+      />
+
+      {/* Radial centre glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(ellipse 65% 50% at 50% 44%, rgba(37,99,235,0.18) 0%, transparent 68%)' }}
+      />
+
+      {/* Scan-line texture — fades out after iris opens */}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
         style={{
-          background: 'radial-gradient(ellipse 64% 52% at 50% 46%, #0A1C42 0%, #020508 68%)',
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,0.025) 10px, rgba(255,255,255,0.025) 11px)',
         }}
+        initial={{ opacity: 1 }}
+        animate={{ opacity: 0 }}
+        transition={{ delay: 0.4, duration: 0.55, ease: 'easeOut' }}
       />
 
-      {/* ── Corner aurora blobs ─────────────────────────────────────────── */}
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-28 -top-16 h-[360px] w-[360px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 68%)' }}
-        animate={{ scale: [1, 1.12, 1], opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-20 -bottom-12 h-[300px] w-[300px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.09) 0%, transparent 65%)' }}
-        animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0.9, 0.5] }}
-        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-      />
-
-      {/* ── Dot grid ────────────────────────────────────────────────────── */}
+      {/* Dot grid */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.018]"
+        className="pointer-events-none absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)',
-          backgroundSize:  '30px 30px',
+          backgroundSize:  '28px 28px',
         }}
       />
 
-      {/* ── LOGO — springs in with bloom ────────────────────────────────── */}
-      <div className="relative flex items-center justify-center">
-        {/* Bloom behind icon */}
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute rounded-full"
-          style={{ width: 110, height: 110, background: 'radial-gradient(circle, rgba(0,212,255,0.18) 0%, transparent 68%)' }}
-          initial={{ scale: 0.4, opacity: 0 }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0, 0.8, 0.55] }}
-          transition={{ duration: 2.8, delay: 0.3, repeat: Infinity, ease: 'easeInOut' }}
-        />
+      {/* ── Content ────────────────────────────────────────────── */}
+      <div className="relative flex h-full flex-col items-center justify-center" style={{ gap: 26 }}>
 
+        {/* Icon — springs in from blur */}
         <motion.div
-          className="relative z-10"
-          initial={{ scale: 0.2, opacity: 0, filter: 'blur(24px)' }}
-          animate={{ scale: 1,   opacity: 1, filter: 'blur(0px)'  }}
-          transition={{ duration: 0.75, delay: 0.18, ease: expo }}
+          className="relative"
+          initial={{ scale: 0.35, opacity: 0, filter: 'blur(20px)' }}
+          animate={{ scale: 1,    opacity: 1, filter: 'blur(0px)'  }}
+          transition={{ delay: 0.26, duration: 0.70, ease: expo }}
         >
-          <CenterIcon size={62} />
+          {/* Ambient bloom */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              inset:      '-20px',
+              background: 'radial-gradient(circle, rgba(37,99,235,0.20) 0%, transparent 60%)',
+              filter:     'blur(16px)',
+            }}
+          />
+          <SplashIcon size={72} />
         </motion.div>
-      </div>
 
-      {/* ── Brand name — two words, each with wipe reveal ───────────────── */}
-      <div
-        className="mt-8 flex select-none items-baseline"
-        style={{
-          gap:        '0.38em',
-          fontFamily: 'var(--font-sans)',
-        }}
-        aria-label="Tik Credit"
-      >
-        {/* "Tik" — white, medium weight */}
-        <WipeWord
-          text="Tik"
-          delay={0.52}
-          duration={0.62}
-          streakColor="rgba(255,255,255,0.9)"
-          style={{
-            fontSize:      'clamp(2rem, 5.5vw, 2.8rem)',
-            fontWeight:    600,
-            letterSpacing: '-0.025em',
-            color:         'rgba(255,255,255,0.88)',
-          }}
-        />
+        {/* Brand text — fade up from blur */}
+        <motion.div
+          className="flex flex-col items-center"
+          style={{ gap: 10, fontFamily: 'var(--font-sans)' }}
+          initial={{ opacity: 0, y: 18, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, y: 0,  filter: 'blur(0px)'  }}
+          transition={{ delay: 0.58, duration: 0.60, ease: expo }}
+        >
+          {/* Tik Credit */}
+          <div className="flex items-baseline" style={{ gap: '0.24em' }}>
+            <span
+              style={{
+                fontSize:      'clamp(1.5rem, 4vw, 2rem)',
+                fontWeight:    400,
+                letterSpacing: '0.04em',
+                lineHeight:    1,
+                color:         'rgba(255,255,255,0.48)',
+              }}
+            >
+              Tik
+            </span>
+            <span
+              style={{
+                fontSize:             'clamp(1.5rem, 4vw, 2rem)',
+                fontWeight:           800,
+                letterSpacing:        '-0.025em',
+                lineHeight:           1,
+                background:           'linear-gradient(112deg, #00D4FF 0%, #3B82F6 55%, #7C3AED 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor:  'transparent',
+                backgroundClip:       'text',
+              }}
+            >
+              Credit
+            </span>
+          </div>
 
-        {/* "Credit" — gradient, heavy weight */}
-        <WipeWord
-          text="Credit"
-          delay={0.96}
-          duration={0.82}
-          streakColor="rgba(0,212,255,0.9)"
-          style={{
-            fontSize:             'clamp(2rem, 5.5vw, 2.8rem)',
-            fontWeight:           900,
-            letterSpacing:        '-0.025em',
-            background:           'linear-gradient(118deg, #00D4FF 0%, #4D7FFF 55%, #A78BFA 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor:  'transparent',
-            backgroundClip:       'text',
-          }}
-        />
-      </div>
-
-      {/* ── PRO badge ───────────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {showPro && (
+          {/* PRO badge */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.5, y: 10 }}
-            animate={{ opacity: 1, scale: 1,   y: 0  }}
-            transition={{ duration: 0.45, ease: expo }}
-            className="mt-3 inline-flex rounded-full"
+            className="inline-flex rounded-full"
             style={{
               padding:    '1.5px',
-              background: 'linear-gradient(108deg, #92400E, #D97706, #FBBF24, #FDE68A, #F59E0B, #92400E)',
-              boxShadow:  '0 0 14px rgba(212,175,55,0.35)',
+              background: 'linear-gradient(108deg, #8B6914, #B8941F, #D4AF37, #E5C76B, #D4AF37, #8B6914)',
+              boxShadow:  '0 0 12px rgba(212,175,55,0.40)',
             }}
+            initial={{ opacity: 0, scale: 0.5, y: 8 }}
+            animate={{ opacity: 1, scale: 1,   y: 0 }}
+            transition={{ delay: 0.88, duration: 0.40, ease: expo }}
           >
             <div
-              className="flex items-center justify-center rounded-full px-4 py-0.5"
-              style={{ background: '#010915' }}
+              className="flex items-center justify-center rounded-full px-4 py-[3px]"
+              style={{ background: '#0A1628' }}
             >
               <span
                 style={{
                   fontFamily:           'var(--font-sans)',
-                  fontSize:             '0.6rem',
+                  fontSize:             '0.58rem',
                   fontWeight:           800,
-                  letterSpacing:        '0.38em',
-                  background:           'linear-gradient(90deg, #D97706, #FBBF24, #FDE68A, #F59E0B)',
+                  letterSpacing:        '0.40em',
+                  background:           'linear-gradient(90deg, #B8941F, #D4AF37, #E5C76B, #D4AF37)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor:  'transparent',
                   backgroundClip:       'text',
@@ -263,50 +222,52 @@ const Preloader: React.FC = () => {
               </span>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>
 
-      {/* ── Arabic subtitle ──────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {showSub && (
-          <motion.p
-            dir="rtl"
-            className="mt-5 font-arabic text-xs"
-            style={{ color: 'rgba(255,255,255,0.22)', letterSpacing: '0.1em' }}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            جاري التحميل…
-          </motion.p>
-        )}
-      </AnimatePresence>
+        {/* Arabic subtitle */}
+        <motion.p
+          dir="rtl"
+          className="font-arabic text-xs"
+          style={{ color: 'rgba(255,255,255,0.22)', letterSpacing: '0.08em' }}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.05, duration: 0.45 }}
+        >
+          جاري التحميل…
+        </motion.p>
+      </div>
 
-      {/* ── Progress bar ─────────────────────────────────────────────────── */}
+      {/* ── Progress bar ──────────────────────────────────────── */}
       <motion.div
-        className="absolute bottom-12 left-1/2 -translate-x-1/2"
-        style={{ width: 140 }}
+        className="absolute bottom-11 left-1/2 -translate-x-1/2"
+        style={{ width: 120 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.45, duration: 0.4 }}
+        transition={{ delay: 0.45, duration: 0.30 }}
         aria-hidden="true"
       >
-        <div className="h-px w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-px w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
           <motion.div
             className="h-full rounded-full"
             style={{ background: 'linear-gradient(90deg, #1E3A8A, #2563EB 35%, #00D4FF 65%, #D4AF37)' }}
             initial={{ scaleX: 0, originX: 0 }}
             animate={{ scaleX: 1 }}
-            transition={{ delay: 0.45, duration: 2.0, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ delay: 0.45, duration: 1.85, ease: [0.4, 0, 0.2, 1] }}
           />
         </div>
       </motion.div>
 
-      {/* ── Top shimmer hairline ──────────────────────────────────────────── */}
+      {/* Top accent hairline */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.45) 38%, rgba(212,175,55,0.38) 62%, transparent)' }}
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.50) 35%, rgba(212,175,55,0.40) 65%, transparent)' }}
+      />
+      {/* Bottom accent hairline */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.30) 35%, rgba(0,212,255,0.25) 65%, transparent)' }}
       />
     </motion.div>
   )

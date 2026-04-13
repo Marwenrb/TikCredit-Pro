@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useMemo, memo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
-import { AlertCircle, CheckCircle2, Sparkles, PenLine, Infinity, ArrowLeft } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Sparkles, PenLine, Infinity as InfinityIcon, ArrowLeft } from 'lucide-react'
 
 export interface AmountSliderProps {
   min?: number
@@ -188,7 +188,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
               exit={{ opacity: 0, scale: 0.85 }}
               className="inline-flex items-center gap-1.5 rounded-full border border-premium-gold/40 bg-premium-gold/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-700"
             >
-              <Infinity className="w-3.5 h-3.5" />
+              <InfinityIcon className="w-3.5 h-3.5" />
               Montant Libre
             </motion.span>
           ) : (
@@ -269,7 +269,7 @@ const AmountSlider: React.FC<AmountSliderProps> = memo(({
             {/* Libre callout banner */}
             <div className="mb-4 flex items-center gap-3 rounded-2xl border border-premium-gold/30 bg-gradient-to-r from-amber-50 via-white to-amber-50 px-5 py-3">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-premium-gold to-amber-500 shadow-md">
-                <Infinity className="h-4 w-4 text-white" />
+                <InfinityIcon className="h-4 w-4 text-white" />
               </div>
               <div>
                 <p className="text-sm font-bold text-amber-800">Montant Libre — بلا حد أقصى</p>

@@ -3,9 +3,7 @@
  * Advanced Excel & PDF export functionality with date filtering
  */
 
-import ExcelJS from 'exceljs'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+// Heavy libs loaded on-demand inside exportToExcel / exportToPDF
 import { format } from 'date-fns'
 import { Submission } from '@/types'
 
@@ -166,7 +164,8 @@ export const exportToExcel = async (
       return
     }
 
-    // Create workbook and worksheets using ExcelJS
+    // Create workbook and worksheets using ExcelJS (loaded on-demand)
+    const ExcelJS = (await import('exceljs')).default
     const workbook = new ExcelJS.Workbook()
     workbook.creator = 'TikCredit Pro'
     workbook.created = new Date()
@@ -423,10 +422,10 @@ export const exportToExcel = async (
  * Note: PDF uses English labels for compatibility (Arabic not supported in jsPDF without custom fonts)
  * For Arabic text export, use TXT or CSV format instead
  */
-export const exportToPDF = (
+export const exportToPDF = async (
   submissions: Submission[],
   options: ExportOptions
-): void => {
+): Promise<void> => {
   try {
     // Filter by date range
     const filteredSubmissions = filterSubmissionsByDateRange(submissions, options.dateRange)
@@ -436,7 +435,9 @@ export const exportToPDF = (
       return
     }
 
-    // Create PDF document
+    // Create PDF document (loaded on-demand)
+    const { default: jsPDF } = await import('jspdf')
+    await import('jspdf-autotable')
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
@@ -480,8 +481,8 @@ export const exportToPDF = (
     // Define table headers (English for PDF compatibility)
     const headers = ['#', 'Phone', 'Email', 'Amount', 'Date']
 
-    // Generate table
-    autoTable(doc, {
+    // Generate table (jspdf-autotable patches doc via side-effect import above)
+    ;(doc as any).autoTable({
       head: [headers],
       body: tableData,
       startY: 50,
@@ -509,7 +510,7 @@ export const exportToPDF = (
         4: { cellWidth: 40 },
       },
       margin: { left: 15, right: 15 },
-      didDrawPage: (data) => {
+      didDrawPage: (data: { pageNumber: number }) => {
         // Add footer with page numbers
         const pageCount = doc.getNumberOfPages()
         doc.setFontSize(8)

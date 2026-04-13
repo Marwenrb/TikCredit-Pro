@@ -7,7 +7,7 @@ const nextConfig = {
 
   // Experimental optimizations for better bundle size
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns', 'chart.js'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns'],
   },
 
   // Performance optimizations
