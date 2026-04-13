@@ -1,7 +1,5 @@
-// Tik Credit Pro — Logo · clean rewrite · 2026
-// Uses actual theme tokens: lux-navy #0A1628 · lux-sapphire #1E3A8A
-// elegant-blue #2563EB · elegant-blue-light #3B82F6 · premium-gold #D4AF37
-// neon-blue #00D4FF
+// Tik Credit Pro — Premium Logo · 2026
+// TC monogram mark with neon accents + premium wordmark
 'use client'
 
 import React from 'react'
@@ -16,9 +14,9 @@ export interface LogoProps {
 }
 
 const dims = {
-  sm: { icon: 30, fs: 14, pro: 7,  gap: 8  },
-  md: { icon: 40, fs: 18, pro: 9,  gap: 12 },
-  lg: { icon: 56, fs: 25, pro: 13, gap: 16 },
+  sm: { icon: 32, fs: 15, pro: 7,  gap: 8  },
+  md: { icon: 42, fs: 19, pro: 9,  gap: 12 },
+  lg: { icon: 60, fs: 28, pro: 13, gap: 16 },
 } as const
 
 const Logo: React.FC<LogoProps> = ({
@@ -28,22 +26,8 @@ const Logo: React.FC<LogoProps> = ({
   variant      = 'light',
 }) => {
   const { icon, fs, pro, gap } = dims[size]
-  const id  = `tc-${size}-${variant}`
+  const id = `tc-${size}-${variant}`
   const dk = variant === 'dark'
-
-  /* ── Gradient stops by variant ──────────────────────────────────── */
-  // Light: CTA gradient (sapphire → blue → light) — pops on ivory bg
-  // Dark:  Hero gradient (navy → sapphire → blue)  — deep & cinematic
-  const fillStops = dk
-    ? [['0%','#0A1628'],['55%','#1E3A8A'],['100%','#2563EB']]
-    : [['0%','#1E3A8A'],['50%','#2563EB'],['100%','#3B82F6']]
-
-  // Check gradient
-  // Light: pure white (high contrast on blue fill)
-  // Dark:  white → neon-blue → gold sweep
-  const checkStops = dk
-    ? [['0%','#FFFFFF','0.97'],['45%','#00D4FF','0.93'],['100%','#D4AF37','0.95']]
-    : [['0%','#FFFFFF','0.98'],['50%','#FFFFFF','0.96'],['100%','#FFFFFF','0.90']]
 
   return (
     <div
@@ -51,12 +35,12 @@ const Logo: React.FC<LogoProps> = ({
       style={{ gap }}
     >
 
-      {/* ── Icon ─────────────────────────────────────────────────── */}
+      {/* ── Icon Mark — TC Monogram ─────────────────────────────── */}
       <div className="relative flex-shrink-0" style={{ width: icon, height: icon }}>
         <svg
           width={icon}
           height={icon}
-          viewBox="0 0 44 44"
+          viewBox="0 0 56 56"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="relative z-10"
@@ -64,77 +48,146 @@ const Logo: React.FC<LogoProps> = ({
           aria-label="Tik Credit Pro"
         >
           <defs>
-            <linearGradient id={`f-${id}`} x1="7" y1="7" x2="37" y2="37" gradientUnits="userSpaceOnUse">
-              {fillStops.map(([o, c]) => (
-                <stop key={o} offset={o} stopColor={c} />
-              ))}
+            {/* Main fill gradient */}
+            <linearGradient id={`bg-${id}`} x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+              {dk
+                ? <>
+                    <stop offset="0%"   stopColor="#0A1628" />
+                    <stop offset="40%"  stopColor="#0F2347" />
+                    <stop offset="100%" stopColor="#1E3A8A" />
+                  </>
+                : <>
+                    <stop offset="0%"   stopColor="#0F2347" />
+                    <stop offset="45%"  stopColor="#1E3A8A" />
+                    <stop offset="100%" stopColor="#2563EB" />
+                  </>
+              }
             </linearGradient>
 
-            <linearGradient id={`ck-${id}`} x1="13" y1="26" x2="33" y2="13" gradientUnits="userSpaceOnUse">
-              {checkStops.map(([o, c, a]) => (
-                <stop key={o} offset={o} stopColor={c} stopOpacity={a} />
-              ))}
+            {/* Neon accent gradient */}
+            <linearGradient id={`neon-${id}`} x1="10" y1="46" x2="46" y2="10" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stopColor="#00D4FF" />
+              <stop offset="50%"  stopColor="#2563EB" />
+              <stop offset="100%" stopColor="#7C3AED" />
             </linearGradient>
 
-            <radialGradient id={`sh-${id}`} cx="28%" cy="18%" r="48%">
-              <stop offset="0%"   stopColor="#fff" stopOpacity="0.24" />
+            {/* Gold accent gradient */}
+            <linearGradient id={`gold-${id}`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stopColor="#8B6914" />
+              <stop offset="35%"  stopColor="#D4AF37" />
+              <stop offset="65%"  stopColor="#E5C76B" />
+              <stop offset="100%" stopColor="#D4AF37" />
+            </linearGradient>
+
+            {/* Glass sheen */}
+            <radialGradient id={`sheen-${id}`} cx="30%" cy="15%" r="50%">
+              <stop offset="0%"   stopColor="#fff" stopOpacity="0.18" />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </radialGradient>
 
-            <radialGradient id={`gd-${id}`} cx="36%" cy="30%" r="52%">
-              <stop offset="0%"   stopColor="#FEF3C7" />
-              <stop offset="40%"  stopColor="#D4AF37" />
-              <stop offset="100%" stopColor="#8B6914" />
-            </radialGradient>
-
-            <filter id={`gl-${id}`} x="-25%" y="-25%" width="150%" height="150%">
-              <feDropShadow dx="0" dy="1" stdDeviation="1.8" floodColor="#000" floodOpacity="0.50" />
-              {dk && <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#00D4FF" floodOpacity="0.28" />}
+            {/* Letter glow */}
+            <filter id={`glow-${id}`} x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="0.5" stdDeviation="1" floodColor="#000" floodOpacity="0.35" />
+              {dk && <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00D4FF" floodOpacity="0.25" />}
             </filter>
+
+            {/* Outer ring glow for dark variant */}
+            {dk && (
+              <filter id={`ring-glow-${id}`} x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#00D4FF" floodOpacity="0.20" />
+              </filter>
+            )}
           </defs>
 
-          {/* Squircle body */}
-          <rect x="7" y="7" width="30" height="30" rx="9" ry="9" fill={`url(#f-${id})`} />
-          <rect x="7" y="7" width="30" height="30" rx="9" ry="9" fill={`url(#sh-${id})`} />
+          {/* ── Rounded square body ──────────────────────────── */}
+          <rect x="4" y="4" width="48" height="48" rx="14" ry="14" fill={`url(#bg-${id})`} />
 
-          {/* Inner rim */}
+          {/* Glass sheen overlay */}
+          <rect x="4" y="4" width="48" height="48" rx="14" ry="14" fill={`url(#sheen-${id})`} />
+
+          {/* Subtle inner border */}
           <rect
-            x="7.6" y="7.6" width="28.8" height="28.8" rx="8.5" ry="8.5"
-            stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" fill="none"
+            x="4.75" y="4.75" width="46.5" height="46.5" rx="13.5" ry="13.5"
+            stroke={dk ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.08)'}
+            strokeWidth="0.5" fill="none"
           />
 
-          {/* Checkmark */}
+          {/* ── Bottom-right neon accent arc ─────────────────── */}
           <path
-            d="M 13 23 L 19.5 30.5 L 33 13.5"
-            stroke={`url(#ck-${id})`}
-            strokeWidth="4.8"
+            d="M 44 52 A 14 14 0 0 0 52 44"
+            stroke={`url(#neon-${id})`}
+            strokeWidth="1.5"
             strokeLinecap="round"
-            strokeLinejoin="round"
             fill="none"
-            filter={`url(#gl-${id})`}
+            opacity={dk ? 0.6 : 0.35}
           />
 
-          {/* Gold dot at tip */}
-          <circle cx="33" cy="13.5" r="3" fill={`url(#gd-${id})`} />
-          <circle cx="32.3" cy="12.8" r="1" fill="white" opacity="0.65" />
+          {/* ── Top-left gold accent arc ─────────────────────── */}
+          <path
+            d="M 12 4 A 14 14 0 0 0 4 12"
+            stroke={`url(#gold-${id})`}
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            fill="none"
+            opacity={dk ? 0.5 : 0.3}
+          />
+
+          {/* ── TC Monogram ──────────────────────────────────── */}
+          <g filter={`url(#glow-${id})`}>
+            {/* T — clean geometric */}
+            <path
+              d="M 14 16 L 28 16"
+              stroke="white"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              opacity="0.95"
+            />
+            <path
+              d="M 21 16 L 21 38"
+              stroke="white"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              opacity="0.95"
+            />
+
+            {/* C — open arc, slightly overlapping the T stem */}
+            <path
+              d="M 42 20 A 12 12 0 1 0 42 36"
+              stroke={`url(#neon-${id})`}
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </g>
+
+          {/* ── Gold diamond accent at intersection ──────────── */}
+          <g transform="translate(36, 14)">
+            <rect
+              x="-2.5" y="-2.5" width="5" height="5" rx="1"
+              transform="rotate(45)"
+              fill={`url(#gold-${id})`}
+            />
+            {/* Specular highlight */}
+            <circle cx="-0.8" cy="-1" r="0.8" fill="white" opacity="0.55" />
+          </g>
         </svg>
       </div>
 
       {/* ── Wordmark ─────────────────────────────────────────────── */}
       {showWordmark && (
-        <div className="flex flex-col" style={{ lineHeight: 1, gap: Math.max(3, Math.round(icon * 0.09)) }}>
+        <div className="flex flex-col" style={{ lineHeight: 1, gap: Math.max(2, Math.round(icon * 0.07)) }}>
 
-          {/* Tik Credit */}
-          <div className="flex items-baseline" style={{ gap: Math.round(fs * 0.20) }}>
+          {/* Tik Credit — single baseline */}
+          <div className="flex items-baseline" style={{ gap: Math.round(fs * 0.18) }}>
             <span
               style={{
                 fontFamily:    'var(--font-sans)',
                 fontSize:      fs,
-                fontWeight:    400,
-                letterSpacing: '0.03em',
+                fontWeight:    300,
+                letterSpacing: '0.06em',
                 lineHeight:    1,
-                color: dk ? 'rgba(255,255,255,0.50)' : '#0A1628',
-                opacity: dk ? 1 : 0.52,
+                textTransform: 'uppercase' as const,
+                color: dk ? 'rgba(255,255,255,0.45)' : 'rgba(10,22,40,0.45)',
               }}
             >
               Tik
@@ -143,12 +196,12 @@ const Logo: React.FC<LogoProps> = ({
               style={{
                 fontFamily:           'var(--font-sans)',
                 fontSize:             fs,
-                fontWeight:           800,
-                letterSpacing:        '-0.025em',
+                fontWeight:           900,
+                letterSpacing:        '-0.03em',
                 lineHeight:           1,
                 background: dk
-                  ? 'linear-gradient(112deg, #00D4FF 0%, #3B82F6 55%, #7C3AED 100%)'
-                  : 'linear-gradient(112deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%)',
+                  ? 'linear-gradient(115deg, #FFFFFF 0%, #00D4FF 45%, #3B82F6 80%, #7C3AED 100%)'
+                  : 'linear-gradient(115deg, #0A1628 0%, #1E3A8A 40%, #2563EB 75%, #3B82F6 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor:  'transparent',
                 backgroundClip:       'text',
@@ -158,31 +211,31 @@ const Logo: React.FC<LogoProps> = ({
             </span>
           </div>
 
-          {/* PRO pill */}
+          {/* PRO pill — gold border, dark fill */}
           <div
             className="inline-flex self-start rounded-full"
             style={{
               padding:    '1.5px',
-              background: 'linear-gradient(108deg, #8B6914, #B8941F, #D4AF37, #E5C76B, #D4AF37, #8B6914)',
+              background: 'linear-gradient(105deg, #8B6914, #D4AF37, #E5C76B, #D4AF37, #8B6914)',
               boxShadow: dk
-                ? '0 0 10px rgba(212,175,55,0.40)'
-                : '0 0 6px rgba(212,175,55,0.25)',
+                ? '0 0 10px rgba(212,175,55,0.35), 0 0 20px rgba(212,175,55,0.15)'
+                : '0 0 6px rgba(212,175,55,0.20)',
             }}
           >
             <div
               className="flex items-center justify-center rounded-full"
               style={{
-                background:    dk ? '#0A1628' : '#0A1628',
-                paddingInline: Math.round(pro * 0.9),
-                paddingBlock:  Math.round(pro * 0.2),
+                background:    '#0A1628',
+                paddingInline: Math.round(pro * 1.0),
+                paddingBlock:  Math.round(pro * 0.22),
               }}
             >
               <span
                 style={{
                   fontFamily:           'var(--font-sans)',
                   fontSize:             pro,
-                  fontWeight:           800,
-                  letterSpacing:        '0.36em',
+                  fontWeight:           900,
+                  letterSpacing:        '0.38em',
                   background:           'linear-gradient(90deg, #B8941F, #D4AF37, #E5C76B, #D4AF37)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor:  'transparent',

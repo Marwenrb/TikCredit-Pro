@@ -9,53 +9,62 @@ import { motion, useReducedMotion } from 'framer-motion'
 
 const expo = [0.16, 1, 0.3, 1] as const
 
-// ── Inline squircle icon (unique IDs: pl- prefix) ─────────────────────────────
+// ── Inline TC monogram icon (unique IDs: pl- prefix) ─────────────────────────
 function SplashIcon({ size = 72 }: { size?: number }) {
   return (
     <svg
-      width={size} height={size} viewBox="0 0 44 44" fill="none"
+      width={size} height={size} viewBox="0 0 56 56" fill="none"
       xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tik Credit Pro"
     >
       <defs>
-        <linearGradient id="pl-fill" x1="7" y1="7" x2="37" y2="37" gradientUnits="userSpaceOnUse">
+        <linearGradient id="pl-bg" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#0A1628" />
-          <stop offset="55%"  stopColor="#1E3A8A" />
-          <stop offset="100%" stopColor="#2563EB" />
+          <stop offset="40%"  stopColor="#0F2347" />
+          <stop offset="100%" stopColor="#1E3A8A" />
         </linearGradient>
-        <radialGradient id="pl-sheen" cx="28%" cy="18%" r="48%">
-          <stop offset="0%"   stopColor="#fff" stopOpacity="0.26" />
+        <linearGradient id="pl-neon" x1="10" y1="46" x2="46" y2="10" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#00D4FF" />
+          <stop offset="50%"  stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#7C3AED" />
+        </linearGradient>
+        <linearGradient id="pl-gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"   stopColor="#8B6914" />
+          <stop offset="35%"  stopColor="#D4AF37" />
+          <stop offset="65%"  stopColor="#E5C76B" />
+          <stop offset="100%" stopColor="#D4AF37" />
+        </linearGradient>
+        <radialGradient id="pl-sheen" cx="30%" cy="15%" r="50%">
+          <stop offset="0%"   stopColor="#fff" stopOpacity="0.18" />
           <stop offset="100%" stopColor="#fff" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="pl-ck" x1="13" y1="26" x2="33" y2="13" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#FFFFFF" stopOpacity="0.97" />
-          <stop offset="45%"  stopColor="#00D4FF" stopOpacity="0.93" />
-          <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.95" />
-        </linearGradient>
-        <radialGradient id="pl-dot" cx="36%" cy="30%" r="52%">
-          <stop offset="0%"   stopColor="#FEF3C7" />
-          <stop offset="40%"  stopColor="#D4AF37" />
-          <stop offset="100%" stopColor="#8B6914" />
-        </radialGradient>
-        <filter id="pl-glow" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000"    floodOpacity="0.50" />
-          <feDropShadow dx="0" dy="0" stdDeviation="7" floodColor="#00D4FF" floodOpacity="0.32" />
+        <filter id="pl-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="0.5" stdDeviation="1" floodColor="#000" floodOpacity="0.35" />
+          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00D4FF" floodOpacity="0.25" />
         </filter>
       </defs>
 
-      <rect x="7" y="7" width="30" height="30" rx="9" ry="9" fill="url(#pl-fill)" />
-      <rect x="7" y="7" width="30" height="30" rx="9" ry="9" fill="url(#pl-sheen)" />
-      <rect
-        x="7.6" y="7.6" width="28.8" height="28.8" rx="8.5" ry="8.5"
-        stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" fill="none"
-      />
-      <path
-        d="M 13 23 L 19.5 30.5 L 33 13.5"
-        stroke="url(#pl-ck)" strokeWidth="4.8"
-        strokeLinecap="round" strokeLinejoin="round"
-        fill="none" filter="url(#pl-glow)"
-      />
-      <circle cx="33"   cy="13.5" r="3"   fill="url(#pl-dot)" />
-      <circle cx="32.3" cy="12.8" r="1"   fill="white" opacity="0.65" />
+      {/* Body */}
+      <rect x="4" y="4" width="48" height="48" rx="14" ry="14" fill="url(#pl-bg)" />
+      <rect x="4" y="4" width="48" height="48" rx="14" ry="14" fill="url(#pl-sheen)" />
+      <rect x="4.75" y="4.75" width="46.5" height="46.5" rx="13.5" ry="13.5"
+        stroke="rgba(255,255,255,0.10)" strokeWidth="0.5" fill="none" />
+
+      {/* Corner accent arcs */}
+      <path d="M 44 52 A 14 14 0 0 0 52 44" stroke="url(#pl-neon)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6" />
+      <path d="M 12 4 A 14 14 0 0 0 4 12" stroke="url(#pl-gold)" strokeWidth="1.2" strokeLinecap="round" fill="none" opacity="0.5" />
+
+      {/* TC Monogram */}
+      <g filter="url(#pl-glow)">
+        <path d="M 14 16 L 28 16" stroke="white" strokeWidth="3.2" strokeLinecap="round" opacity="0.95" />
+        <path d="M 21 16 L 21 38" stroke="white" strokeWidth="3.2" strokeLinecap="round" opacity="0.95" />
+        <path d="M 42 20 A 12 12 0 1 0 42 36" stroke="url(#pl-neon)" strokeWidth="3.2" strokeLinecap="round" fill="none" />
+      </g>
+
+      {/* Gold diamond accent */}
+      <g transform="translate(36, 14)">
+        <rect x="-2.5" y="-2.5" width="5" height="5" rx="1" transform="rotate(45)" fill="url(#pl-gold)" />
+        <circle cx="-0.8" cy="-1" r="0.8" fill="white" opacity="0.55" />
+      </g>
     </svg>
   )
 }
@@ -73,7 +82,7 @@ const Preloader: React.FC = () => {
       >
         <div className="flex flex-col items-center gap-3">
           <SplashIcon size={56} />
-          <p className="text-base font-bold text-white tracking-widest">TIK CREDIT PRO</p>
+          <p className="text-base font-black text-white tracking-widest uppercase">Tik Credit Pro</p>
         </div>
       </div>
     )
@@ -162,14 +171,15 @@ const Preloader: React.FC = () => {
           transition={{ delay: 0.58, duration: 0.60, ease: expo }}
         >
           {/* Tik Credit */}
-          <div className="flex items-baseline" style={{ gap: '0.24em' }}>
+          <div className="flex items-baseline" style={{ gap: '0.22em' }}>
             <span
               style={{
                 fontSize:      'clamp(1.5rem, 4vw, 2rem)',
-                fontWeight:    400,
-                letterSpacing: '0.04em',
+                fontWeight:    300,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase' as const,
                 lineHeight:    1,
-                color:         'rgba(255,255,255,0.48)',
+                color:         'rgba(255,255,255,0.42)',
               }}
             >
               Tik
@@ -177,10 +187,10 @@ const Preloader: React.FC = () => {
             <span
               style={{
                 fontSize:             'clamp(1.5rem, 4vw, 2rem)',
-                fontWeight:           800,
-                letterSpacing:        '-0.025em',
+                fontWeight:           900,
+                letterSpacing:        '-0.03em',
                 lineHeight:           1,
-                background:           'linear-gradient(112deg, #00D4FF 0%, #3B82F6 55%, #7C3AED 100%)',
+                background:           'linear-gradient(115deg, #FFFFFF 0%, #00D4FF 45%, #3B82F6 80%, #7C3AED 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor:  'transparent',
                 backgroundClip:       'text',
