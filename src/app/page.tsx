@@ -562,34 +562,102 @@ export default function HomePage() {
         </main>
 
         {/* ── Footer ───────────────────────────────────────────────────── */}
-        <footer className="relative mt-20">
-          {/* Gradient separator */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-lux-sapphire/20 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-lux-sapphire/[0.02] to-lux-sapphire/[0.04]" />
-          <div className="relative container mx-auto px-6 py-8">
+        <footer className="relative mt-20 overflow-hidden">
+          {/* Animated neon separator */}
+          <motion.div
+            className="absolute top-0 left-0 right-0 h-px"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, #00D4FF 20%, #2563EB 40%, #D4AF37 60%, #7C3AED 80%, transparent 100%)',
+              backgroundSize: '200% 100%',
+            }}
+            animate={{ backgroundPosition: ['0% 0%', '200% 0%'] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+          />
+          {/* Secondary softer glow line under the neon */}
+          <div className="absolute top-[1px] left-0 right-0 h-[6px] bg-gradient-to-r from-transparent via-elegant-blue/10 to-transparent blur-sm" />
+
+          {/* Subtle radial glow behind footer content */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-lux-sapphire/[0.02] to-lux-sapphire/[0.05]" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(37,99,235,0.04) 0%, transparent 70%)' }} />
+
+          <div className="relative container mx-auto px-6 pt-12 pb-8">
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 2, type: 'spring', stiffness: 200 }}
-              className="text-center"
+              className="flex flex-col items-center gap-6"
             >
-              <motion.div className="inline-flex items-center gap-3 mb-6 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-luxury-lg border border-lux-silver/50">
-                <span className="text-xl">🇩🇿</span>
-                <span className="text-sm font-bold text-lux-navy">صُنع بإتقان في الجزائر</span>
-                <div className="w-px h-4 bg-lux-silver" />
-                <span className="text-xs font-semibold text-lux-slate">{new Date().getFullYear()}</span>
+              {/* ── Algeria origin badge — glassmorphism + neon border ─── */}
+              <motion.div
+                className="relative group/badge"
+                whileHover={{ scale: 1.04, transition: { type: 'spring', stiffness: 400, damping: 20 } }}
+              >
+                {/* Neon glow border on hover */}
+                <div className="absolute -inset-px rounded-2xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'linear-gradient(135deg, #00D4FF, #2563EB, #D4AF37, #7C3AED)', padding: '1px', borderRadius: '1rem', WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }} />
+
+                <div className="relative inline-flex items-center gap-4 px-7 py-3.5 rounded-2xl bg-white/90 backdrop-blur-lg shadow-luxury-lg border border-lux-silver/40 overflow-hidden">
+                  {/* Shimmer sweep on hover */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-elegant-blue/[0.06] to-transparent pointer-events-none"
+                    initial={{ x: '-100%' }}
+                    whileHover={{ x: '200%' }}
+                    transition={{ duration: 0.8, ease: 'easeInOut' }}
+                  />
+
+                  {/* Algeria flag — SVG crescent & star, no emoji */}
+                  <div className="relative flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-[#006233] to-[#009645] flex items-center justify-center shadow-md" style={{ boxShadow: '0 3px 12px rgba(0,98,51,0.25)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="11" cy="12" r="6" fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
+                      <path d="M11 6a6 6 0 0 1 0 12 4.8 4.8 0 0 0 0-12z" fill="#FFFFFF" />
+                      <polygon points="14.5,10.2 15.3,12.6 13,11.1 16,11.1 13.7,12.6" fill="#D4001A" />
+                    </svg>
+                  </div>
+
+                  {/* Text cluster */}
+                  <div className="flex flex-col items-start relative z-10">
+                    <span className="text-[13px] font-extrabold text-lux-navy tracking-tight leading-none">صُنع بإتقان في الجزائر</span>
+                    <span className="text-[10px] font-semibold text-lux-slate/70 tracking-wide mt-0.5">CRAFTED IN ALGERIA</span>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="w-px h-8 bg-gradient-to-b from-transparent via-lux-silver to-transparent mx-1" />
+
+                  {/* Year pill */}
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-black bg-gradient-to-br from-lux-sapphire to-elegant-blue bg-clip-text text-transparent leading-none">{new Date().getFullYear()}</span>
+                    <span className="text-[8px] font-bold text-premium-gold tracking-[0.2em] mt-0.5">PRO</span>
+                  </div>
+                </div>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2.3 }}
-                className="flex items-center justify-center flex-wrap gap-3 text-sm text-lux-slate font-medium"
-              >
-                <span>&copy; {new Date().getFullYear()} Tik Credit Pro</span>
-                <span className="w-1 h-1 rounded-full bg-lux-sapphire/30" />
-                <span>جميع الحقوق محفوظة</span>
-              </motion.div>
+              {/* ── Brand signature + copyright ────────────────────────── */}
+              <div className="flex flex-col items-center gap-3">
+                {/* Brand wordmark */}
+                <motion.div
+                  className="flex items-center gap-1.5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2.2 }}
+                >
+                  <span className="text-sm font-medium text-lux-slate/50">Tik</span>
+                  <span className="text-sm font-extrabold bg-gradient-to-r from-lux-sapphire to-elegant-blue bg-clip-text text-transparent">Credit</span>
+                  <span className="text-[9px] font-black bg-gradient-to-r from-premium-gold-dark to-premium-gold bg-clip-text text-transparent tracking-[0.15em] -mt-1">PRO</span>
+                </motion.div>
+
+                {/* Copyright + links row */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2.4 }}
+                  className="flex items-center justify-center flex-wrap gap-2 text-xs text-lux-slate/60 font-medium"
+                >
+                  <span>&copy; {new Date().getFullYear()}</span>
+                  <span className="w-[3px] h-[3px] rounded-full bg-lux-sapphire/20" />
+                  <span>جميع الحقوق محفوظة</span>
+                  <span className="w-[3px] h-[3px] rounded-full bg-lux-sapphire/20" />
+                  <span className="text-lux-slate/40">منصة التمويل الرائدة في الجزائر</span>
+                </motion.div>
+              </div>
             </motion.div>
           </div>
         </footer>
