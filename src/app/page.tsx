@@ -608,12 +608,20 @@ export default function HomePage() {
                     transition={{ duration: 3.5, repeat: Infinity, ease: 'linear', repeatDelay: 4 }}
                   />
 
-                  {/* Algeria flag dot */}
-                  <div className="relative flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-[#006233] to-[#009645] flex items-center justify-center shadow-sm" style={{ boxShadow: '0 2px 8px rgba(0,98,51,0.25)' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                      <circle cx="11" cy="12" r="6" fill="none" stroke="#FFFFFF" strokeWidth="1.8" />
-                      <path d="M11 6a6 6 0 0 1 0 12 4.8 4.8 0 0 0 0-12z" fill="#FFFFFF" />
-                      <polygon points="14.5,10.2 15.3,12.6 13,11.1 16,11.1 13.7,12.6" fill="#D4001A" />
+                  {/* Algeria flag */}
+                  <div className="relative flex-shrink-0 overflow-hidden rounded-[3px]" style={{ width: 28, height: 19, boxShadow: '0 1px 5px rgba(0,0,0,0.18), inset 0 0 0 0.5px rgba(0,0,0,0.09)' }}>
+                    <svg width="28" height="19" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="alg-bg" gradientUnits="userSpaceOnUse" x1="238" y1="0" x2="408" y2="0">
+                          <stop offset="36.5%" stopColor="#006233" />
+                          <stop offset="36.5%" stopColor="#FFFFFF" />
+                        </linearGradient>
+                      </defs>
+                      <rect width="300" height="400" fill="#006233" />
+                      <rect x="300" width="300" height="400" fill="#FFFFFF" />
+                      <circle cx="300" cy="200" r="107" fill="#D21034" />
+                      <circle cx="323" cy="200" r="85" fill="url(#alg-bg)" />
+                      <polygon transform="translate(347,200)" points="0,-30 7,-10 29,-9 11,4 18,24 0,12 -18,24 -11,4 -29,-9 -7,-10" fill="#D21034" />
                     </svg>
                   </div>
 
