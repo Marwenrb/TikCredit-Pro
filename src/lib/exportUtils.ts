@@ -176,7 +176,7 @@ export const exportToExcel = async (
     const sheetName = `الطلبات_${format(new Date(), 'ddMMyyyy')}`
     const worksheet = workbook.addWorksheet(sheetName.substring(0, 31))
 
-    // Define columns with headers - now includes ID for tracking
+    // Define columns with headers - now includes ID for tracking and banking fields
     const columns = [
       { header: 'الرقم', key: 'number', width: 8 },
       { header: 'معرف الطلب (ID)', key: 'submissionId', width: 20 },
@@ -188,6 +188,8 @@ export const exportToExcel = async (
       { header: 'نوع التمويل', key: 'financingType', width: 20 },
       { header: 'المبلغ المطلوب', key: 'amount', width: 18 },
       { header: 'طريقة استلام الراتب', key: 'salaryMethod', width: 20 },
+      { header: 'نوع الحساب', key: 'paymentMethod', width: 12 },
+      { header: 'رقم CCP / رقم الحساب', key: 'bankingNumber', width: 30 },
       { header: 'نطاق الدخل الشهري', key: 'incomeRange', width: 20 },
       { header: 'وقت التواصل المفضل', key: 'contactTime', width: 20 },
       { header: 'عميل موجود', key: 'existingCustomer', width: 12 },
@@ -216,6 +218,20 @@ export const exportToExcel = async (
         ? submission.data.customProfession
         : (submission.data.profession || 'غير محدد')
 
+      // Format banking information
+      let paymentMethod = ''
+      let bankingNumber = ''
+      
+      if (submission.data.banking) {
+        if (submission.data.banking.paymentMethod === 'CCP') {
+          paymentMethod = 'CCP (البريد)'
+          bankingNumber = `${submission.data.banking.ccpNumber} / ${submission.data.banking.ccpKey}`
+        } else if (submission.data.banking.paymentMethod === 'بنك') {
+          paymentMethod = 'حساب بنكي'
+          bankingNumber = `${submission.data.banking.bankName} - RIB: ${submission.data.banking.bankAccountNumber}`
+        }
+      }
+
       const row: Record<string, unknown> = {
         number: index + 1,
         submissionId: submission.id || 'N/A',
@@ -227,6 +243,8 @@ export const exportToExcel = async (
         financingType: submission.data.financingType || '',
         amount: submission.data.requestedAmount || 0,
         salaryMethod: submission.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : (submission.data.salaryReceiveMethod || ''),
+        paymentMethod: paymentMethod,
+        bankingNumber: bankingNumber,
         incomeRange: submission.data.monthlyIncomeRange || 'غير محدد',
         contactTime: submission.data.preferredContactTime || 'غير محدد',
         existingCustomer: submission.data.isExistingCustomer || 'لا',
@@ -419,8 +437,7 @@ export const exportToExcel = async (
 
 /**
  * Export submissions to PDF with professional formatting
- * Note: PDF uses English labels for compatibility (Arabic not supported in jsPDF without custom fonts)
- * For Arabic text export, use TXT or CSV format instead
+ * Note: Includes all submission data with proper Arabic support via TXT format recommendation
  */
 export const exportToPDF = async (
   submissions: Submission[],
@@ -431,7 +448,7 @@ export const exportToPDF = async (
     const filteredSubmissions = filterSubmissionsByDateRange(submissions, options.dateRange)
 
     if (filteredSubmissions.length === 0) {
-      alert('لا توجد طلبات في الفترة المحددة - For Arabic text, please use TXT or CSV export')
+      alert('لا توجد طلبات في الفترة المحددة')
       return
     }
 
@@ -457,20 +474,29 @@ export const exportToPDF = async (
     // Add submission count
     doc.text(`Total Submissions: ${filteredSubmissions.length}`, 15, 37)
 
-    // Add note about Arabic text
-    doc.setFontSize(9)
-    doc.setTextColor(128, 128, 128)
-    doc.text('Note: For Arabic text support, please export as TXT or CSV format', 15, 44)
-
-    // Prepare table data - use phone as identifier since Arabic names won't render
+    // Prepare table data with banking information
     const tableData = filteredSubmissions.map((submission, index) => {
-      // Format amount without Arabic currency
+      // Format amount
       const amount = submission.data.requestedAmount?.toLocaleString() || '0'
+      
+      // Format banking info
+      let bankingInfo = '-'
+      if (submission.data.banking) {
+        if (submission.data.banking.paymentMethod === 'CCP') {
+          bankingInfo = `CCP: ${submission.data.banking.ccpNumber}/${submission.data.banking.ccpKey}`
+        } else if (submission.data.banking.paymentMethod === 'بنك') {
+          bankingInfo = `Bank: ${submission.data.banking.bankName} - ${submission.data.banking.bankAccountNumber}`
+        }
+      }
 
       const row = [
         (index + 1).toString(),
         submission.data.phone || '-',
         submission.data.email || '-',
+        submission.data.fullName || '-',
+        submission.data.wilaya || '-',
+        submission.data.salaryReceiveMethod === 'CCP' ? 'CCP' : (submission.data.salaryReceiveMethod || '-'),
+        bankingInfo,
         `${amount} DZD`,
         format(new Date(submission.timestamp), 'dd/MM/yyyy HH:mm'),
       ]
@@ -478,8 +504,8 @@ export const exportToPDF = async (
       return row
     })
 
-    // Define table headers (English for PDF compatibility)
-    const headers = ['#', 'Phone', 'Email', 'Amount', 'Date']
+    // Define table headers
+    const headers = ['#', 'Phone', 'Email', 'Name', 'Wilaya', 'Salary Method', 'Banking Info', 'Amount', 'Date']
 
     // Generate table (jspdf-autotable patches doc via side-effect import above)
     ;(doc as any).autoTable({
@@ -490,12 +516,12 @@ export const exportToPDF = async (
       headStyles: {
         fillColor: [30, 58, 138], // Elegant blue
         textColor: [255, 255, 255],
-        fontSize: 11,
+        fontSize: 10,
         fontStyle: 'bold',
         halign: 'center',
       },
       bodyStyles: {
-        fontSize: 10,
+        fontSize: 9,
         textColor: [50, 50, 50],
         halign: 'center',
       },
@@ -503,13 +529,17 @@ export const exportToPDF = async (
         fillColor: [249, 250, 251], // Luxury off-white
       },
       columnStyles: {
-        0: { cellWidth: 15, halign: 'center' },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 60 },
-        3: { cellWidth: 35, halign: 'right' },
-        4: { cellWidth: 40 },
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 40 },
+        7: { cellWidth: 20 },
+        8: { cellWidth: 30 },
       },
-      margin: { left: 15, right: 15 },
+      margin: { left: 10, right: 10 },
       didDrawPage: (data: { pageNumber: number }) => {
         // Add footer with page numbers
         const pageCount = doc.getNumberOfPages()
@@ -530,10 +560,10 @@ export const exportToPDF = async (
     // Download PDF
     doc.save(filename)
 
-    console.log(`Exported ${filteredSubmissions.length} submissions to PDF`)
+    console.log(`✅ Exported ${filteredSubmissions.length} submissions to PDF successfully`)
   } catch (error) {
     console.error('PDF export error:', error)
-    alert('حدث خطأ أثناء تصدير الملف. يرجى المحاولة مرة أخرى.')
+    alert('حدث خطأ أثناء تصدير الملف PDF. يرجى المحاولة مرة أخرى.')
   }
 }
 
@@ -579,6 +609,24 @@ export const exportToTXT = (
         ? submission.data.customProfession
         : (submission.data.profession || 'غير محدد')
 
+      // Format banking information
+      let bankingInfo = ''
+      if (submission.data.banking) {
+        if (submission.data.banking.paymentMethod === 'CCP') {
+          bankingInfo = `│ 📮 نوع الحساب:       CCP (بريد الجزائر)\n`
+          bankingInfo += `│ 🔢 رقم CCP:         ${submission.data.banking.ccpNumber}\n`
+          bankingInfo += `│ 🔐 مفتاح CCP:       ${submission.data.banking.ccpKey}\n`
+          bankingInfo += `│ 📋 الرقم الكامل:    ${submission.data.banking.ccpFullNumber}\n`
+        } else if (submission.data.banking.paymentMethod === 'بنك') {
+          bankingInfo = `│ 🏦 نوع الحساب:       حساب بنكي\n`
+          bankingInfo += `│ 🏛️ البنك:           ${submission.data.banking.bankName}\n`
+          bankingInfo += `│ 📊 رقم الحساب (RIB):${submission.data.banking.bankAccountNumber}\n`
+          if ((submission.data.banking as any).bankAgencyCode) {
+            bankingInfo += `│ 🔗 رمز الفرع:       ${(submission.data.banking as any).bankAgencyCode}\n`
+          }
+        }
+      }
+
       content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`
       content += `│ طلب رقم ${index + 1}                                                                      \n`
       content += `│ 🔖 معرف الطلب:       ${submission.id || 'N/A'}\n`
@@ -591,6 +639,14 @@ export const exportToTXT = (
       content += `│ 💳 نوع التمويل:      ${submission.data.financingType || 'غير محدد'}\n`
       content += `│ 💵 المبلغ المطلوب:   ${submission.data.requestedAmount?.toLocaleString('ar-DZ') || '0'} دج\n`
       content += `│ 🏦 طريقة الراتب:     ${submission.data.salaryReceiveMethod === 'CCP' ? 'البريد (CCP)' : submission.data.salaryReceiveMethod || 'غير محدد'}\n`
+      
+      // Add banking info section
+      if (bankingInfo) {
+        content += `├─────────────────────────────────────────────────────────────────────────────┤\n`
+        content += bankingInfo
+      }
+
+      content += `├─────────────────────────────────────────────────────────────────────────────┤\n`
       content += `│ 💰 نطاق الدخل:       ${submission.data.monthlyIncomeRange || 'غير محدد'}\n`
       content += `│ 🕐 وقت التواصل:      ${submission.data.preferredContactTime || 'غير محدد'}\n`
       content += `│ 👥 عميل موجود:       ${submission.data.isExistingCustomer === 'نعم' ? 'نعم ✓' : 'لا ✗'}\n`
