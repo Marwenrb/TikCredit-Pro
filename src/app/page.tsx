@@ -2,11 +2,10 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
 import Logo from '@/components/ui/Logo'
-import Preloader from '@/components/ui/Preloader'
 import BlueParticles from '@/components/ui/BlueParticles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -56,18 +55,11 @@ const heroTextVariants: Variants = {
 
 export default function HomePage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
     router.prefetch('/form')
   }, [router])
-
-  // Dismiss preloader after 2.4 s
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 2400)
-    return () => clearTimeout(t)
-  }, [])
 
   // Sticky glass nav on scroll
   useEffect(() => {
@@ -77,12 +69,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <>
-      <AnimatePresence mode="wait">
-        {loading && <Preloader key="preloader" />}
-      </AnimatePresence>
-
-      <div className="min-h-screen bg-lux-ivory relative overflow-hidden">
+    <div className="min-h-screen bg-lux-ivory relative overflow-hidden">
 
       {/* ── Ambient background layers ──────────────────────────────────── */}
       <BlueParticles className="fixed inset-0 z-0" density={20} />
@@ -656,6 +643,5 @@ export default function HomePage() {
         </footer>
       </div>
     </div>
-    </>
   )
 }
