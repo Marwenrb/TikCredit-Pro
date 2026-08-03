@@ -71,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar" dir="rtl" className={`${inter.variable} ${notoKufiArabic.variable} dark`}>
+    <html lang="ar" dir="rtl" className={`${inter.variable} ${notoKufiArabic.variable}`}>
       <head>
         <Script id="facebook-pixel" strategy="afterInteractive">
           {`
@@ -88,7 +88,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className={`${notoKufiArabic.className} antialiased bg-obsidian-900 text-white min-h-screen flex flex-col`}>
+      <body className={`${notoKufiArabic.className} antialiased min-h-screen flex flex-col`}>
         {/* Apple-Tier Ambient Background Glow */}
         <div className="fixed inset-0 pointer-events-none z-[-1] bg-ambient-glow" />
         
