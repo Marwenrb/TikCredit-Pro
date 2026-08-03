@@ -30,8 +30,8 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                 <motion.div
                   className={cn(
                     'relative w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300',
-                    isCompleted && 'bg-elegant-blue text-white',
-                    isCurrent && 'bg-elegant-blue text-white scale-110 shadow-lg shadow-elegant-blue/50',
+                    isCompleted && 'bg-elegant-blue text-apple-900',
+                    isCurrent && 'bg-elegant-blue text-apple-900 scale-110 shadow-lg shadow-elegant-blue/50',
                     isUpcoming && 'bg-surface-card border-2 border-gray-200 text-gray-400'
                   )}
                   initial={false}
