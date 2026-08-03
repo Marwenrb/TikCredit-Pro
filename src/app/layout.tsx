@@ -71,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar" dir="rtl" className={`${inter.variable} ${notoKufiArabic.variable}`}>
+    <html lang="ar" dir="rtl" className={`${inter.variable} ${notoKufiArabic.variable} dark`}>
       <head>
         <Script id="facebook-pixel" strategy="afterInteractive">
           {`
@@ -88,7 +88,10 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className={`${notoKufiArabic.className} antialiased`}>
+      <body className={`${notoKufiArabic.className} antialiased bg-obsidian-900 text-white min-h-screen flex flex-col`}>
+        {/* Apple-Tier Ambient Background Glow */}
+        <div className="fixed inset-0 pointer-events-none z-[-1] bg-ambient-glow" />
+        
         <noscript>
           <img 
             height="1" 
@@ -99,7 +102,9 @@ export default function RootLayout({
           />
         </noscript>
         <Providers>
-          {children}
+          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>
