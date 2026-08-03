@@ -124,14 +124,33 @@ export default function HomePage() {
             </motion.div>
 
             <motion.h1
-              variants={heroTextVariants}
-              initial="hidden"
-              animate="show"
-              className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-tight"
+              className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-tight flex flex-col items-center"
             >
-              <motion.span className="text-apple-900 inline-block drop-shadow-sm">
-                Tik Credit Pro
-              </motion.span>
+              <motion.div
+                className="text-apple-900 drop-shadow-sm flex overflow-hidden py-2"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.06, delayChildren: 0.2 }
+                  }
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {Array.from("Tik Credit Pro").map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    variants={{
+                      hidden: { opacity: 0, y: 40, rotateX: -90, filter: 'blur(10px)' },
+                      show: { opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)', transition: { type: 'spring', damping: 12, stiffness: 150 } }
+                    }}
+                    className={letter === " " ? "w-3 md:w-5" : "inline-block origin-bottom"}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </motion.div>
               <br />
               <motion.span
                 className="text-apple-gradient inline-block mt-2"
@@ -342,11 +361,12 @@ export default function HomePage() {
             <div className="flex flex-col items-center gap-6">
               
               {/* Premium Origin Badge */}
-              <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full apple-glass border-glass-border">
-                <span className="text-[11px] font-bold text-apple-300 tracking-wider">ENGINEERED IN ALGERIA</span>
-                <span className="w-1 h-1 rounded-full bg-apple-300/50" />
-                <span className="text-[11px] font-black text-apple-900 tracking-tight">{new Date().getFullYear()}</span>
-                <span className="text-[9px] font-black text-apple-blue tracking-[0.2em]">PRO</span>
+              <div className="inline-flex flex-wrap items-center justify-center gap-2 md:gap-3 px-5 py-2.5 rounded-full apple-glass border-glass-border">
+                <span className="text-[10px] md:text-[11px] font-bold text-apple-300 tracking-wider">ENGINEERED IN ALGERIA</span>
+                <span className="text-base md:text-lg leading-none drop-shadow-sm">🇩🇿</span>
+                <span className="w-1 h-1 rounded-full bg-apple-300/50 hidden md:block" />
+                <span className="text-[10px] md:text-[11px] font-black text-apple-900 tracking-tight">{new Date().getFullYear()}</span>
+                <span className="text-[8px] md:text-[9px] font-black text-apple-blue tracking-[0.2em]">PRO</span>
               </div>
 
               {/* Minimal Copyright */}
