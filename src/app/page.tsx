@@ -124,7 +124,7 @@ export default function HomePage() {
             </motion.div>
 
             <motion.h1
-              className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-tight flex flex-col items-center"
+              className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-normal flex flex-col items-center"
             >
               <motion.div
                 className="text-apple-900 drop-shadow-sm flex flex-row flex-nowrap justify-center items-center py-2 overflow-visible"
@@ -152,9 +152,9 @@ export default function HomePage() {
                   </motion.span>
                 ))}
               </motion.div>
-              <br />
+              
               <motion.span
-                className="text-apple-gradient inline-block mt-2"
+                className="text-apple-gradient inline-block mt-4 pb-4 pt-2 leading-relaxed"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, ...springConfig }}
