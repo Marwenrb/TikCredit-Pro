@@ -166,25 +166,4 @@ const Logo: React.FC<LogoProps> = ({
   )
 }
 
-export default Logo     'var(--font-sans)',
-                  fontSize:             pro,
-                  fontWeight:           900,
-                  letterSpacing:        '0.45em',
-                  background:           'linear-gradient(90deg, #6A4A0C, #9B7518, #D9B43C, #ECC95C, #9B7518)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor:  'transparent',
-                  backgroundClip:       'text',
-                }}
-              >
-                PRO
-              </span>
-            </div>
-          </div>
-
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default Logo
