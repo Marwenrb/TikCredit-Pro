@@ -68,7 +68,7 @@ export default function HomePage() {
   return (
     <div className="relative overflow-hidden min-h-screen selection:bg-apple-blue/20">
       {/* ── Ambient Background Particles ───────────────────────────────── */}
-      <BlueParticles className="fixed inset-0 z-0 opacity-[0.15]" density={25} color="#0066CC" />
+      <BlueParticles className="fixed inset-0 z-0 opacity-[0.15]" density={25} />
 
       <div className="relative z-10">
         {/* ── Apple-Grade Navigation ─────────────────────────────────────── */}
