@@ -127,12 +127,13 @@ export default function HomePage() {
               className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-tight flex flex-col items-center"
             >
               <motion.div
-                className="text-apple-900 drop-shadow-sm flex overflow-hidden py-2"
+                className="text-apple-900 drop-shadow-sm flex flex-row flex-nowrap justify-center items-center py-2 overflow-visible"
+                dir="ltr"
                 variants={{
                   hidden: { opacity: 0 },
                   show: {
                     opacity: 1,
-                    transition: { staggerChildren: 0.06, delayChildren: 0.2 }
+                    transition: { staggerChildren: 0.05, delayChildren: 0.2 }
                   }
                 }}
                 initial="hidden"
@@ -142,10 +143,10 @@ export default function HomePage() {
                   <motion.span
                     key={index}
                     variants={{
-                      hidden: { opacity: 0, y: 40, rotateX: -90, filter: 'blur(10px)' },
-                      show: { opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)', transition: { type: 'spring', damping: 12, stiffness: 150 } }
+                      hidden: { opacity: 0, y: 30, scale: 0.8, filter: 'blur(8px)' },
+                      show: { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', transition: { type: 'spring', damping: 14, stiffness: 200 } }
                     }}
-                    className={letter === " " ? "w-3 md:w-5" : "inline-block origin-bottom"}
+                    className={letter === " " ? "w-3 md:w-5" : "inline-block"}
                   >
                     {letter}
                   </motion.span>
